@@ -30,29 +30,25 @@ The app opens to the current month's budget by default, showing all sections wit
 
 - Java 17 or higher
 - Node.js 18 or higher
-- PostgreSQL
+- Docker and Docker Compose
 
 ## Getting Started
 
-### 1. Set up the Database
+### 1. Start the Database
 
-Create a PostgreSQL database:
+Start PostgreSQL using Docker Compose:
 
-```sql
-CREATE DATABASE budget_db;
+```bash
+docker-compose up -d
 ```
 
-### 2. Configure the Backend
+This creates a PostgreSQL container with:
+- Database: `budget_db`
+- Username: `postgres`
+- Password: `postgres`
+- Port: `5432`
 
-Edit `backend/src/main/resources/application.properties` if needed:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/budget_db
-spring.datasource.username=postgres
-spring.datasource.password=postgres
-```
-
-### 3. Run the Backend
+### 2. Run the Backend
 
 ```bash
 cd backend

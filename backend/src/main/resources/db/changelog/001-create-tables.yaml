@@ -1,0 +1,129 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: budget-app
+      comment: Create budget table
+      changes:
+        - createTable:
+            tableName: budget
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: year
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: month
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: budget
+            columnNames: year, month
+            constraintName: uk_budget_year_month
+
+  - changeSet:
+      id: 2
+      author: budget-app
+      comment: Create section table
+      changes:
+        - createTable:
+            tableName: section
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: budget_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_order
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_income
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: section
+            baseColumnNames: budget_id
+            referencedTableName: budget
+            referencedColumnNames: id
+            constraintName: fk_section_budget
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 3
+      author: budget-app
+      comment: Create budget_item table
+      changes:
+        - createTable:
+            tableName: budget_item
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: section_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: planned_amount
+                  type: decimal(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actual_amount
+                  type: decimal(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_order
+                  type: int
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: budget_item
+            baseColumnNames: section_id
+            referencedTableName: section
+            referencedColumnNames: id
+            constraintName: fk_budget_item_section
+            onDelete: CASCADE

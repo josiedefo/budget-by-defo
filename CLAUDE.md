@@ -37,7 +37,13 @@ budget-by-defo/
 ### Prerequisites
 - Java 17+
 - Node.js 18+
-- PostgreSQL with database `budget_db`
+- Docker and Docker Compose
+
+### Database (Docker)
+```bash
+docker-compose up -d
+```
+Creates PostgreSQL container on port 5432
 
 ### Backend
 ```bash
@@ -56,12 +62,23 @@ Runs on http://localhost:5173
 
 ## Database Configuration
 
-Edit `backend/src/main/resources/application.properties`:
+Default configuration in `backend/src/main/resources/application.properties`:
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/budget_db
 spring.datasource.username=postgres
 spring.datasource.password=postgres
 ```
+
+## Database Migrations (Liquibase)
+
+Database schema is managed by Liquibase. Changelog files are in:
+```
+backend/src/main/resources/db/changelog/
+├── db.changelog-master.yaml    # Master changelog
+└── 001-create-tables.yaml      # Initial schema
+```
+
+To add new migrations, create a new YAML file and include it in the master changelog.
 
 ## API Endpoints
 
