@@ -7,12 +7,22 @@
     </v-row>
 
     <template v-else-if="currentBudget">
+      <v-alert
+        v-if="isOffline"
+        type="warning"
+        variant="tonal"
+        class="mb-4"
+        closable
+      >
+        Unable to connect to server. Showing default budget template. Changes will not be saved.
+      </v-alert>
+
       <BudgetSummary class="mb-4" />
 
       <v-row>
         <v-col cols="12">
           <div class="d-flex justify-end mb-2">
-            <v-btn color="primary" variant="tonal" @click="showAddSection = true">
+            <v-btn color="primary" variant="tonal" :disabled="isOffline" @click="showAddSection = true">
               <v-icon start>mdi-plus</v-icon>
               Add Section
             </v-btn>
@@ -24,6 +34,7 @@
         <v-col v-for="section in sections" :key="section.id" cols="12" md="6">
           <BudgetSection
             :section="section"
+            :readonly="isOffline"
             @add-item="openAddItemDialog(section.id)"
             @update-item="handleUpdateItem"
             @delete-item="handleDeleteItem"
@@ -63,7 +74,7 @@ const props = defineProps({
 
 const router = useRouter()
 const budgetStore = useBudgetStore()
-const { currentBudget, sections, loading } = storeToRefs(budgetStore)
+const { currentBudget, sections, loading, isOffline } = storeToRefs(budgetStore)
 
 const showAddSection = ref(false)
 const showAddItem = ref(false)

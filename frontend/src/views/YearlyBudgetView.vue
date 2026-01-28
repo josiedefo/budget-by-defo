@@ -27,6 +27,16 @@
     </v-row>
 
     <template v-else-if="yearlySummary">
+      <v-alert
+        v-if="isOffline"
+        type="warning"
+        variant="tonal"
+        class="mb-4"
+        closable
+      >
+        Unable to connect to server. No budget data available.
+      </v-alert>
+
       <v-card class="mb-4">
         <v-card-title>{{ selectedYear }} Summary</v-card-title>
         <v-card-text>
@@ -121,6 +131,7 @@ const props = defineProps({
 const router = useRouter()
 const budgetStore = useBudgetStore()
 const { yearlySummary, loading } = storeToRefs(budgetStore)
+const isOffline = computed(() => yearlySummary.value?.isOffline || false)
 
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i)
