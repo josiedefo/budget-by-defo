@@ -2,6 +2,7 @@
 
 ## Completed Tasks
 
+### Initial Setup
 - [x] Initialize Spring Boot backend project with dependencies
 - [x] Create entity classes (Budget, Section, BudgetItem)
 - [x] Create JPA repositories
@@ -13,6 +14,18 @@
 - [x] Build yearly budget view
 - [x] Add navigation and polish
 
+### Offline Fallback
+- [x] Add default sections fallback when backend unreachable
+- [x] Show warning alert in offline mode
+- [x] Disable editing controls when offline
+- [x] Add isOffline state to budget store
+
+### Database & DevOps
+- [x] Add Liquibase for database migrations
+- [x] Create changelog files for budget, section, budget_item tables
+- [x] Add Docker Compose for PostgreSQL container
+- [x] Update Hibernate to validate mode (Liquibase manages schema)
+
 ## Implementation Summary
 
 ### Backend (Spring Boot)
@@ -22,6 +35,7 @@
 - Created REST controllers for all CRUD operations
 - Added CORS configuration for frontend communication
 - Global exception handler for consistent error responses
+- **Liquibase** manages database schema migrations
 
 ### Frontend (Vue.js + Vuetify)
 - Set up Vue 3 project with Vite, Vuetify 3, Pinia, Vue Router
@@ -35,6 +49,17 @@
   - `AddItemDialog` - add new budget items
 - Implemented Pinia store for state management
 - API service with axios for backend communication
+- **Offline fallback** shows default sections when backend unreachable
+
+### DevOps
+- **Docker Compose** for PostgreSQL database container
+- **Liquibase** changelog files in `backend/src/main/resources/db/changelog/`
+
+## Git Commits
+
+1. `dd2ba29` - Initial commit: Budget tracking app
+2. `fb797b4` - Add offline fallback with default sections
+3. `ef100a1` - Add Liquibase and Docker for database management
 
 ## Future Enhancements
 
