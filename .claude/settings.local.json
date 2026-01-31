@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: Budget tracking app\n\n- Spring Boot backend with REST API\n- Vue.js + Vuetify frontend\n- PostgreSQL database integration\n- Monthly and yearly budget views\n- CRUD for sections and budget items\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd offline fallback with default sections\n\n- Show default budget sections when backend is unreachable\n- Display warning alert in offline mode\n- Disable editing controls when offline\n- Add isOffline state to budget store\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Liquibase and Docker for database management\n\n- Add Liquibase dependency for database migrations\n- Create changelog files for budget, section, budget_item tables\n- Add Docker Compose for PostgreSQL container\n- Update Hibernate to validate mode \\(Liquibase manages schema\\)\n- Update documentation with Docker instructions\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker ps:*)",
+      "Bash(git commit:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(tasklist:*)",
+      "Bash(ping:*)",
+      "Bash(mvn spring-boot:run:*)",
+      "Bash(docker exec:*)",
+      "Bash(mvn clean spring-boot:run:*)",
+      "Bash(docker volume prune:*)",
+      "Bash(powershell:*)"
+    ]
+  }
+}
