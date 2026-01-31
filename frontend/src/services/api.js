@@ -53,4 +53,26 @@ export const itemApi = {
   }
 }
 
+export const transactionApi = {
+  getTransactions(params = {}) {
+    return api.get('/transactions', { params })
+  },
+
+  getTransaction(id) {
+    return api.get(`/transactions/${id}`)
+  },
+
+  create(data) {
+    return api.post('/transactions', data)
+  },
+
+  update(id, data) {
+    return api.put(`/transactions/${id}`, data)
+  },
+
+  delete(id) {
+    return api.delete(`/transactions/${id}`)
+  }
+}
+
 export default api

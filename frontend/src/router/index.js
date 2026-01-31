@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MonthlyBudgetView from '@/views/MonthlyBudgetView.vue'
 import YearlyBudgetView from '@/views/YearlyBudgetView.vue'
+import TransactionsView from '@/views/TransactionsView.vue'
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
     props: route => ({
       year: parseInt(route.params.year)
     })
+  },
+  {
+    path: '/transactions',
+    name: 'transactions',
+    component: TransactionsView
   }
 ]
 

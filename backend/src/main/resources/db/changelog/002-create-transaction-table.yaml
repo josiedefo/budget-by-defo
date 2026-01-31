@@ -1,0 +1,82 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: budget-app
+      comment: Create transaction table
+      changes:
+        - createTable:
+            tableName: transaction
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: section_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+              - column:
+                  name: budget_item_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+              - column:
+                  name: type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: merchant
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: transaction
+            baseColumnNames: section_id
+            referencedTableName: section
+            referencedColumnNames: id
+            constraintName: fk_transaction_section
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: transaction
+            baseColumnNames: budget_item_id
+            referencedTableName: budget_item
+            referencedColumnNames: id
+            constraintName: fk_transaction_budget_item
+            onDelete: SET NULL
+        - createIndex:
+            tableName: transaction
+            indexName: idx_transaction_date
+            columns:
+              - column:
+                  name: transaction_date
+        - createIndex:
+            tableName: transaction
+            indexName: idx_transaction_type
+            columns:
+              - column:
+                  name: type

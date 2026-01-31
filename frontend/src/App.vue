@@ -12,6 +12,10 @@
           <v-icon start>mdi-calendar</v-icon>
           Yearly
         </v-btn>
+        <v-btn value="transactions" variant="text">
+          <v-icon start>mdi-swap-horizontal</v-icon>
+          Transactions
+        </v-btn>
       </v-btn-toggle>
     </v-app-bar>
 
@@ -30,11 +34,23 @@ const route = useRoute()
 const viewMode = ref('monthly')
 
 onMounted(() => {
-  viewMode.value = route.name === 'yearly' ? 'yearly' : 'monthly'
+  if (route.name === 'yearly') {
+    viewMode.value = 'yearly'
+  } else if (route.name === 'transactions') {
+    viewMode.value = 'transactions'
+  } else {
+    viewMode.value = 'monthly'
+  }
 })
 
 watch(() => route.name, (name) => {
-  viewMode.value = name === 'yearly' ? 'yearly' : 'monthly'
+  if (name === 'yearly') {
+    viewMode.value = 'yearly'
+  } else if (name === 'transactions') {
+    viewMode.value = 'transactions'
+  } else {
+    viewMode.value = 'monthly'
+  }
 })
 
 watch(viewMode, (newValue) => {
@@ -46,6 +62,8 @@ watch(viewMode, (newValue) => {
     router.push({ name: 'monthly', params: { year, month } })
   } else if (newValue === 'yearly' && route.name !== 'yearly') {
     router.push({ name: 'yearly', params: { year } })
+  } else if (newValue === 'transactions' && route.name !== 'transactions') {
+    router.push({ name: 'transactions' })
   }
 })
 </script>
