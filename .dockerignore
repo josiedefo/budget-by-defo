@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build outputs
+backend/target
+frontend/node_modules
+frontend/dist
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude
+
+# Docs
+*.md
+!README.md

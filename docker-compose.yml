@@ -15,6 +15,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - budget-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budget-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/budget_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - budget-network
 
 volumes:
   budget_data:
+
+networks:
+  budget-network:
+    driver: bridge

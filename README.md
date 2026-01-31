@@ -34,21 +34,29 @@ The app opens to the current month's budget by default, showing all sections wit
 
 ## Getting Started
 
-### 1. Start the Database
+### Option 1: Run Everything with Docker (Recommended)
 
-Start PostgreSQL using Docker Compose:
+Build and start the entire application:
 
 ```bash
-docker-compose up -d
+docker-compose up --build
 ```
 
-This creates a PostgreSQL container with:
-- Database: `budget_db`
-- Username: `postgres`
-- Password: `postgres`
-- Port: `5432`
+This starts:
+- PostgreSQL database on port 5433
+- Budget app (frontend + backend) on port 8080
 
-### 2. Run the Backend
+Access the app at http://localhost:8080
+
+### Option 2: Run Services Separately
+
+#### 1. Start the Database
+
+```bash
+docker-compose up postgres -d
+```
+
+#### 2. Run the Backend
 
 ```bash
 cd backend
@@ -57,7 +65,7 @@ mvn spring-boot:run
 
 The API will be available at `http://localhost:8080`
 
-### 4. Run the Frontend
+#### 3. Run the Frontend
 
 ```bash
 cd frontend
