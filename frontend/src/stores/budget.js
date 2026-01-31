@@ -2,37 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { budgetApi, sectionApi, itemApi } from '@/services/api'
 
-const DEFAULT_SECTIONS = [
-  { id: 'default-1', name: 'Income', displayOrder: 1, isIncome: true, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-2', name: 'Housing', displayOrder: 2, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-3', name: 'Transportation', displayOrder: 3, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-4', name: 'Food', displayOrder: 4, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-5', name: 'Utilities', displayOrder: 5, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-6', name: 'Healthcare', displayOrder: 6, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-7', name: 'Entertainment', displayOrder: 7, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 },
-  { id: 'default-8', name: 'Savings', displayOrder: 8, isIncome: false, items: [], totalPlanned: 0, totalActual: 0 }
-]
-
-function createOfflineBudget(year, month) {
-  return {
-    id: null,
-    year,
-    month,
-    sections: DEFAULT_SECTIONS.map(s => ({ ...s, items: [] })),
-    totalPlannedIncome: 0,
-    totalIncome: 0,
-    totalPlannedExpenses: 0,
-    totalExpenses: 0,
-    isOffline: true
-  }
-}
-
 export const useBudgetStore = defineStore('budget', () => {
   const currentBudget = ref(null)
   const yearlySummary = ref(null)
   const loading = ref(false)
   const error = ref(null)
-  const isOffline = computed(() => currentBudget.value?.isOffline || false)
 
   const sections = computed(() => currentBudget.value?.sections || [])
 
@@ -51,9 +25,8 @@ export const useBudgetStore = defineStore('budget', () => {
       const response = await budgetApi.getBudget(year, month)
       currentBudget.value = response.data
     } catch (e) {
-      error.value = e.message
-      // Fallback to offline budget with default sections
-      currentBudget.value = createOfflineBudget(year, month)
+      error.value = 'Unable to connect to server. Please try again later.'
+      currentBudget.value = null
     } finally {
       loading.value = false
     }
@@ -66,19 +39,8 @@ export const useBudgetStore = defineStore('budget', () => {
       const response = await budgetApi.getYearlySummary(year)
       yearlySummary.value = response.data
     } catch (e) {
-      error.value = e.message
-      // Fallback to empty yearly summary
-      yearlySummary.value = {
-        year,
-        months: [],
-        totalPlannedIncome: 0,
-        totalActualIncome: 0,
-        totalPlannedExpenses: 0,
-        totalActualExpenses: 0,
-        totalPlannedSavings: 0,
-        totalActualSavings: 0,
-        isOffline: true
-      }
+      error.value = 'Unable to connect to server. Please try again later.'
+      yearlySummary.value = null
     } finally {
       loading.value = false
     }
@@ -197,7 +159,6 @@ export const useBudgetStore = defineStore('budget', () => {
     yearlySummary,
     loading,
     error,
-    isOffline,
     sections,
     totalPlannedIncome,
     totalActualIncome,

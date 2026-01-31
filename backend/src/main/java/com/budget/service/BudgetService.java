@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,7 +58,7 @@ public class BudgetService {
 
     private Budget createBudgetWithDefaults(Integer year, Integer month) {
         Budget budget = new Budget(year, month);
-        budget.setSections(new ArrayList<>());
+        budget.setSections(new LinkedHashSet<>());
 
         for (int i = 0; i < DEFAULT_SECTIONS.length; i++) {
             Section section = new Section();
@@ -66,7 +66,7 @@ public class BudgetService {
             section.setDisplayOrder(i + 1);
             section.setIsIncome(DEFAULT_SECTIONS[i].equals("Income"));
             section.setBudget(budget);
-            section.setItems(new ArrayList<>());
+            section.setItems(new LinkedHashSet<>());
             budget.getSections().add(section);
         }
 

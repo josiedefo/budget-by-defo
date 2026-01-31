@@ -26,17 +26,16 @@
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
     </v-row>
 
-    <template v-else-if="yearlySummary">
-      <v-alert
-        v-if="isOffline"
-        type="warning"
-        variant="tonal"
-        class="mb-4"
-        closable
-      >
-        Unable to connect to server. No budget data available.
-      </v-alert>
+    <v-alert
+      v-else-if="error"
+      type="warning"
+      variant="tonal"
+      class="mt-4"
+    >
+      {{ error }}
+    </v-alert>
 
+    <template v-else-if="yearlySummary">
       <v-card class="mb-4">
         <v-card-title>{{ selectedYear }} Summary</v-card-title>
         <v-card-text>
@@ -130,8 +129,7 @@ const props = defineProps({
 
 const router = useRouter()
 const budgetStore = useBudgetStore()
-const { yearlySummary, loading } = storeToRefs(budgetStore)
-const isOffline = computed(() => yearlySummary.value?.isOffline || false)
+const { yearlySummary, loading, error } = storeToRefs(budgetStore)
 
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i)

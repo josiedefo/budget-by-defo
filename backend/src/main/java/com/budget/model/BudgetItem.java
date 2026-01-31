@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Entity
 @Table(name = "budget_item")
@@ -42,4 +43,22 @@ public class BudgetItem {
         this.actualAmount = BigDecimal.ZERO;
         this.displayOrder = displayOrder;
     }
+
+    // BudgetItem.java
+@Override
+public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BudgetItem item = (BudgetItem) o;
+    return Objects.equals(id, item.id) &&
+           Objects.equals(name, item.name) &&
+           Objects.equals(displayOrder, item.displayOrder);
+    // DON'T include section!
+}
+
+@Override
+public int hashCode() {
+    return Objects.hash(id, name, displayOrder);
+    // DON'T include section!
+}
 }

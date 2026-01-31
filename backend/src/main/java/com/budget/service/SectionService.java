@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +31,7 @@ public class SectionService {
         section.setIsIncome(request.getIsIncome() != null ? request.getIsIncome() : false);
         section.setDisplayOrder(maxOrder + 1);
         section.setBudget(budget);
-        section.setItems(new ArrayList<>());
+        section.setItems(new HashSet<>());
 
         section = sectionRepository.save(section);
         return SectionDTO.fromEntity(section);

@@ -15,10 +15,10 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
 
     List<Budget> findByYearOrderByMonthAsc(Integer year);
 
-    @Query("SELECT b FROM Budget b LEFT JOIN FETCH b.sections s LEFT JOIN FETCH s.items WHERE b.year = :year AND b.month = :month")
+    @Query("SELECT DISTINCT b FROM Budget b LEFT JOIN FETCH b.sections WHERE b.year = :year AND b.month = :month")
     Optional<Budget> findByYearAndMonthWithSectionsAndItems(Integer year, Integer month);
 
-    @Query("SELECT b FROM Budget b LEFT JOIN FETCH b.sections s LEFT JOIN FETCH s.items WHERE b.id = :id")
+    @Query("SELECT DISTINCT b FROM Budget b LEFT JOIN FETCH b.sections WHERE b.id = :id")
     Optional<Budget> findByIdWithSectionsAndItems(Long id);
 
     boolean existsByYearAndMonth(Integer year, Integer month);

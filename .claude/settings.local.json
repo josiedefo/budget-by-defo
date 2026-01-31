@@ -22,7 +22,8 @@
       "Bash(docker exec:*)",
       "Bash(mvn clean spring-boot:run:*)",
       "Bash(docker volume prune:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(curl:*)"
     ]
   }
 }

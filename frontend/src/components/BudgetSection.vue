@@ -9,10 +9,10 @@
         {{ formatCurrency(section.totalActual) }} / {{ formatCurrency(section.totalPlanned) }}
       </v-chip>
       <v-spacer></v-spacer>
-      <v-btn icon size="small" variant="text" :disabled="readonly" @click="emit('add-item')">
+      <v-btn icon size="small" variant="text" @click="emit('add-item')">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
-      <v-btn icon size="small" variant="text" color="error" :disabled="readonly" @click="confirmDelete">
+      <v-btn icon size="small" variant="text" color="error" @click="confirmDelete">
         <v-icon>mdi-delete</v-icon>
       </v-btn>
     </v-card-title>
@@ -40,7 +40,6 @@
               hide-details
               variant="plain"
               class="text-right amount-input"
-              :readonly="readonly"
               @update:model-value="val => updateItem(item.id, 'plannedAmount', val)"
             ></v-text-field>
           </td>
@@ -52,7 +51,6 @@
               hide-details
               variant="plain"
               class="text-right amount-input"
-              :readonly="readonly"
               @update:model-value="val => updateItem(item.id, 'actualAmount', val)"
             ></v-text-field>
           </td>
@@ -60,7 +58,7 @@
             {{ formatCurrency(item.difference) }}
           </td>
           <td>
-            <v-btn icon size="x-small" variant="text" color="error" :disabled="readonly" @click="deleteItem(item.id)">
+            <v-btn icon size="x-small" variant="text" color="error" @click="deleteItem(item.id)">
               <v-icon size="small">mdi-delete</v-icon>
             </v-btn>
           </td>
@@ -77,8 +75,7 @@
 
 <script setup>
 const props = defineProps({
-  section: { type: Object, required: true },
-  readonly: { type: Boolean, default: false }
+  section: { type: Object, required: true }
 })
 
 const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section'])
