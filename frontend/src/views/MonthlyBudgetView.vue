@@ -16,7 +16,9 @@
     </v-alert>
 
     <template v-else-if="currentBudget">
-      <BudgetSummary class="mb-4" />
+      <div class="sticky-summary">
+        <BudgetSummary />
+      </div>
 
       <v-row>
         <v-col cols="12">
@@ -117,3 +119,18 @@ onMounted(loadBudget)
 
 watch(() => [props.year, props.month], loadBudget)
 </script>
+
+<style scoped>
+.sticky-summary {
+  position: sticky;
+  top: 48px;
+  z-index: 10;
+  background-color: rgb(var(--v-theme-background));
+  padding-top: 8px;
+  padding-bottom: 16px;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+</style>
