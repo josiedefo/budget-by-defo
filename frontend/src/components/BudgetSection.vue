@@ -69,16 +69,63 @@
           </td>
         </tr>
       </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td class="font-weight-bold">Total</td>
+          <td class="text-right font-weight-bold">
+            {{ formatCurrency(section.totalPlanned) }}
+            <span v-if="plannedPercentOfIncome" class="text-medium-emphasis percent-badge">
+              ({{ plannedPercentOfIncome }}%)
+            </span>
+          </td>
+          <td class="text-right font-weight-bold">
+            {{ formatCurrency(section.totalActual) }}
+            <span v-if="actualPercentOfIncome" class="text-medium-emphasis percent-badge">
+              ({{ actualPercentOfIncome }}%)
+            </span>
+          </td>
+          <td class="text-right font-weight-bold" :class="getTotalDiffClass">
+            {{ formatCurrency(totalDifference) }}
+          </td>
+          <td></td>
+        </tr>
+      </tfoot>
     </v-table>
   </v-card>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
-  section: { type: Object, required: true }
+  section: { type: Object, required: true },
+  totalPlannedIncome: { type: Number, default: 0 },
+  totalActualIncome: { type: Number, default: 0 }
 })
 
 const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section'])
+
+const totalDifference = computed(() => {
+  return (props.section.totalPlanned || 0) - (props.section.totalActual || 0)
+})
+
+const getTotalDiffClass = computed(() => {
+  const diff = totalDifference.value
+  if (props.section.isIncome) {
+    return diff <= 0 ? 'text-success' : 'text-error'
+  }
+  return diff >= 0 ? 'text-success' : 'text-error'
+})
+
+const plannedPercentOfIncome = computed(() => {
+  if (props.section.isIncome || !props.totalPlannedIncome) return null
+  return ((props.section.totalPlanned || 0) / props.totalPlannedIncome * 100).toFixed(1)
+})
+
+const actualPercentOfIncome = computed(() => {
+  if (props.section.isIncome || !props.totalActualIncome) return null
+  return ((props.section.totalActual || 0) / props.totalActualIncome * 100).toFixed(1)
+})
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('en-US', {
@@ -121,5 +168,15 @@ function confirmDelete() {
 <style scoped>
 .amount-input :deep(input) {
   text-align: right;
+}
+
+.total-row {
+  background-color: rgba(var(--v-theme-surface-variant), 0.4);
+  border-top: 2px solid rgba(var(--v-border-color), 0.4);
+}
+
+.percent-badge {
+  font-size: 0.85em;
+  font-weight: normal;
 }
 </style>

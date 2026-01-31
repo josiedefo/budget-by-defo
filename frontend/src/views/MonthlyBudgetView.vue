@@ -35,6 +35,8 @@
         <v-col v-for="section in sections" :key="section.id" cols="12" md="6">
           <BudgetSection
             :section="section"
+            :total-planned-income="totalPlannedIncome"
+            :total-actual-income="totalActualIncome"
             @add-item="openAddItemDialog(section.id)"
             @update-item="handleUpdateItem"
             @delete-item="handleDeleteItem"
@@ -74,7 +76,7 @@ const props = defineProps({
 
 const router = useRouter()
 const budgetStore = useBudgetStore()
-const { currentBudget, sections, loading, error } = storeToRefs(budgetStore)
+const { currentBudget, sections, loading, error, totalPlannedIncome, totalActualIncome } = storeToRefs(budgetStore)
 
 const showAddSection = ref(false)
 const showAddItem = ref(false)
