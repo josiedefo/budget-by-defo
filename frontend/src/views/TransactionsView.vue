@@ -169,9 +169,11 @@
 import { ref, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTransactionStore } from '@/stores/transaction'
+import { useBudgetStore } from '@/stores/budget'
 import TransactionDialog from '@/components/TransactionDialog.vue'
 
 const transactionStore = useTransactionStore()
+const budgetStore = useBudgetStore()
 const { transactions, loading, error, hasMore } = storeToRefs(transactionStore)
 
 const showDialog = ref(false)
@@ -259,7 +261,11 @@ async function handleDelete() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Load current month's budget to populate section/budget item dropdowns
+  const now = new Date()
+  await budgetStore.fetchBudget(now.getFullYear(), now.getMonth() + 1)
+
   transactionStore.fetchTransactions()
 })
 </script>

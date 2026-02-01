@@ -6,13 +6,17 @@ import com.budget.model.Budget;
 import com.budget.model.BudgetItem;
 import com.budget.model.Section;
 import com.budget.repository.BudgetRepository;
+import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,6 +27,7 @@ import java.util.Map;
 public class BudgetService {
 
     private final BudgetRepository budgetRepository;
+    private final TransactionRepository transactionRepository;
 
     // Section name -> (isIncome, items[])
     private static final Map<String, SectionConfig> DEFAULT_SECTIONS = new LinkedHashMap<>();
@@ -89,6 +94,9 @@ public class BudgetService {
             return null;
         }
 
+        // Populate actual amounts from transactions
+        populateActualAmountsFromTransactions(budget, year, month);
+
         return BudgetDTO.fromEntity(budget);
     }
 
@@ -97,7 +105,39 @@ public class BudgetService {
         Budget budget = budgetRepository.findByYearAndMonthWithSectionsAndItems(year, month)
                 .orElseGet(() -> createBudgetWithDefaults(year, month));
 
+        // Populate actual amounts from transactions
+        populateActualAmountsFromTransactions(budget, year, month);
+
         return BudgetDTO.fromEntity(budget);
+    }
+
+    private void populateActualAmountsFromTransactions(Budget budget, Integer year, Integer month) {
+        // Get date range for the month
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        // Get transaction sums grouped by section name and budget item name
+        List<Object[]> transactionSums = transactionRepository.sumAmountsByBudgetItemNameAndDateRange(startDate, endDate);
+
+        // Build a map of "sectionName|itemName" -> sum
+        Map<String, BigDecimal> actualAmounts = new HashMap<>();
+        for (Object[] row : transactionSums) {
+            String sectionName = (String) row[0];
+            String itemName = (String) row[1];
+            BigDecimal sum = (BigDecimal) row[2];
+            String key = sectionName + "|" + itemName;
+            actualAmounts.put(key, sum);
+        }
+
+        // Update each budget item's actual amount by matching names
+        for (Section section : budget.getSections()) {
+            for (BudgetItem item : section.getItems()) {
+                String key = section.getName() + "|" + item.getName();
+                BigDecimal actualAmount = actualAmounts.getOrDefault(key, BigDecimal.ZERO);
+                item.setActualAmount(actualAmount);
+            }
+        }
     }
 
     @Transactional
@@ -160,6 +200,9 @@ public class BudgetService {
         for (Budget budget : budgets) {
             Budget fullBudget = budgetRepository.findByIdWithSectionsAndItems(budget.getId())
                     .orElse(budget);
+
+            // Populate actual amounts from transactions
+            populateActualAmountsFromTransactions(fullBudget, year, budget.getMonth());
 
             BudgetDTO budgetDTO = BudgetDTO.fromEntity(fullBudget);
 

@@ -27,6 +27,5 @@ public class CreateTransactionRequest {
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
 
-    @NotBlank(message = "Note is required")
     private String note;
 }

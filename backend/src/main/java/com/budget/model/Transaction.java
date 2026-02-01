@@ -45,7 +45,7 @@ public class Transaction {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String note;
 
     @Column(name = "created_at", nullable = false)

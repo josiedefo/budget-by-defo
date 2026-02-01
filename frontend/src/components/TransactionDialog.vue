@@ -42,10 +42,9 @@
 
           <v-textarea
             v-model="formData.note"
-            label="Note *"
+            label="Note"
             variant="outlined"
             rows="2"
-            :rules="[v => !!v || 'Note is required']"
             class="mb-2"
           ></v-textarea>
 
