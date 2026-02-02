@@ -56,8 +56,12 @@
       </v-card-text>
     </v-card>
 
-    <!-- Add Transaction Button -->
-    <div class="d-flex justify-end mb-4">
+    <!-- Action Buttons -->
+    <div class="d-flex justify-end mb-4 ga-2">
+      <v-btn variant="tonal" @click="showImportDialog = true">
+        <v-icon start>mdi-file-import</v-icon>
+        Import CSV
+      </v-btn>
       <v-btn color="primary" @click="openAddDialog">
         <v-icon start>mdi-plus</v-icon>
         Add Transaction
@@ -162,6 +166,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- CSV Import Dialog -->
+    <CsvImportDialog
+      v-model="showImportDialog"
+      @imported="handleImportComplete"
+    />
   </v-container>
 </template>
 
@@ -171,13 +181,16 @@ import { storeToRefs } from 'pinia'
 import { useTransactionStore } from '@/stores/transaction'
 import { useBudgetStore } from '@/stores/budget'
 import TransactionDialog from '@/components/TransactionDialog.vue'
+import CsvImportDialog from '@/components/CsvImportDialog.vue'
 
 const transactionStore = useTransactionStore()
 const budgetStore = useBudgetStore()
 const { transactions, loading, error, hasMore } = storeToRefs(transactionStore)
+const { loadMore } = transactionStore
 
 const showDialog = ref(false)
 const showDeleteDialog = ref(false)
+const showImportDialog = ref(false)
 const editingTransaction = ref(null)
 const deletingTransaction = ref(null)
 
@@ -259,6 +272,11 @@ async function handleDelete() {
       console.error('Error deleting transaction:', e)
     }
   }
+}
+
+function handleImportComplete() {
+  showImportDialog.value = false
+  transactionStore.fetchTransactions()
 }
 
 onMounted(async () => {

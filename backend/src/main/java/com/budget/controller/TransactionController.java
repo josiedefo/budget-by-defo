@@ -1,6 +1,7 @@
 package com.budget.controller;
 
 import com.budget.dto.CreateTransactionRequest;
+import com.budget.dto.CsvImportRequest;
 import com.budget.dto.TransactionDTO;
 import com.budget.dto.UpdateTransactionRequest;
 import com.budget.model.TransactionType;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -61,5 +63,11 @@ public class TransactionController {
     public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<List<TransactionDTO>> importTransactions(@Valid @RequestBody CsvImportRequest request) {
+        List<TransactionDTO> imported = transactionService.importTransactions(request);
+        return ResponseEntity.ok(imported);
     }
 }

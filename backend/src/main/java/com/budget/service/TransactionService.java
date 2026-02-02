@@ -1,6 +1,7 @@
 package com.budget.service;
 
 import com.budget.dto.CreateTransactionRequest;
+import com.budget.dto.CsvImportRequest;
 import com.budget.dto.TransactionDTO;
 import com.budget.dto.UpdateTransactionRequest;
 import com.budget.model.BudgetItem;
@@ -25,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -150,5 +154,112 @@ public class TransactionService {
     public BigDecimal getTotalByType(TransactionType type, LocalDate startDate, LocalDate endDate) {
         BigDecimal total = transactionRepository.sumAmountByTypeAndDateRange(type, startDate, endDate);
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    @Transactional
+    public List<TransactionDTO> importTransactions(CsvImportRequest request) {
+        List<TransactionDTO> imported = new ArrayList<>();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(
+            request.getDateFormat() != null ? request.getDateFormat() : "yyyy-MM-dd"
+        );
+
+        List<List<String>> rows = request.getRows();
+        int startIndex = request.isSkipFirstRow() ? 1 : 0;
+
+        for (int i = startIndex; i < rows.size(); i++) {
+            List<String> row = rows.get(i);
+            try {
+                Transaction transaction = new Transaction();
+
+                // Parse date
+                Integer dateCol = request.getColumnMapping().get("date");
+                if (dateCol != null && dateCol < row.size()) {
+                    String dateStr = row.get(dateCol).trim();
+                    transaction.setTransactionDate(LocalDate.parse(dateStr, dateFormatter));
+                } else {
+                    continue; // Skip rows without date
+                }
+
+                // Parse type (default to EXPENSE if not mapped or invalid)
+                Integer typeCol = request.getColumnMapping().get("type");
+                if (typeCol != null && typeCol < row.size()) {
+                    String typeStr = row.get(typeCol).trim().toUpperCase();
+                    if (typeStr.contains("INCOME") || typeStr.contains("CREDIT") || typeStr.contains("DEPOSIT")) {
+                        transaction.setType(TransactionType.INCOME);
+                    } else {
+                        transaction.setType(TransactionType.EXPENSE);
+                    }
+                } else {
+                    transaction.setType(TransactionType.EXPENSE);
+                }
+
+                // Parse merchant
+                Integer merchantCol = request.getColumnMapping().get("merchant");
+                if (merchantCol != null && merchantCol < row.size()) {
+                    transaction.setMerchant(row.get(merchantCol).trim());
+                } else {
+                    transaction.setMerchant("Unknown");
+                }
+
+                // Parse amount
+                Integer amountCol = request.getColumnMapping().get("amount");
+                if (amountCol != null && amountCol < row.size()) {
+                    String amountStr = row.get(amountCol).trim()
+                        .replace("$", "")
+                        .replace(",", "")
+                        .replace("(", "-")
+                        .replace(")", "");
+                    BigDecimal amount = new BigDecimal(amountStr).abs();
+                    transaction.setAmount(amount);
+                } else {
+                    continue; // Skip rows without amount
+                }
+
+                // Parse note (optional)
+                Integer noteCol = request.getColumnMapping().get("note");
+                if (noteCol != null && noteCol < row.size()) {
+                    transaction.setNote(row.get(noteCol).trim());
+                }
+
+                // Parse category/section (optional) - try to match to existing section
+                Integer categoryCol = request.getColumnMapping().get("category");
+                Section matchedSection = null;
+                if (categoryCol != null && categoryCol < row.size()) {
+                    String categoryName = row.get(categoryCol).trim();
+                    if (!categoryName.isEmpty()) {
+                        matchedSection = sectionRepository.findAll().stream()
+                            .filter(s -> s.getName().equalsIgnoreCase(categoryName))
+                            .findFirst()
+                            .orElse(null);
+                        if (matchedSection != null) {
+                            transaction.setSection(matchedSection);
+                        }
+                    }
+                }
+
+                // Parse budget item (optional) - try to match within the section
+                Integer budgetItemCol = request.getColumnMapping().get("budgetItem");
+                if (budgetItemCol != null && budgetItemCol < row.size() && matchedSection != null) {
+                    String budgetItemName = row.get(budgetItemCol).trim();
+                    if (!budgetItemName.isEmpty()) {
+                        final Section section = matchedSection;
+                        budgetItemRepository.findAll().stream()
+                            .filter(bi -> bi.getSection() != null
+                                && bi.getSection().getName().equalsIgnoreCase(section.getName())
+                                && bi.getName().equalsIgnoreCase(budgetItemName))
+                            .findFirst()
+                            .ifPresent(transaction::setBudgetItem);
+                    }
+                }
+
+                Transaction saved = transactionRepository.save(transaction);
+                imported.add(TransactionDTO.fromEntity(saved));
+            } catch (DateTimeParseException | NumberFormatException e) {
+                // Skip invalid rows
+                continue;
+            }
+        }
+
+        return imported;
     }
 }

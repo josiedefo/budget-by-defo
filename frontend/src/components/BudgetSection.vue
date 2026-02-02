@@ -55,7 +55,7 @@
             ></v-text-field>
           </td>
           <td class="text-right" :class="getDiffClass(item)">
-            {{ formatCurrency(item.difference) }}
+            {{ formatCurrency(getItemDiff(item)) }}
           </td>
           <td>
             <v-btn icon size="x-small" variant="text" color="error" @click="deleteItem(item.id)">
@@ -106,15 +106,16 @@ const props = defineProps({
 const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section'])
 
 const totalDifference = computed(() => {
-  return (props.section.totalPlanned || 0) - (props.section.totalActual || 0)
+  const planned = props.section.totalPlanned || 0
+  const actual = props.section.totalActual || 0
+  // For income: actual - planned (positive = earned more than expected)
+  // For expenses: planned - actual (positive = spent less than expected)
+  return props.section.isIncome ? actual - planned : planned - actual
 })
 
 const getTotalDiffClass = computed(() => {
-  const diff = totalDifference.value
-  if (props.section.isIncome) {
-    return diff <= 0 ? 'text-success' : 'text-error'
-  }
-  return diff >= 0 ? 'text-success' : 'text-error'
+  // Positive diff is always good (earned more or spent less), negative is bad
+  return totalDifference.value >= 0 ? 'text-success' : 'text-error'
 })
 
 const plannedPercentOfIncome = computed(() => {
@@ -134,11 +135,15 @@ function formatCurrency(value) {
   }).format(value || 0)
 }
 
-function getDiffClass(item) {
+function getItemDiff(item) {
   const diff = parseFloat(item.difference) || 0
-  if (props.section.isIncome) {
-    return diff <= 0 ? 'text-success' : 'text-error'
-  }
+  // For income: invert the diff (backend gives planned - actual, we want actual - planned)
+  return props.section.isIncome ? -diff : diff
+}
+
+function getDiffClass(item) {
+  const diff = getItemDiff(item)
+  // Positive diff is always good (earned more or spent less), negative is bad
   return diff >= 0 ? 'text-success' : 'text-error'
 }
 

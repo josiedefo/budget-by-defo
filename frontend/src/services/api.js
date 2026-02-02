@@ -72,6 +72,10 @@ export const transactionApi = {
 
   delete(id) {
     return api.delete(`/transactions/${id}`)
+  },
+
+  import(data) {
+    return api.post('/transactions/import', data).then(res => res.data)
   }
 }
 
