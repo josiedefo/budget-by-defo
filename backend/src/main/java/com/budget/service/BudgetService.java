@@ -135,6 +135,11 @@ public class BudgetService {
             for (BudgetItem item : section.getItems()) {
                 String key = section.getName() + "|" + item.getName();
                 BigDecimal actualAmount = actualAmounts.getOrDefault(key, BigDecimal.ZERO);
+                // For expense sections, negate the value so spending shows as positive
+                // (query returns income - expense, we want expense - income for expenses)
+                if (!section.getIsIncome()) {
+                    actualAmount = actualAmount.negate();
+                }
                 item.setActualAmount(actualAmount);
             }
         }

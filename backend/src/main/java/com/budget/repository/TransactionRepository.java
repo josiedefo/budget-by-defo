@@ -59,7 +59,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate);
 
-    @Query("SELECT t.section.name, t.budgetItem.name, SUM(t.amount) FROM Transaction t " +
+    @Query("SELECT t.section.name, t.budgetItem.name, " +
+           "SUM(CASE WHEN t.type = com.budget.model.TransactionType.INCOME THEN t.amount ELSE -t.amount END) FROM Transaction t " +
            "WHERE t.budgetItem IS NOT NULL " +
            "AND t.section IS NOT NULL " +
            "AND t.transactionDate >= :startDate " +
