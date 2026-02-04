@@ -56,6 +56,18 @@
       </v-card-text>
     </v-card>
 
+    <!-- Active Category Filter -->
+    <v-alert
+      v-if="activeFilterText"
+      type="info"
+      variant="tonal"
+      closable
+      class="mb-4"
+      @click:close="clearCategoryFilter"
+    >
+      Showing transactions for: <strong>{{ activeFilterText }}</strong>
+    </v-alert>
+
     <!-- Action Buttons -->
     <div class="d-flex justify-end mb-4 ga-2">
       <v-btn variant="tonal" @click="showImportDialog = true">
@@ -176,17 +188,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTransactionStore } from '@/stores/transaction'
 import { useBudgetStore } from '@/stores/budget'
 import TransactionDialog from '@/components/TransactionDialog.vue'
 import CsvImportDialog from '@/components/CsvImportDialog.vue'
 
+const route = useRoute()
+const router = useRouter()
 const transactionStore = useTransactionStore()
 const budgetStore = useBudgetStore()
-const { transactions, loading, error, hasMore } = storeToRefs(transactionStore)
+const { transactions, loading, error, hasMore, filters } = storeToRefs(transactionStore)
 const { loadMore } = transactionStore
+
+const activeFilterText = computed(() => {
+  const parts = []
+  if (filters.value.sectionName) parts.push(filters.value.sectionName)
+  if (filters.value.budgetItemName) parts.push(filters.value.budgetItemName)
+  return parts.length > 0 ? parts.join(' / ') : null
+})
+
+function clearCategoryFilter() {
+  router.replace({ query: {} })
+  transactionStore.clearFilters()
+}
 
 const showDialog = ref(false)
 const showDeleteDialog = ref(false)
@@ -284,6 +311,23 @@ onMounted(async () => {
   const now = new Date()
   await budgetStore.fetchBudget(now.getFullYear(), now.getMonth() + 1)
 
-  transactionStore.fetchTransactions()
+  // Check for query params to apply filters
+  const { sectionName, budgetItemName, startDate, endDate } = route.query
+  if (sectionName || budgetItemName || startDate || endDate) {
+    const filters = {}
+    if (sectionName) filters.sectionName = sectionName
+    if (budgetItemName) filters.budgetItemName = budgetItemName
+    if (startDate) {
+      filters.startDate = startDate
+      localFilters.startDate = startDate
+    }
+    if (endDate) {
+      filters.endDate = endDate
+      localFilters.endDate = endDate
+    }
+    transactionStore.setFilters(filters)
+  } else {
+    transactionStore.fetchTransactions()
+  }
 })
 </script>

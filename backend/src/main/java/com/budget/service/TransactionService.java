@@ -45,22 +45,30 @@ public class TransactionService {
             TransactionType type,
             Long sectionId,
             Long budgetItemId,
+            String sectionName,
+            String budgetItemName,
             String merchant,
             int page,
             int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "transactionDate"));
+        // Use unsorted pageable since native query already has ORDER BY clause
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
 
         // Prepare merchant pattern for LIKE query
         String merchantPattern = (merchant != null && !merchant.isBlank())
             ? "%" + merchant.toLowerCase() + "%"
             : null;
 
+        // Convert enum to string for native query
+        String typeStr = type != null ? type.name() : null;
+
         Page<Transaction> transactions = transactionRepository.findWithFilters(
             startDate,
             endDate,
-            type,
+            typeStr,
             sectionId,
             budgetItemId,
+            sectionName,
+            budgetItemName,
             merchantPattern,
             pageable
         );

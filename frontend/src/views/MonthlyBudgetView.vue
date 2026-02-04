@@ -37,6 +37,8 @@
             :section="section"
             :total-planned-income="totalPlannedIncome"
             :total-actual-income="totalActualIncome"
+            :year="year"
+            :month="month"
             @add-item="openAddItemDialog(section.id)"
             @update-item="handleUpdateItem"
             @delete-item="handleDeleteItem"

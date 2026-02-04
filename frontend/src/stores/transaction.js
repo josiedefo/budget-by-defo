@@ -18,6 +18,8 @@ export const useTransactionStore = defineStore('transaction', () => {
     type: null,
     sectionId: null,
     budgetItemId: null,
+    sectionName: null,
+    budgetItemName: null,
     merchant: ''
   })
 
@@ -78,6 +80,8 @@ export const useTransactionStore = defineStore('transaction', () => {
       type: null,
       sectionId: null,
       budgetItemId: null,
+      sectionName: null,
+      budgetItemName: null,
       merchant: ''
     }
     fetchTransactions(true)

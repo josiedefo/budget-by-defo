@@ -44,15 +44,13 @@
             ></v-text-field>
           </td>
           <td class="text-right">
-            <v-text-field
-              :model-value="item.actualAmount"
-              type="number"
-              density="compact"
-              hide-details
-              variant="plain"
-              class="text-right amount-input"
-              @update:model-value="val => updateItem(item.id, 'actualAmount', val)"
-            ></v-text-field>
+            <span
+              class="actual-link"
+              @click="viewTransactions(item)"
+              :title="'View transactions for ' + item.name"
+            >
+              {{ formatCurrency(item.actualAmount) }}
+            </span>
           </td>
           <td class="text-right" :class="getDiffClass(item)">
             {{ formatCurrency(getItemDiff(item)) }}
@@ -96,11 +94,16 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps({
   section: { type: Object, required: true },
   totalPlannedIncome: { type: Number, default: 0 },
-  totalActualIncome: { type: Number, default: 0 }
+  totalActualIncome: { type: Number, default: 0 },
+  year: { type: Number, required: true },
+  month: { type: Number, required: true }
 })
 
 const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section'])
@@ -168,6 +171,23 @@ function confirmDelete() {
     emit('delete-section', props.section.id)
   }
 }
+
+function viewTransactions(item) {
+  // Calculate start and end dates for the month
+  const startDate = `${props.year}-${String(props.month).padStart(2, '0')}-01`
+  const lastDay = new Date(props.year, props.month, 0).getDate()
+  const endDate = `${props.year}-${String(props.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+  router.push({
+    path: '/transactions',
+    query: {
+      sectionName: props.section.name,
+      budgetItemName: item.name,
+      startDate,
+      endDate
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -183,5 +203,16 @@ function confirmDelete() {
 .percent-badge {
   font-size: 0.85em;
   font-weight: normal;
+}
+
+.actual-link {
+  cursor: pointer;
+  color: rgb(var(--v-theme-primary));
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.actual-link:hover {
+  text-decoration-style: solid;
 }
 </style>
