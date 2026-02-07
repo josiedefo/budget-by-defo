@@ -37,6 +37,9 @@ public class BudgetItem {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
+    @Column(name = "is_excluded_from_budget", nullable = false)
+    private Boolean isExcludedFromBudget = false;
+
     public BudgetItem(String name, BigDecimal plannedAmount, Integer displayOrder) {
         this.name = name;
         this.plannedAmount = plannedAmount;

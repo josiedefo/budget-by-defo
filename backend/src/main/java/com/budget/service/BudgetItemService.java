@@ -51,6 +51,9 @@ public class BudgetItemService {
         if (request.getActualAmount() != null) {
             item.setActualAmount(request.getActualAmount());
         }
+        if (request.getIsExcludedFromBudget() != null) {
+            item.setIsExcludedFromBudget(request.getIsExcludedFromBudget());
+        }
 
         item = budgetItemRepository.save(item);
         return BudgetItemDTO.fromEntity(item);

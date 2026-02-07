@@ -9,4 +9,5 @@ public class UpdateItemRequest {
     private String name;
     private BigDecimal plannedAmount;
     private BigDecimal actualAmount;
+    private Boolean isExcludedFromBudget;
 }

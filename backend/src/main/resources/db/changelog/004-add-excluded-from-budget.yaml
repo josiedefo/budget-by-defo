@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: budget-app
+      comment: Add is_excluded_from_budget column to budget_item table
+      changes:
+        - addColumn:
+            tableName: budget_item
+            columns:
+              - column:
+                  name: is_excluded_from_budget
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

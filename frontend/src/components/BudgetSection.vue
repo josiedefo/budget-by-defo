@@ -22,6 +22,9 @@
     <v-table density="compact">
       <thead>
         <tr>
+          <th style="width: 40px" title="Include in budget totals">
+            <v-icon size="small">mdi-calculator</v-icon>
+          </th>
           <th>Item</th>
           <th class="text-right">Planned</th>
           <th class="text-right">Actual</th>
@@ -30,7 +33,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in section.items" :key="item.id">
+        <tr v-for="item in section.items" :key="item.id" :class="{ 'excluded-item': item.isExcludedFromBudget }">
+          <td>
+            <v-checkbox
+              :model-value="!item.isExcludedFromBudget"
+              density="compact"
+              hide-details
+              @update:model-value="val => toggleExclusion(item.id, !val)"
+            ></v-checkbox>
+          </td>
           <td>{{ item.name }}</td>
           <td class="text-right">
             <v-text-field
@@ -62,13 +73,14 @@
           </td>
         </tr>
         <tr v-if="section.items.length === 0">
-          <td colspan="5" class="text-center text-medium-emphasis py-4">
+          <td colspan="6" class="text-center text-medium-emphasis py-4">
             No items yet. Click + to add one.
           </td>
         </tr>
       </tbody>
       <tfoot>
         <tr class="total-row">
+          <td></td>
           <td class="font-weight-bold">Total</td>
           <td class="text-right font-weight-bold">
             {{ formatCurrency(section.totalPlanned) }}
@@ -106,7 +118,7 @@ const props = defineProps({
   month: { type: Number, required: true }
 })
 
-const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section'])
+const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section', 'toggle-exclusion'])
 
 const totalDifference = computed(() => {
   const planned = props.section.totalPlanned || 0
@@ -166,6 +178,10 @@ function deleteItem(itemId) {
   emit('delete-item', { sectionId: props.section.id, itemId })
 }
 
+function toggleExclusion(itemId, excluded) {
+  emit('toggle-exclusion', { sectionId: props.section.id, itemId, excluded })
+}
+
 function confirmDelete() {
   if (confirm(`Delete section "${props.section.name}" and all its items?`)) {
     emit('delete-section', props.section.id)
@@ -214,5 +230,14 @@ function viewTransactions(item) {
 
 .actual-link:hover {
   text-decoration-style: solid;
+}
+
+.excluded-item {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.excluded-item td:first-child {
+  text-decoration: none;
 }
 </style>

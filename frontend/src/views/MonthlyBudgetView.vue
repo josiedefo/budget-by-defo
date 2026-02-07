@@ -43,6 +43,7 @@
             @update-item="handleUpdateItem"
             @delete-item="handleDeleteItem"
             @delete-section="handleDeleteSection"
+            @toggle-exclusion="handleToggleExclusion"
           />
         </v-col>
       </v-row>
@@ -117,6 +118,10 @@ async function handleDeleteItem({ sectionId, itemId }) {
 
 async function handleDeleteSection(sectionId) {
   await budgetStore.deleteSection(sectionId)
+}
+
+async function handleToggleExclusion({ sectionId, itemId, excluded }) {
+  await budgetStore.toggleItemExclusion(sectionId, itemId, excluded)
 }
 
 onMounted(loadBudget)

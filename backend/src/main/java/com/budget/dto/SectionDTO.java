@@ -30,10 +30,12 @@ public class SectionDTO {
                 .collect(Collectors.toList()));
 
         dto.setTotalPlanned(dto.getItems().stream()
+                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
                 .map(BudgetItemDTO::getPlannedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         dto.setTotalActual(dto.getItems().stream()
+                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
                 .map(BudgetItemDTO::getActualAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 

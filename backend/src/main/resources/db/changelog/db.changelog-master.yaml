@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/002-create-transaction-table.yaml
   - include:
       file: db/changelog/003-make-note-nullable.yaml
+  - include:
+      file: db/changelog/004-add-excluded-from-budget.yaml

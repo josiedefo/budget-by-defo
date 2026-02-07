@@ -132,6 +132,8 @@ export const useBudgetStore = defineStore('budget', () => {
       let sectionActual = 0
 
       for (const item of section.items) {
+        // Skip excluded items from totals
+        if (item.isExcludedFromBudget) continue
         sectionPlanned += parseFloat(item.plannedAmount) || 0
         sectionActual += parseFloat(item.actualAmount) || 0
       }
@@ -154,6 +156,22 @@ export const useBudgetStore = defineStore('budget', () => {
     currentBudget.value.totalExpenses = actualExpenses
   }
 
+  async function toggleItemExclusion(sectionId, itemId, excluded) {
+    try {
+      const response = await itemApi.update(itemId, { isExcludedFromBudget: excluded })
+      const section = currentBudget.value.sections.find(s => s.id === sectionId)
+      if (section) {
+        const index = section.items.findIndex(i => i.id === itemId)
+        if (index !== -1) {
+          section.items[index] = response.data
+          recalculateTotals()
+        }
+      }
+    } catch (e) {
+      error.value = e.message
+    }
+  }
+
   return {
     currentBudget,
     yearlySummary,
@@ -173,6 +191,7 @@ export const useBudgetStore = defineStore('budget', () => {
     deleteSection,
     addItem,
     updateItem,
-    deleteItem
+    deleteItem,
+    toggleItemExclusion
   }
 })

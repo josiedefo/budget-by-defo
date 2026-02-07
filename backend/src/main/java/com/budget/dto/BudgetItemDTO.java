@@ -15,6 +15,7 @@ public class BudgetItemDTO {
     private BigDecimal actualAmount;
     private Integer displayOrder;
     private BigDecimal difference;
+    private Boolean isExcludedFromBudget;
 
     public static BudgetItemDTO fromEntity(BudgetItem item) {
         BudgetItemDTO dto = new BudgetItemDTO();
@@ -24,6 +25,7 @@ public class BudgetItemDTO {
         dto.setActualAmount(item.getActualAmount());
         dto.setDisplayOrder(item.getDisplayOrder());
         dto.setDifference(item.getPlannedAmount().subtract(item.getActualAmount()));
+        dto.setIsExcludedFromBudget(item.getIsExcludedFromBudget());
         return dto;
     }
 }
