@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import MonthlyBudgetView from '@/views/MonthlyBudgetView.vue'
 import YearlyBudgetView from '@/views/YearlyBudgetView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
+import PlannerView from '@/views/PlannerView.vue'
 
 const routes = [
   {
@@ -32,6 +33,11 @@ const routes = [
     path: '/transactions',
     name: 'transactions',
     component: TransactionsView
+  },
+  {
+    path: '/planner',
+    name: 'planner',
+    component: PlannerView
   }
 ]
 

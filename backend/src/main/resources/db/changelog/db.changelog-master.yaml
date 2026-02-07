@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/003-make-note-nullable.yaml
   - include:
       file: db/changelog/004-add-excluded-from-budget.yaml
+  - include:
+      file: db/changelog/005-create-plan-tables.yaml

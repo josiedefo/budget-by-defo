@@ -44,7 +44,12 @@
           </td>
           <td>{{ item.name }}</td>
           <td class="text-right">
+            <span v-if="item.planId" class="plan-link" @click="viewPlan(item)" :title="'View plan for ' + item.name">
+              {{ formatCurrency(item.plannedAmount) }}
+              <v-icon size="x-small" class="ml-1">mdi-link</v-icon>
+            </span>
             <v-text-field
+              v-else
               :model-value="item.plannedAmount"
               type="number"
               density="compact"
@@ -204,6 +209,17 @@ function viewTransactions(item) {
     }
   })
 }
+
+function viewPlan(item) {
+  router.push({
+    path: '/planner',
+    query: {
+      year: props.year,
+      month: props.month,
+      planId: item.planId
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -229,6 +245,17 @@ function viewTransactions(item) {
 }
 
 .actual-link:hover {
+  text-decoration-style: solid;
+}
+
+.plan-link {
+  cursor: pointer;
+  color: rgb(var(--v-theme-primary));
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.plan-link:hover {
   text-decoration-style: solid;
 }
 

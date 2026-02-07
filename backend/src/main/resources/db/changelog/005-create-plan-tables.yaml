@@ -1,0 +1,98 @@
+databaseChangeLog:
+  - changeSet:
+      id: 7
+      author: budget-app
+      comment: Create plan and plan_item tables for budget planning feature
+      changes:
+        - createTable:
+            tableName: plan
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: budget_item_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: year
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: month
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: plan
+            baseColumnNames: budget_item_id
+            referencedTableName: budget_item
+            referencedColumnNames: id
+            constraintName: fk_plan_budget_item
+            onDelete: CASCADE
+
+        - addUniqueConstraint:
+            tableName: plan
+            columnNames: budget_item_id, year, month
+            constraintName: uk_plan_budget_item_year_month
+
+        - createTable:
+            tableName: plan_item
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: plan_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_order
+                  type: int
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: plan_item
+            baseColumnNames: plan_id
+            referencedTableName: plan
+            referencedColumnNames: id
+            constraintName: fk_plan_item_plan
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: plan
+            indexName: idx_plan_year_month
+            columns:
+              - column:
+                  name: year
+              - column:
+                  name: month

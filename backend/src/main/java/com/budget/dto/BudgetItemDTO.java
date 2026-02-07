@@ -16,6 +16,7 @@ public class BudgetItemDTO {
     private Integer displayOrder;
     private BigDecimal difference;
     private Boolean isExcludedFromBudget;
+    private Long planId;
 
     public static BudgetItemDTO fromEntity(BudgetItem item) {
         BudgetItemDTO dto = new BudgetItemDTO();

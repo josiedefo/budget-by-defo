@@ -1,11 +1,15 @@
 package com.budget.service;
 
 import com.budget.dto.BudgetDTO;
+import com.budget.dto.BudgetItemDTO;
+import com.budget.dto.SectionDTO;
 import com.budget.dto.YearlySummaryDTO;
 import com.budget.model.Budget;
 import com.budget.model.BudgetItem;
+import com.budget.model.Plan;
 import com.budget.model.Section;
 import com.budget.repository.BudgetRepository;
+import com.budget.repository.PlanRepository;
 import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,7 @@ public class BudgetService {
 
     private final BudgetRepository budgetRepository;
     private final TransactionRepository transactionRepository;
+    private final PlanRepository planRepository;
 
     // Section name -> (isIncome, items[])
     private static final Map<String, SectionConfig> DEFAULT_SECTIONS = new LinkedHashMap<>();
@@ -97,7 +102,9 @@ public class BudgetService {
         // Populate actual amounts from transactions
         populateActualAmountsFromTransactions(budget, year, month);
 
-        return BudgetDTO.fromEntity(budget);
+        BudgetDTO dto = BudgetDTO.fromEntity(budget);
+        populatePlanIds(dto, year, month);
+        return dto;
     }
 
     @Transactional
@@ -108,7 +115,37 @@ public class BudgetService {
         // Populate actual amounts from transactions
         populateActualAmountsFromTransactions(budget, year, month);
 
-        return BudgetDTO.fromEntity(budget);
+        BudgetDTO dto = BudgetDTO.fromEntity(budget);
+        populatePlanIds(dto, year, month);
+        return dto;
+    }
+
+    private void populatePlanIds(BudgetDTO budgetDTO, Integer year, Integer month) {
+        // Collect all budget item IDs
+        List<Long> budgetItemIds = budgetDTO.getSections().stream()
+                .flatMap(s -> s.getItems().stream())
+                .map(BudgetItemDTO::getId)
+                .collect(java.util.stream.Collectors.toList());
+
+        if (budgetItemIds.isEmpty()) {
+            return;
+        }
+
+        // Fetch all plans for these budget items in this month
+        List<Plan> plans = planRepository.findByBudgetItemIdsAndYearAndMonth(budgetItemIds, year, month);
+
+        // Build map of budgetItemId -> planId
+        Map<Long, Long> planIdMap = new HashMap<>();
+        for (Plan plan : plans) {
+            planIdMap.put(plan.getBudgetItem().getId(), plan.getId());
+        }
+
+        // Populate planId on each item
+        for (SectionDTO section : budgetDTO.getSections()) {
+            for (BudgetItemDTO item : section.getItems()) {
+                item.setPlanId(planIdMap.get(item.getId()));
+            }
+        }
     }
 
     private void populateActualAmountsFromTransactions(Budget budget, Integer year, Integer month) {

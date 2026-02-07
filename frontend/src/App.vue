@@ -16,6 +16,10 @@
           <v-icon start>mdi-swap-horizontal</v-icon>
           Transactions
         </v-btn>
+        <v-btn value="planner" variant="text">
+          <v-icon start>mdi-calendar-text</v-icon>
+          Planner
+        </v-btn>
       </v-btn-toggle>
     </v-app-bar>
 
@@ -38,6 +42,8 @@ onMounted(() => {
     viewMode.value = 'yearly'
   } else if (route.name === 'transactions') {
     viewMode.value = 'transactions'
+  } else if (route.name === 'planner') {
+    viewMode.value = 'planner'
   } else {
     viewMode.value = 'monthly'
   }
@@ -48,6 +54,8 @@ watch(() => route.name, (name) => {
     viewMode.value = 'yearly'
   } else if (name === 'transactions') {
     viewMode.value = 'transactions'
+  } else if (name === 'planner') {
+    viewMode.value = 'planner'
   } else {
     viewMode.value = 'monthly'
   }
@@ -64,6 +72,8 @@ watch(viewMode, (newValue) => {
     router.push({ name: 'yearly', params: { year } })
   } else if (newValue === 'transactions' && route.name !== 'transactions') {
     router.push({ name: 'transactions' })
+  } else if (newValue === 'planner' && route.name !== 'planner') {
+    router.push({ name: 'planner' })
   }
 })
 </script>

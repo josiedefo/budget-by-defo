@@ -79,4 +79,30 @@ export const transactionApi = {
   }
 }
 
+export const planApi = {
+  getPlans(year, month) {
+    return api.get('/plans', { params: { year, month } })
+  },
+
+  getPlan(id) {
+    return api.get(`/plans/${id}`)
+  },
+
+  getPlanByBudgetItem(budgetItemId, year, month) {
+    return api.get('/plans/by-item', { params: { budgetItemId, year, month } })
+  },
+
+  create(data) {
+    return api.post('/plans', data)
+  },
+
+  update(id, data) {
+    return api.put(`/plans/${id}`, data)
+  },
+
+  delete(id) {
+    return api.delete(`/plans/${id}`)
+  }
+}
+
 export default api
