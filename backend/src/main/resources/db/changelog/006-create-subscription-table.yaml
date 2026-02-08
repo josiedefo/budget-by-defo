@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 8
+      author: budget-app
+      comment: Create subscription table for recurring subscription templates
+      changes:
+        - createTable:
+            tableName: subscription
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: billing_day
+                  type: int
+                  constraints:
+                    nullable: true
+              - column:
+                  name: category
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: recurrence
+                  type: varchar(20)
+                  defaultValue: MONTHLY
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: subscription
+            indexName: idx_subscription_is_active
+            columns:
+              - column:
+                  name: is_active

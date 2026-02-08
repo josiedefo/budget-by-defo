@@ -9,3 +9,9 @@ databaseChangeLog:
       file: db/changelog/004-add-excluded-from-budget.yaml
   - include:
       file: db/changelog/005-create-plan-tables.yaml
+  - include:
+      file: db/changelog/006-create-subscription-table.yaml
+  - include:
+      file: db/changelog/007-drop-subscription-notes.yaml
+  - include:
+      file: db/changelog/008-add-plan-item-from-subscription.yaml

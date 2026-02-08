@@ -13,6 +13,7 @@ public class PlanItemDTO {
     private String name;
     private BigDecimal amount;
     private Integer displayOrder;
+    private Boolean fromSubscription;
 
     public static PlanItemDTO fromEntity(PlanItem item) {
         PlanItemDTO dto = new PlanItemDTO();
@@ -20,6 +21,7 @@ public class PlanItemDTO {
         dto.setName(item.getName());
         dto.setAmount(item.getAmount());
         dto.setDisplayOrder(item.getDisplayOrder());
+        dto.setFromSubscription(item.getFromSubscription());
         return dto;
     }
 }

@@ -19,13 +19,22 @@
           <tbody>
             <tr v-for="(item, index) in items" :key="index">
               <td>
-                <v-text-field
-                  v-model="item.name"
-                  density="compact"
-                  hide-details
-                  variant="plain"
-                  placeholder="Description"
-                ></v-text-field>
+                <div class="d-flex align-center">
+                  <v-icon
+                    v-if="item.fromSubscription"
+                    size="small"
+                    color="secondary"
+                    class="mr-1"
+                    title="From subscription"
+                  >mdi-repeat</v-icon>
+                  <v-text-field
+                    v-model="item.name"
+                    density="compact"
+                    hide-details
+                    variant="plain"
+                    placeholder="Description"
+                  ></v-text-field>
+                </div>
               </td>
               <td>
                 <v-text-field
@@ -59,10 +68,16 @@
           </tfoot>
         </v-table>
 
-        <v-btn variant="tonal" class="mt-4" @click="addItem">
-          <v-icon start>mdi-plus</v-icon>
-          Add Item
-        </v-btn>
+        <div class="d-flex gap-2 mt-4 flex-wrap">
+          <v-btn variant="tonal" @click="addItem">
+            <v-icon start>mdi-plus</v-icon>
+            Add Item
+          </v-btn>
+          <v-btn variant="tonal" color="secondary" @click="showSubscriptionPicker = true">
+            <v-icon start>mdi-repeat</v-icon>
+            Add from Subscriptions
+          </v-btn>
+        </div>
       </v-card-text>
 
       <v-card-actions>
@@ -77,12 +92,22 @@
         </v-btn>
       </v-card-actions>
     </v-card>
+
+    <AddSubscriptionsToPlanDialog
+      v-model="showSubscriptionPicker"
+      @add="addFromSubscriptions"
+      @manage-subscriptions="openManageSubscriptions"
+    />
+
+    <SubscriptionsDialog v-model="showSubscriptionsDialog" />
   </v-dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { usePlanStore } from '@/stores/plan'
+import AddSubscriptionsToPlanDialog from '@/components/AddSubscriptionsToPlanDialog.vue'
+import SubscriptionsDialog from '@/components/SubscriptionsDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -100,6 +125,8 @@ const dialog = computed({
 
 const items = ref([])
 const saving = ref(false)
+const showSubscriptionPicker = ref(false)
+const showSubscriptionsDialog = ref(false)
 
 const monthName = computed(() => {
   if (!props.plan) return ''
@@ -123,6 +150,16 @@ function addItem() {
 
 function removeItem(index) {
   items.value.splice(index, 1)
+}
+
+function addFromSubscriptions(subscriptionItems) {
+  for (const sub of subscriptionItems) {
+    items.value.push({ name: sub.name, amount: sub.amount, fromSubscription: true })
+  }
+}
+
+function openManageSubscriptions() {
+  showSubscriptionsDialog.value = true
 }
 
 async function save() {
@@ -152,7 +189,11 @@ function close() {
 
 watch(() => props.plan, (plan) => {
   if (plan) {
-    items.value = plan.items.map(i => ({ name: i.name, amount: i.amount }))
+    items.value = plan.items.map(i => ({
+      name: i.name,
+      amount: i.amount,
+      fromSubscription: i.fromSubscription || false
+    }))
   } else {
     items.value = []
   }

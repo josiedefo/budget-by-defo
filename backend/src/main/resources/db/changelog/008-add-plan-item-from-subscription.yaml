@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 10
+      author: budget-app
+      comment: Add from_subscription column to plan_item table
+      changes:
+        - addColumn:
+            tableName: plan_item
+            columns:
+              - column:
+                  name: from_subscription
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

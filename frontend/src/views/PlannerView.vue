@@ -15,10 +15,16 @@
         <v-col cols="12">
           <div class="d-flex justify-space-between align-center mb-4">
             <h2 class="text-h5">Plans for {{ monthName }} {{ year }}</h2>
-            <v-btn color="primary" @click="showCreateDialog = true">
-              <v-icon start>mdi-plus</v-icon>
-              Create Plan
-            </v-btn>
+            <div class="d-flex gap-2">
+              <v-btn variant="outlined" @click="showSubscriptionsDialog = true">
+                <v-icon start>mdi-repeat</v-icon>
+                Manage Subscriptions
+              </v-btn>
+              <v-btn color="primary" @click="showCreateDialog = true">
+                <v-icon start>mdi-plus</v-icon>
+                Create Plan
+              </v-btn>
+            </div>
           </div>
         </v-col>
       </v-row>
@@ -71,6 +77,8 @@
       @saved="handlePlanSaved"
       @deleted="handlePlanDeleted"
     />
+
+    <SubscriptionsDialog v-model="showSubscriptionsDialog" />
   </v-container>
 </template>
 
@@ -82,6 +90,7 @@ import { usePlanStore } from '@/stores/plan'
 import MonthSelector from '@/components/MonthSelector.vue'
 import CreatePlanDialog from '@/components/CreatePlanDialog.vue'
 import PlanDialog from '@/components/PlanDialog.vue'
+import SubscriptionsDialog from '@/components/SubscriptionsDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -94,6 +103,7 @@ const month = ref(parseInt(route.query.month) || now.getMonth() + 1)
 
 const showCreateDialog = ref(false)
 const showPlanDialog = ref(false)
+const showSubscriptionsDialog = ref(false)
 const selectedPlan = ref(null)
 
 const monthName = computed(() => {

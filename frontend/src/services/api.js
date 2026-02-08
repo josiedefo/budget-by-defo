@@ -105,4 +105,26 @@ export const planApi = {
   }
 }
 
+export const subscriptionApi = {
+  getAll() {
+    return api.get('/subscriptions')
+  },
+
+  get(id) {
+    return api.get(`/subscriptions/${id}`)
+  },
+
+  create(data) {
+    return api.post('/subscriptions', data)
+  },
+
+  update(id, data) {
+    return api.put(`/subscriptions/${id}`, data)
+  },
+
+  delete(id) {
+    return api.delete(`/subscriptions/${id}`)
+  }
+}
+
 export default api

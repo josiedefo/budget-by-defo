@@ -34,6 +34,9 @@ public class PlanItem {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
+    @Column(name = "from_subscription", nullable = false)
+    private Boolean fromSubscription = false;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

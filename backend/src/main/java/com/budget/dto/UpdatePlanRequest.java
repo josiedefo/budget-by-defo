@@ -15,5 +15,6 @@ public class UpdatePlanRequest {
     public static class PlanItemInput {
         private String name;
         private BigDecimal amount;
+        private Boolean fromSubscription;
     }
 }

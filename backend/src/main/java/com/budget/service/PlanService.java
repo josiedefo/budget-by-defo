@@ -84,6 +84,7 @@ public class PlanService {
             item.setName(input.getName());
             item.setAmount(input.getAmount() != null ? input.getAmount() : BigDecimal.ZERO);
             item.setDisplayOrder(order++);
+            item.setFromSubscription(input.getFromSubscription() != null && input.getFromSubscription());
             plan.getItems().add(item);
         }
 

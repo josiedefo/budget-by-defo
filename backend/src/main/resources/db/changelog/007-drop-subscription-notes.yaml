@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 9
+      author: budget-app
+      comment: Remove notes column from subscription table
+      changes:
+        - dropColumn:
+            tableName: subscription
+            columnName: notes
