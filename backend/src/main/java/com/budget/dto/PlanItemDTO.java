@@ -14,6 +14,7 @@ public class PlanItemDTO {
     private BigDecimal amount;
     private Integer displayOrder;
     private Boolean fromSubscription;
+    private Boolean fromSalary;
 
     public static PlanItemDTO fromEntity(PlanItem item) {
         PlanItemDTO dto = new PlanItemDTO();
@@ -22,6 +23,7 @@ public class PlanItemDTO {
         dto.setAmount(item.getAmount());
         dto.setDisplayOrder(item.getDisplayOrder());
         dto.setFromSubscription(item.getFromSubscription());
+        dto.setFromSalary(item.getFromSalary());
         return dto;
     }
 }

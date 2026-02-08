@@ -16,5 +16,6 @@ public class UpdatePlanRequest {
         private String name;
         private BigDecimal amount;
         private Boolean fromSubscription;
+        private Boolean fromSalary;
     }
 }

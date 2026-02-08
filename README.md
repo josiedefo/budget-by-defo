@@ -29,6 +29,13 @@ A personal budget tracking application to manage your finances month by month.
 - **Recurrence Options** - Weekly, Monthly, Quarterly, Semi-Annually, or Yearly
 - **Visual Indicator** - Plan items from recurring payments show a repeat icon
 
+### Salaries
+- **Salary Templates** - Define salary entries with gross pay and payroll deductions
+- **Payroll Deductions** - Track Federal Tax, Medicare, Social Security, 401K, HSA, Medical Insurance, FSA, and extra tax withholding
+- **Net Pay Calculation** - Automatically calculates net pay from gross minus all deductions
+- **Quick Add to Plans** - Add salaries to plans as income items using the computed net pay
+- **Visual Indicator** - Plan items from salaries show a dollar icon
+
 ## Screenshots
 
 The app opens to the current month's budget by default, showing all sections with their budget items. You can:
@@ -154,6 +161,15 @@ budget-by-defo/
 | `POST /api/subscriptions` | Create a recurring payment |
 | `PUT /api/subscriptions/{id}` | Update a recurring payment |
 | `DELETE /api/subscriptions/{id}` | Delete (deactivate) a recurring payment |
+
+### Salaries
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/salaries` | List all active salaries |
+| `GET /api/salaries/{id}` | Get a salary with computed net pay |
+| `POST /api/salaries` | Create a salary |
+| `PUT /api/salaries/{id}` | Update a salary |
+| `DELETE /api/salaries/{id}` | Delete (deactivate) a salary |
 
 ## License
 

@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 12
+      author: budget-app
+      comment: Add from_salary column to plan_item table
+      changes:
+        - addColumn:
+            tableName: plan_item
+            columns:
+              - column:
+                  name: from_salary
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

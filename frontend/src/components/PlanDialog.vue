@@ -27,6 +27,13 @@
                     class="mr-1"
                     title="From recurring payment"
                   >mdi-repeat</v-icon>
+                  <v-icon
+                    v-if="item.fromSalary"
+                    size="small"
+                    color="success"
+                    class="mr-1"
+                    title="From salary"
+                  >mdi-currency-usd</v-icon>
                   <v-text-field
                     v-model="item.name"
                     density="compact"
@@ -77,6 +84,10 @@
             <v-icon start>mdi-repeat</v-icon>
             Add from Recurring Payments
           </v-btn>
+          <v-btn variant="tonal" color="success" @click="showSalaryPicker = true">
+            <v-icon start>mdi-currency-usd</v-icon>
+            Add from Salaries
+          </v-btn>
         </div>
       </v-card-text>
 
@@ -100,6 +111,14 @@
     />
 
     <SubscriptionsDialog v-model="showSubscriptionsDialog" />
+
+    <AddSalaryToPlanDialog
+      v-model="showSalaryPicker"
+      @add="addFromSalaries"
+      @manage-salaries="openManageSalaries"
+    />
+
+    <SalariesDialog v-model="showSalariesDialog" />
   </v-dialog>
 </template>
 
@@ -108,6 +127,8 @@ import { ref, computed, watch } from 'vue'
 import { usePlanStore } from '@/stores/plan'
 import AddSubscriptionsToPlanDialog from '@/components/AddSubscriptionsToPlanDialog.vue'
 import SubscriptionsDialog from '@/components/SubscriptionsDialog.vue'
+import AddSalaryToPlanDialog from '@/components/AddSalaryToPlanDialog.vue'
+import SalariesDialog from '@/components/SalariesDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -127,6 +148,8 @@ const items = ref([])
 const saving = ref(false)
 const showSubscriptionPicker = ref(false)
 const showSubscriptionsDialog = ref(false)
+const showSalaryPicker = ref(false)
+const showSalariesDialog = ref(false)
 
 const monthName = computed(() => {
   if (!props.plan) return ''
@@ -162,6 +185,16 @@ function openManageSubscriptions() {
   showSubscriptionsDialog.value = true
 }
 
+function addFromSalaries(salaryItems) {
+  for (const sal of salaryItems) {
+    items.value.push({ name: sal.name, amount: sal.amount, fromSalary: true })
+  }
+}
+
+function openManageSalaries() {
+  showSalariesDialog.value = true
+}
+
 async function save() {
   saving.value = true
   try {
@@ -192,7 +225,8 @@ watch(() => props.plan, (plan) => {
     items.value = plan.items.map(i => ({
       name: i.name,
       amount: i.amount,
-      fromSubscription: i.fromSubscription || false
+      fromSubscription: i.fromSubscription || false,
+      fromSalary: i.fromSalary || false
     }))
   } else {
     items.value = []

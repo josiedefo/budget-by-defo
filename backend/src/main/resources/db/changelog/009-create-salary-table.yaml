@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 11
+      author: budget-app
+      comment: Create salary table for salary templates with payroll deductions
+      changes:
+        - createTable:
+            tableName: salary
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: regular_amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: federal_tax
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: medicare
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: social_security
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: four_oh_one_k
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: extra_tax_withholding
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: health_savings_account
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: medical_insurance
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: flexible_spending_account
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: salary
+            indexName: idx_salary_is_active
+            columns:
+              - column:
+                  name: is_active

@@ -37,6 +37,9 @@ public class PlanItem {
     @Column(name = "from_subscription", nullable = false)
     private Boolean fromSubscription = false;
 
+    @Column(name = "from_salary", nullable = false)
+    private Boolean fromSalary = false;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

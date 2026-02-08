@@ -127,4 +127,26 @@ export const subscriptionApi = {
   }
 }
 
+export const salaryApi = {
+  getAll() {
+    return api.get('/salaries')
+  },
+
+  get(id) {
+    return api.get(`/salaries/${id}`)
+  },
+
+  create(data) {
+    return api.post('/salaries', data)
+  },
+
+  update(id, data) {
+    return api.put(`/salaries/${id}`, data)
+  },
+
+  delete(id) {
+    return api.delete(`/salaries/${id}`)
+  }
+}
+
 export default api

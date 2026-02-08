@@ -15,10 +15,14 @@
         <v-col cols="12">
           <div class="d-flex justify-space-between align-center mb-4">
             <h2 class="text-h5">Plans for {{ monthName }} {{ year }}</h2>
-            <div class="d-flex gap-2">
+            <div class="d-flex ga-3 flex-wrap">
               <v-btn variant="outlined" @click="showSubscriptionsDialog = true">
                 <v-icon start>mdi-repeat</v-icon>
                 Manage Recurring Payments
+              </v-btn>
+              <v-btn variant="outlined" color="success" @click="showSalariesDialog = true">
+                <v-icon start>mdi-currency-usd</v-icon>
+                Manage Salaries
               </v-btn>
               <v-btn color="primary" @click="showCreateDialog = true">
                 <v-icon start>mdi-plus</v-icon>
@@ -79,6 +83,8 @@
     />
 
     <SubscriptionsDialog v-model="showSubscriptionsDialog" />
+
+    <SalariesDialog v-model="showSalariesDialog" />
   </v-container>
 </template>
 
@@ -91,6 +97,7 @@ import MonthSelector from '@/components/MonthSelector.vue'
 import CreatePlanDialog from '@/components/CreatePlanDialog.vue'
 import PlanDialog from '@/components/PlanDialog.vue'
 import SubscriptionsDialog from '@/components/SubscriptionsDialog.vue'
+import SalariesDialog from '@/components/SalariesDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -104,6 +111,7 @@ const month = ref(parseInt(route.query.month) || now.getMonth() + 1)
 const showCreateDialog = ref(false)
 const showPlanDialog = ref(false)
 const showSubscriptionsDialog = ref(false)
+const showSalariesDialog = ref(false)
 const selectedPlan = ref(null)
 
 const monthName = computed(() => {
