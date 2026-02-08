@@ -23,11 +23,11 @@ A personal budget tracking application to manage your finances month by month.
 - **Plan Items** - Break down planned amounts into specific line items
 - **Auto-Sync** - Plan totals automatically update budget item planned amounts
 
-### Subscriptions
-- **Subscription Templates** - Define recurring subscriptions once (Netflix, Gym, etc.)
-- **Quick Add to Plans** - Easily add subscriptions to any plan
+### Recurring Payments
+- **Recurring Payment Templates** - Define recurring payments once (Netflix, Gym, etc.)
+- **Quick Add to Plans** - Easily add recurring payments to any plan
 - **Recurrence Options** - Weekly, Monthly, Quarterly, Semi-Annually, or Yearly
-- **Visual Indicator** - Plan items from subscriptions show a repeat icon
+- **Visual Indicator** - Plan items from recurring payments show a repeat icon
 
 ## Screenshots
 
@@ -37,7 +37,7 @@ The app opens to the current month's budget by default, showing all sections wit
 - Navigate between months using the selector
 - Switch to yearly view to see the big picture
 - Access the Planner to create detailed monthly plans
-- Manage recurring subscriptions from the Planner
+- Manage recurring payments from the Planner
 
 ## Tech Stack
 
@@ -147,13 +147,13 @@ budget-by-defo/
 | `PUT /api/plans/{id}` | Update plan items |
 | `DELETE /api/plans/{id}` | Delete a plan |
 
-### Subscriptions
+### Recurring Payments
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/subscriptions` | List all active subscriptions |
-| `POST /api/subscriptions` | Create a subscription |
-| `PUT /api/subscriptions/{id}` | Update a subscription |
-| `DELETE /api/subscriptions/{id}` | Delete (deactivate) a subscription |
+| `GET /api/subscriptions` | List all active recurring payments |
+| `POST /api/subscriptions` | Create a recurring payment |
+| `PUT /api/subscriptions/{id}` | Update a recurring payment |
+| `DELETE /api/subscriptions/{id}` | Delete (deactivate) a recurring payment |
 
 ## License
 

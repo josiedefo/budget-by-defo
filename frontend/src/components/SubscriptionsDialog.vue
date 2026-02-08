@@ -3,9 +3,9 @@
     <v-card>
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2" color="primary">mdi-repeat</v-icon>
-        Manage Subscriptions
+        Manage Recurring Payments
       </v-card-title>
-      <v-card-subtitle>Create subscription templates to quickly add to your plans</v-card-subtitle>
+      <v-card-subtitle>Create recurring payment templates to quickly add to your plans</v-card-subtitle>
 
       <v-card-text>
         <v-alert v-if="error" type="error" variant="tonal" class="mb-4" closable @click:close="error = null">
@@ -165,7 +165,7 @@
 
             <tr v-if="subscriptions.length === 0 && !showAddRow">
               <td colspan="6" class="text-center text-medium-emphasis py-4">
-                No subscriptions yet. Click "Add Subscription" to create one.
+                No recurring payments yet. Click "Add Recurring Payment" to create one.
               </td>
             </tr>
           </tbody>
@@ -173,7 +173,7 @@
 
         <v-btn v-if="!showAddRow" variant="tonal" class="mt-4" @click="startAdd">
           <v-icon start>mdi-plus</v-icon>
-          Add Subscription
+          Add Recurring Payment
         </v-btn>
       </v-card-text>
 
@@ -265,7 +265,7 @@ async function saveNewSubscription() {
     await subscriptionStore.createSubscription(newSubscription.value)
     showAddRow.value = false
   } catch (e) {
-    error.value = e.response?.data?.message || 'Failed to create subscription'
+    error.value = e.response?.data?.message || 'Failed to create recurring payment'
   } finally {
     saving.value = false
   }
@@ -302,14 +302,14 @@ async function saveEdit() {
     await subscriptionStore.updateSubscription(editingId.value, editForm.value)
     editingId.value = null
   } catch (e) {
-    error.value = 'Failed to update subscription'
+    error.value = 'Failed to update recurring payment'
   } finally {
     saving.value = false
   }
 }
 
 function confirmDelete(sub) {
-  if (confirm(`Delete subscription "${sub.name}"?`)) {
+  if (confirm(`Delete recurring payment "${sub.name}"?`)) {
     subscriptionStore.deleteSubscription(sub.id)
   }
 }

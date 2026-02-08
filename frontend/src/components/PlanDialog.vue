@@ -25,7 +25,7 @@
                     size="small"
                     color="secondary"
                     class="mr-1"
-                    title="From subscription"
+                    title="From recurring payment"
                   >mdi-repeat</v-icon>
                   <v-text-field
                     v-model="item.name"
@@ -75,7 +75,7 @@
           </v-btn>
           <v-btn variant="tonal" color="secondary" @click="showSubscriptionPicker = true">
             <v-icon start>mdi-repeat</v-icon>
-            Add from Subscriptions
+            Add from Recurring Payments
           </v-btn>
         </div>
       </v-card-text>

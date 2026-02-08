@@ -18,7 +18,7 @@
             <div class="d-flex gap-2">
               <v-btn variant="outlined" @click="showSubscriptionsDialog = true">
                 <v-icon start>mdi-repeat</v-icon>
-                Manage Subscriptions
+                Manage Recurring Payments
               </v-btn>
               <v-btn color="primary" @click="showCreateDialog = true">
                 <v-icon start>mdi-plus</v-icon>

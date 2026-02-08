@@ -3,9 +3,9 @@
     <v-card>
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2" color="primary">mdi-repeat</v-icon>
-        Add from Subscriptions
+        Add from Recurring Payments
       </v-card-title>
-      <v-card-subtitle>Select subscriptions to add to your plan</v-card-subtitle>
+      <v-card-subtitle>Select recurring payments to add to your plan</v-card-subtitle>
 
       <v-card-text>
         <v-list v-if="subscriptions.length > 0" density="compact" select-strategy="classic">
@@ -36,10 +36,10 @@
         </v-list>
 
         <div v-else class="text-center text-medium-emphasis py-4">
-          No subscriptions available.
+          No recurring payments available.
           <br>
           <v-btn variant="text" size="small" color="primary" class="mt-2" @click="openManageSubscriptions">
-            Manage Subscriptions
+            Manage Recurring Payments
           </v-btn>
         </div>
       </v-card-text>
