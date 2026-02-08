@@ -4,11 +4,30 @@ A personal budget tracking application to manage your finances month by month.
 
 ## Features
 
+### Budget Management
 - **Monthly Budget View** - Track income and expenses for each month
 - **Yearly Overview** - See your financial summary across all months
 - **Planned vs Actual** - Compare what you budgeted against actual spending
 - **Custom Sections** - Add your own budget categories
 - **Default Categories** - Comes with Income, Housing, Transportation, Food, Utilities, Healthcare, Entertainment, and Savings
+- **Exclude Items** - Optionally exclude specific budget items from overall calculations
+
+### Transactions
+- **Transaction Tracking** - Record individual transactions with date, amount, description, and type
+- **Link to Budget** - Associate transactions with budget sections and items
+- **CSV Import** - Bulk import transactions from CSV files
+- **Click-to-View** - Click on actual amounts to view related transactions
+
+### Planner
+- **Monthly Plans** - Create detailed plans for individual budget items
+- **Plan Items** - Break down planned amounts into specific line items
+- **Auto-Sync** - Plan totals automatically update budget item planned amounts
+
+### Subscriptions
+- **Subscription Templates** - Define recurring subscriptions once (Netflix, Gym, etc.)
+- **Quick Add to Plans** - Easily add subscriptions to any plan
+- **Recurrence Options** - Weekly, Monthly, Quarterly, Semi-Annually, or Yearly
+- **Visual Indicator** - Plan items from subscriptions show a repeat icon
 
 ## Screenshots
 
@@ -17,6 +36,8 @@ The app opens to the current month's budget by default, showing all sections wit
 - Add new sections and items
 - Navigate between months using the selector
 - Switch to yearly view to see the big picture
+- Access the Planner to create detailed monthly plans
+- Manage recurring subscriptions from the Planner
 
 ## Tech Stack
 
@@ -79,15 +100,26 @@ Open `http://localhost:5173` in your browser.
 
 ```
 budget-by-defo/
-├── backend/          # Spring Boot REST API
-├── frontend/         # Vue.js application
-├── CLAUDE.md         # Technical documentation
-├── README.md         # This file
-└── todo.md           # Development log
+├── backend/                    # Spring Boot REST API
+│   └── src/main/java/com/budget/
+│       ├── controller/         # REST endpoints
+│       ├── service/            # Business logic
+│       ├── repository/         # JPA repositories
+│       ├── model/              # Entity classes
+│       └── dto/                # Request/Response DTOs
+├── frontend/                   # Vue.js application
+│   └── src/
+│       ├── views/              # Page components
+│       ├── components/         # Reusable components
+│       ├── stores/             # Pinia state management
+│       └── services/           # API client
+├── CLAUDE.md                   # Technical documentation
+└── README.md                   # This file
 ```
 
 ## API Overview
 
+### Budgets
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/budgets/{year}/{month}` | Get or create monthly budget |
@@ -96,6 +128,32 @@ budget-by-defo/
 | `POST /api/items` | Add a new budget item |
 | `PUT /api/items/{id}` | Update a budget item |
 | `DELETE /api/items/{id}` | Delete a budget item |
+
+### Transactions
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/transactions` | List transactions with filters |
+| `POST /api/transactions` | Create a transaction |
+| `PUT /api/transactions/{id}` | Update a transaction |
+| `DELETE /api/transactions/{id}` | Delete a transaction |
+| `POST /api/transactions/import` | Import transactions from CSV |
+
+### Plans
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/plans` | List plans for a month |
+| `GET /api/plans/{id}` | Get a plan with items |
+| `POST /api/plans` | Create a plan |
+| `PUT /api/plans/{id}` | Update plan items |
+| `DELETE /api/plans/{id}` | Delete a plan |
+
+### Subscriptions
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/subscriptions` | List all active subscriptions |
+| `POST /api/subscriptions` | Create a subscription |
+| `PUT /api/subscriptions/{id}` | Update a subscription |
+| `DELETE /api/subscriptions/{id}` | Delete (deactivate) a subscription |
 
 ## License
 
