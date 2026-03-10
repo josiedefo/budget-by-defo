@@ -36,23 +36,13 @@ A personal budget tracking application to manage your finances month by month.
 - **Quick Add to Plans** - Add salaries to plans as income items using the computed net pay
 - **Visual Indicator** - Plan items from salaries show a dollar icon
 
-## Screenshots
-
-The app opens to the current month's budget by default, showing all sections with their budget items. You can:
-- Edit planned and actual amounts inline
-- Add new sections and items
-- Navigate between months using the selector
-- Switch to yearly view to see the big picture
-- Access the Planner to create detailed monthly plans
-- Manage recurring payments from the Planner
-
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | Frontend | Vue 3, Vuetify 3, Pinia, Vue Router |
 | Backend | Java 17, Spring Boot 3.2, Spring Data JPA |
-| Database | PostgreSQL |
+| Database | PostgreSQL 17 |
 
 ## Prerequisites
 
@@ -71,7 +61,7 @@ docker-compose up --build
 ```
 
 This starts:
-- PostgreSQL database on port 5433
+- PostgreSQL 17 database on port 5433
 - Budget app (frontend + backend) on port 8080
 
 Access the app at http://localhost:8080
@@ -84,16 +74,31 @@ Access the app at http://localhost:8080
 docker-compose up postgres -d
 ```
 
-#### 2. Run the Backend
+#### 2. Run the Backend (Local DB)
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-The API will be available at `http://localhost:8080`
+#### 3. Run the Backend (Neon DB)
 
-#### 3. Run the Frontend
+Set the following Windows environment variables first (search "Environment Variables" in the Start menu):
+
+| Variable | Value |
+|----------|-------|
+| `NEON_DATABASE_URL` | `jdbc:postgresql://<your-neon-host>/budget_db?sslmode=require` |
+| `NEON_DATABASE_USERNAME` | your Neon username |
+| `NEON_DATABASE_PASSWORD` | your Neon password |
+
+Then run with the `neon` profile:
+
+```bash
+cd backend
+mvn spring-boot:run -Dspring-boot.run.profiles=neon
+```
+
+#### 4. Run the Frontend
 
 ```bash
 cd frontend
@@ -103,23 +108,90 @@ npm run dev
 
 Open `http://localhost:5173` in your browser.
 
+## Database
+
+The app supports two database configurations:
+
+| Profile | Database | Usage |
+|---------|----------|-------|
+| default | PostgreSQL 17 (Docker) | Local development |
+| `neon` | Neon PostgreSQL 17 (cloud) | Production / remote |
+
+Database schema is managed by **Liquibase** — migrations run automatically on startup.
+
+## Deployment
+
+The app is deployed on **AWS App Runner** with **Neon PostgreSQL** as the database.
+
+### Architecture
+
+```
+Internet → AWS App Runner (Docker container)
+                    ↕
+           Neon PostgreSQL (serverless)
+```
+
+### Build and Deploy
+
+```bash
+# Set variables
+AWS_REGION=us-east-1
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+ECR_REPO=budget-by-defo
+
+# Authenticate with ECR
+aws ecr get-login-password --region $AWS_REGION \
+  | docker login --username AWS --password-stdin \
+    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# Build, tag, and push
+docker build -t $ECR_REPO .
+docker tag $ECR_REPO:latest \
+  $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+docker push \
+  $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+
+# Trigger redeployment
+SERVICE_ARN=$(aws apprunner list-services --region $AWS_REGION \
+  --query "ServiceSummaryList[?ServiceName=='budget-by-defo'].ServiceArn" \
+  --output text)
+aws apprunner start-deployment --service-arn $SERVICE_ARN --region $AWS_REGION
+```
+
+### App Runner Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `SPRING_DATASOURCE_URL` | Neon JDBC connection string |
+| `SPRING_DATASOURCE_USERNAME` | Neon username |
+| `SPRING_DATASOURCE_PASSWORD` | Neon password |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | Set to `validate` |
+| `SPRING_PROFILES_ACTIVE` | Set to `neon` |
+
 ## Project Structure
 
 ```
 budget-by-defo/
 ├── backend/                    # Spring Boot REST API
-│   └── src/main/java/com/budget/
-│       ├── controller/         # REST endpoints
-│       ├── service/            # Business logic
-│       ├── repository/         # JPA repositories
-│       ├── model/              # Entity classes
-│       └── dto/                # Request/Response DTOs
+│   └── src/main/
+│       ├── java/com/budget/
+│       │   ├── controller/     # REST endpoints
+│       │   ├── service/        # Business logic
+│       │   ├── repository/     # JPA repositories
+│       │   ├── model/          # Entity classes
+│       │   └── dto/            # Request/Response DTOs
+│       └── resources/
+│           ├── application.properties        # Local (Docker) config
+│           ├── application-neon.properties   # Neon (cloud) config
+│           └── db/changelog/                 # Liquibase migrations
 ├── frontend/                   # Vue.js application
 │   └── src/
 │       ├── views/              # Page components
 │       ├── components/         # Reusable components
 │       ├── stores/             # Pinia state management
 │       └── services/           # API client
+├── Dockerfile                  # Multi-stage build
+├── docker-compose.yml          # Local dev with PostgreSQL 17
 ├── CLAUDE.md                   # Technical documentation
 └── README.md                   # This file
 ```
