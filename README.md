@@ -68,7 +68,7 @@ Access the app at http://localhost:8080
 
 ### Option 2: Run Services Separately
 
-#### 1. Start the Database
+#### 1. Start the Database (Local DB)
 
 ```bash
 docker-compose up postgres -d
