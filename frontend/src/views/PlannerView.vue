@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-4">
-    <MonthSelector :year="year" :month="month" @change="navigateToMonth" />
+    <MonthSelector ref="selectorRef" :year="year" :month="month" @change="navigateToMonth" />
 
     <v-row v-if="loading" class="justify-center mt-8">
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
@@ -11,6 +11,9 @@
     </v-alert>
 
     <template v-else>
+      <div class="sticky-summary">
+        <div v-if="showStickyLabel" class="text-subtitle-1 font-weight-bold px-1">{{ monthName }} {{ year }}</div>
+      </div>
       <v-row class="mt-4">
         <v-col cols="12">
           <div class="d-flex justify-space-between align-center mb-4">
@@ -113,6 +116,8 @@ const showPlanDialog = ref(false)
 const showSubscriptionsDialog = ref(false)
 const showSalariesDialog = ref(false)
 const selectedPlan = ref(null)
+const selectorRef = ref(null)
+const showStickyLabel = ref(false)
 
 const monthName = computed(() => {
   return new Date(year.value, month.value - 1).toLocaleString('default', { month: 'long' })
@@ -162,7 +167,13 @@ function confirmDeletePlan(plan) {
   }
 }
 
-onMounted(loadPlans)
+onMounted(() => {
+  loadPlans()
+  const observer = new IntersectionObserver(([entry]) => {
+    showStickyLabel.value = !entry.isIntersecting
+  })
+  if (selectorRef.value?.$el) observer.observe(selectorRef.value.$el)
+})
 
 watch(() => route.query, (query) => {
   if (query.year) year.value = parseInt(query.year)
@@ -179,6 +190,19 @@ watch(() => route.query, (query) => {
 </script>
 
 <style scoped>
+.sticky-summary {
+  position: sticky;
+  top: 48px;
+  z-index: 10;
+  background-color: rgb(var(--v-theme-background));
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
 .plan-card {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;

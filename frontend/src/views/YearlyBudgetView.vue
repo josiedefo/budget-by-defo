@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-4">
-    <v-card class="mb-4">
+    <v-card ref="selectorRef" class="mb-4">
       <v-card-text class="d-flex align-center justify-center">
         <v-btn icon variant="text" @click="selectedYear--">
           <v-icon>mdi-chevron-left</v-icon>
@@ -36,6 +36,9 @@
     </v-alert>
 
     <template v-else-if="yearlySummary">
+      <div class="sticky-summary">
+        <div v-if="showStickyLabel" class="text-subtitle-1 font-weight-bold mb-1 px-1">{{ selectedYear }}</div>
+      </div>
       <v-card class="mb-4">
         <v-card-title>{{ selectedYear }} Summary</v-card-title>
         <v-card-text>
@@ -134,6 +137,8 @@ const { yearlySummary, loading, error } = storeToRefs(budgetStore)
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i)
 const selectedYear = ref(props.year)
+const selectorRef = ref(null)
+const showStickyLabel = ref(false)
 
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -170,5 +175,26 @@ watch(() => props.year, (y) => {
   loadYearlySummary()
 })
 
-onMounted(loadYearlySummary)
+onMounted(() => {
+  loadYearlySummary()
+  const observer = new IntersectionObserver(([entry]) => {
+    showStickyLabel.value = !entry.isIntersecting
+  })
+  if (selectorRef.value?.$el) observer.observe(selectorRef.value.$el)
+})
 </script>
+
+<style scoped>
+.sticky-summary {
+  position: sticky;
+  top: 48px;
+  z-index: 10;
+  background-color: rgb(var(--v-theme-background));
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+</style>

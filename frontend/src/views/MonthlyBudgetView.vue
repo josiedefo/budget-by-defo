@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-4">
-    <MonthSelector :year="year" :month="month" @change="navigateToMonth" />
+    <MonthSelector ref="selectorRef" :year="year" :month="month" @change="navigateToMonth" />
 
     <v-row v-if="loading" class="justify-center mt-8">
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
@@ -17,6 +17,7 @@
 
     <template v-else-if="currentBudget">
       <div class="sticky-summary">
+        <div v-if="showStickyLabel" class="text-subtitle-1 font-weight-bold mb-1 px-1">{{ monthLabel }}</div>
         <BudgetSummary />
       </div>
 
@@ -62,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBudgetStore } from '@/stores/budget'
@@ -80,6 +81,13 @@ const props = defineProps({
 const router = useRouter()
 const budgetStore = useBudgetStore()
 const { currentBudget, sections, loading, error, totalPlannedIncome, totalActualIncome } = storeToRefs(budgetStore)
+
+const monthLabel = computed(() =>
+  new Date(props.year, props.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+)
+
+const selectorRef = ref(null)
+const showStickyLabel = ref(false)
 
 const showAddSection = ref(false)
 const showAddItem = ref(false)
@@ -124,7 +132,15 @@ async function handleToggleExclusion({ sectionId, itemId, excluded }) {
   await budgetStore.toggleItemExclusion(sectionId, itemId, excluded)
 }
 
-onMounted(loadBudget)
+let observer = null
+
+onMounted(() => {
+  loadBudget()
+  observer = new IntersectionObserver(([entry]) => {
+    showStickyLabel.value = !entry.isIntersecting
+  })
+  if (selectorRef.value?.$el) observer.observe(selectorRef.value.$el)
+})
 
 watch(() => [props.year, props.month], loadBudget)
 </script>
