@@ -6,34 +6,34 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Build backend with frontend
+# Stage 2: Build backend
 FROM maven:3.9-eclipse-temurin-17 AS backend-build
-WORKDIR /app
-
-# Copy backend source
-COPY backend/pom.xml ./backend/
-COPY backend/src ./backend/src
-
-# Copy frontend build from previous stage
-COPY --from=frontend-build /app/frontend/dist ./backend/src/main/resources/static
-
-# Build the application
 WORKDIR /app/backend
+
+COPY backend/pom.xml ./
+RUN mvn dependency:go-offline -B        # cache deps separately
+
+COPY backend/src ./src
+COPY --from=frontend-build /app/frontend/dist ./src/main/resources/static
+
 RUN mvn clean package -DskipTests
 
 # Stage 3: Runtime
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copy the built jar
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=backend-build /app/backend/target/*.jar app.jar
+RUN chown appuser:appgroup app.jar
 
-# Expose port
+USER appuser
+
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-jar", "app.jar"]
