@@ -313,6 +313,49 @@ export const useSavingsStore = defineStore('savings', () => {
     }
   }
 
+  async function updateAccountEvent(eventId, data) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await savingsApi.updateAccountEvent(eventId, data)
+      const idx = accountEvents.value.findIndex(e => e.id === eventId)
+      if (idx !== -1) accountEvents.value[idx] = response.data
+      const accountId = response.data.accountId
+      const aIdx = accounts.value.findIndex(a => a.id === accountId)
+      if (aIdx !== -1) accounts.value[aIdx] = { ...accounts.value[aIdx], balance: response.data.balanceAfter }
+      return response.data
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to update event'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function deleteAccountEvent(eventId) {
+    loading.value = true
+    error.value = null
+    try {
+      const event = accountEvents.value.find(e => e.id === eventId)
+      await savingsApi.deleteAccountEvent(eventId)
+      accountEvents.value = accountEvents.value.filter(e => e.id !== eventId)
+      if (event) {
+        const aIdx = accounts.value.findIndex(a => a.id === event.accountId)
+        if (aIdx !== -1) {
+          const current = parseFloat(accounts.value[aIdx].balance)
+          const amt = parseFloat(event.amount)
+          const updated = event.eventType === 'DEPOSIT' ? current - amt : current + amt
+          accounts.value[aIdx] = { ...accounts.value[aIdx], balance: updated }
+        }
+      }
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to delete event'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchEventsForAccount(accountId) {
     loading.value = true
     error.value = null
@@ -347,6 +390,8 @@ export const useSavingsStore = defineStore('savings', () => {
     fetchEventsForAccount,
     depositToAccount,
     withdrawFromAccount,
+    updateAccountEvent,
+    deleteAccountEvent,
     fetchSummary,
     createAccount,
     updateAccount,

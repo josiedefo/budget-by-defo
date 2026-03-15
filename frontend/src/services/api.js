@@ -160,6 +160,8 @@ export const savingsApi = {
   getAccountEvents(accountId) { return api.get(`/savings/accounts/${accountId}/events`) },
   depositToAccount(accountId, data) { return api.post(`/savings/accounts/${accountId}/deposit`, data) },
   withdrawFromAccount(accountId, data) { return api.post(`/savings/accounts/${accountId}/withdrawal`, data) },
+  updateAccountEvent(eventId, data) { return api.put(`/savings/accounts/events/${eventId}`, data) },
+  deleteAccountEvent(eventId) { return api.delete(`/savings/accounts/events/${eventId}`) },
 
   // Funds
   getFunds() { return api.get('/savings/funds') },

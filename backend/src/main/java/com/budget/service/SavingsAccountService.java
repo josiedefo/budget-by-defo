@@ -5,6 +5,7 @@ import com.budget.dto.AccountWithdrawalRequest;
 import com.budget.dto.CreateSavingsAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
 import com.budget.dto.SavingsAccountEventDTO;
+import com.budget.dto.UpdateSavingsAccountEventRequest;
 import com.budget.dto.UpdateSavingsAccountRequest;
 import com.budget.model.SavingsAccount;
 import com.budget.model.SavingsAccountEvent;
@@ -163,6 +164,60 @@ public class SavingsAccountService {
         event = savingsAccountEventRepository.save(event);
 
         return SavingsAccountEventDTO.fromEntity(event);
+    }
+
+    @Transactional
+    public SavingsAccountEventDTO updateAccountEvent(Long id, UpdateSavingsAccountEventRequest request) {
+        SavingsAccountEvent event = savingsAccountEventRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Account event not found: " + id));
+
+        SavingsAccount account = event.getAccount();
+        BigDecimal oldAmount = event.getAmount();
+        BigDecimal newAmount = request.getAmount();
+        BigDecimal delta = newAmount.subtract(oldAmount);
+
+        if (event.getEventType() == SavingsAccountEventType.DEPOSIT) {
+            BigDecimal updatedBalance = account.getBalance().add(delta);
+            if (updatedBalance.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalStateException("Updated amount would result in negative account balance");
+            }
+            account.setBalance(updatedBalance);
+        } else {
+            BigDecimal updatedBalance = account.getBalance().subtract(delta);
+            if (updatedBalance.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalStateException("Updated amount would result in negative account balance");
+            }
+            account.setBalance(updatedBalance);
+        }
+
+        account = savingsAccountRepository.save(account);
+        event.setAmount(newAmount);
+        event.setBalanceAfter(account.getBalance());
+        event.setEventDate(request.getEventDate());
+        event.setNote(request.getNote());
+        event = savingsAccountEventRepository.save(event);
+        return SavingsAccountEventDTO.fromEntity(event);
+    }
+
+    @Transactional
+    public void deleteAccountEvent(Long id) {
+        SavingsAccountEvent event = savingsAccountEventRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Account event not found: " + id));
+
+        SavingsAccount account = event.getAccount();
+
+        if (event.getEventType() == SavingsAccountEventType.DEPOSIT) {
+            BigDecimal updatedBalance = account.getBalance().subtract(event.getAmount());
+            if (updatedBalance.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalStateException("Cannot delete deposit: account balance would go negative");
+            }
+            account.setBalance(updatedBalance);
+        } else {
+            account.setBalance(account.getBalance().add(event.getAmount()));
+        }
+
+        savingsAccountRepository.save(account);
+        savingsAccountEventRepository.delete(event);
     }
 
     @Transactional

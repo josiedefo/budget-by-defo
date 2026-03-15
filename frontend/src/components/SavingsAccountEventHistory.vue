@@ -58,7 +58,11 @@
           No transactions recorded for this account yet.
         </v-alert>
 
-        <v-table v-else density="compact">
+        <v-alert v-if="editError" type="error" variant="tonal" density="compact" class="mb-2" closable @click:close="editError = null">
+          {{ editError }}
+        </v-alert>
+
+        <v-table v-if="accountEvents.length > 0" density="compact">
           <thead>
             <tr>
               <th>Date</th>
@@ -66,28 +70,75 @@
               <th class="text-right">Amount</th>
               <th class="text-right">Balance After</th>
               <th>Note</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="event in accountEvents" :key="event.id">
-              <td class="text-no-wrap">{{ formatDate(event.eventDate) }}</td>
-              <td>
-                <v-chip
-                  size="x-small"
-                  :color="event.eventType === 'DEPOSIT' ? 'success' : 'error'"
-                  variant="tonal"
-                >
-                  {{ event.eventType === 'DEPOSIT' ? 'Deposit' : 'Withdrawal' }}
-                </v-chip>
-              </td>
-              <td class="text-right" :class="event.eventType === 'DEPOSIT' ? 'text-success' : 'text-error'">
-                {{ event.eventType === 'DEPOSIT' ? '+' : '-' }}${{ formatAmount(event.amount) }}
-              </td>
-              <td class="text-right">${{ formatAmount(event.balanceAfter) }}</td>
-              <td class="text-medium-emphasis">{{ event.note || '—' }}</td>
-            </tr>
+            <template v-for="event in accountEvents" :key="event.id">
+              <!-- Edit row -->
+              <tr v-if="editingEventId === event.id">
+                <td>
+                  <v-text-field v-model="editForm.eventDate" type="date" density="compact" hide-details style="min-width:130px" />
+                </td>
+                <td>
+                  <v-chip size="x-small" :color="event.eventType === 'DEPOSIT' ? 'success' : 'error'" variant="tonal">
+                    {{ event.eventType === 'DEPOSIT' ? 'Deposit' : 'Withdrawal' }}
+                  </v-chip>
+                </td>
+                <td class="text-right">
+                  <v-text-field v-model="editForm.amount" type="number" prefix="$" density="compact" hide-details style="min-width:100px" />
+                </td>
+                <td class="text-right text-medium-emphasis">—</td>
+                <td>
+                  <v-text-field v-model="editForm.note" density="compact" hide-details placeholder="Note" />
+                </td>
+                <td class="text-no-wrap">
+                  <v-btn icon size="small" variant="text" color="primary" :loading="loading" @click="saveEdit(event.id)">
+                    <v-icon>mdi-check</v-icon>
+                  </v-btn>
+                  <v-btn icon size="small" variant="text" @click="cancelEdit">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </td>
+              </tr>
+              <!-- Normal row -->
+              <tr v-else>
+                <td class="text-no-wrap">{{ formatDate(event.eventDate) }}</td>
+                <td>
+                  <v-chip size="x-small" :color="event.eventType === 'DEPOSIT' ? 'success' : 'error'" variant="tonal">
+                    {{ event.eventType === 'DEPOSIT' ? 'Deposit' : 'Withdrawal' }}
+                  </v-chip>
+                </td>
+                <td class="text-right" :class="event.eventType === 'DEPOSIT' ? 'text-success' : 'text-error'">
+                  {{ event.eventType === 'DEPOSIT' ? '+' : '-' }}${{ formatAmount(event.amount) }}
+                </td>
+                <td class="text-right">${{ formatAmount(event.balanceAfter) }}</td>
+                <td class="text-medium-emphasis">{{ event.note || '—' }}</td>
+                <td class="text-no-wrap">
+                  <v-btn icon size="small" variant="text" @click="startEdit(event)">
+                    <v-icon size="small">mdi-pencil</v-icon>
+                  </v-btn>
+                  <v-btn icon size="small" variant="text" color="error" @click="confirmDelete(event)">
+                    <v-icon size="small">mdi-delete</v-icon>
+                  </v-btn>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </v-table>
+
+        <!-- Delete confirmation -->
+        <v-dialog v-model="deleteDialogOpen" max-width="400">
+          <v-card>
+            <v-card-title>Delete Transaction</v-card-title>
+            <v-card-text>Delete this transaction? The account balance will be reversed.</v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn @click="deleteDialogOpen = false">Cancel</v-btn>
+              <v-btn color="error" variant="elevated" :loading="loading" @click="executeDelete">Delete</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-card-text>
 
       <v-card-actions>
@@ -122,11 +173,20 @@ const showForm = ref(false)
 const formError = ref(null)
 const logForm = ref({ type: 'DEPOSIT', amount: '', eventDate: today(), note: '' })
 
+const editingEventId = ref(null)
+const editForm = ref({ amount: '', eventDate: '', note: '' })
+const editError = ref(null)
+const deleteDialogOpen = ref(false)
+const deletingEvent = ref(null)
+
 watch(() => props.modelValue, (open) => {
   if (open && props.account?.id) {
     savingsStore.fetchEventsForAccount(props.account.id)
   }
-  if (!open) cancelForm()
+  if (!open) {
+    cancelForm()
+    cancelEdit()
+  }
 })
 
 function today() {
@@ -161,6 +221,45 @@ async function submitLog() {
   } catch (e) {
     formError.value = e.response?.data?.message || 'Failed to save transaction'
   }
+}
+
+function startEdit(event) {
+  editingEventId.value = event.id
+  editForm.value = { amount: event.amount, eventDate: event.eventDate, note: event.note || '' }
+  editError.value = null
+  showForm.value = false
+}
+
+function cancelEdit() {
+  editingEventId.value = null
+  editError.value = null
+}
+
+async function saveEdit(id) {
+  editError.value = null
+  try {
+    await savingsStore.updateAccountEvent(id, {
+      amount: parseFloat(editForm.value.amount),
+      eventDate: editForm.value.eventDate,
+      note: editForm.value.note || null
+    })
+    editingEventId.value = null
+  } catch (e) {
+    editError.value = e.response?.data?.message || savingsStore.error || 'Failed to update event'
+  }
+}
+
+function confirmDelete(event) {
+  deletingEvent.value = event
+  deleteDialogOpen.value = true
+}
+
+async function executeDelete() {
+  try {
+    await savingsStore.deleteAccountEvent(deletingEvent.value.id)
+    deleteDialogOpen.value = false
+    deletingEvent.value = null
+  } catch {}
 }
 
 function close() {

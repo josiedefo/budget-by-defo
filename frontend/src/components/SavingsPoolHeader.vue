@@ -15,7 +15,14 @@
           <div class="text-h6">${{ formatAmount(unassignedBalance) }}</div>
         </v-col>
         <v-col cols="12" sm="3" class="text-center">
-          <div class="text-caption text-medium-emphasis">Untracked</div>
+          <div class="text-caption text-medium-emphasis d-inline-flex align-center gap-1">
+            Untracked
+            <v-tooltip text="How much account money have you not categorized yet? This is money sitting in your accounts that hasn't been deposited into any fund." location="bottom" max-width="260">
+              <template #activator="{ props: tip }">
+                <v-icon v-bind="tip" size="14" style="cursor:pointer">mdi-information-outline</v-icon>
+              </template>
+            </v-tooltip>
+          </div>
           <div class="text-h6" :class="untracked < 0 ? 'text-error' : ''">
             ${{ formatAmount(untracked) }}
           </div>

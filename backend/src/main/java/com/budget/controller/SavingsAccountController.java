@@ -5,6 +5,7 @@ import com.budget.dto.AccountWithdrawalRequest;
 import com.budget.dto.CreateSavingsAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
 import com.budget.dto.SavingsAccountEventDTO;
+import com.budget.dto.UpdateSavingsAccountEventRequest;
 import com.budget.dto.UpdateSavingsAccountRequest;
 import com.budget.service.SavingsAccountService;
 import jakarta.validation.Valid;
@@ -73,5 +74,18 @@ public class SavingsAccountController {
             @PathVariable Long id,
             @Valid @RequestBody AccountWithdrawalRequest request) {
         return savingsAccountService.logWithdrawal(id, request);
+    }
+
+    @PutMapping("/events/{eventId}")
+    public SavingsAccountEventDTO updateAccountEvent(
+            @PathVariable Long eventId,
+            @Valid @RequestBody UpdateSavingsAccountEventRequest request) {
+        return savingsAccountService.updateAccountEvent(eventId, request);
+    }
+
+    @DeleteMapping("/events/{eventId}")
+    public ResponseEntity<Void> deleteAccountEvent(@PathVariable Long eventId) {
+        savingsAccountService.deleteAccountEvent(eventId);
+        return ResponseEntity.noContent().build();
     }
 }

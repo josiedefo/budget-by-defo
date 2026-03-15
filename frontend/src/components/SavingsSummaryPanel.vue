@@ -26,7 +26,14 @@
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card variant="outlined" class="text-center pa-4">
-            <div class="text-caption text-medium-emphasis">Remaining to Save</div>
+            <div class="text-caption text-medium-emphasis d-inline-flex align-center gap-1">
+              Remaining to Save
+              <v-tooltip text="How far are you from your goals? This is the total still needed across all Target and Spend-Down funds that haven't reached their target yet." location="bottom" max-width="260">
+                <template #activator="{ props: tip }">
+                  <v-icon v-bind="tip" size="14" style="cursor:pointer">mdi-information-outline</v-icon>
+                </template>
+              </v-tooltip>
+            </div>
             <div class="text-h5 text-warning">${{ formatAmount(summary.totalRemainingToSave) }}</div>
           </v-card>
         </v-col>
