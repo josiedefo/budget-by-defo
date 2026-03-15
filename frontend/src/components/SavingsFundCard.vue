@@ -1,7 +1,10 @@
 <template>
   <v-card class="fund-card h-100" variant="outlined">
     <v-card-title class="d-flex align-center justify-space-between pb-1">
-      <span class="text-truncate">{{ fund.name }}</span>
+      <div class="d-flex align-center ga-1 min-width-0">
+        <v-icon class="drag-handle text-medium-emphasis" size="small">mdi-drag</v-icon>
+        <span class="text-truncate">{{ fund.name }}</span>
+      </div>
       <div class="d-flex align-center ga-1">
         <v-chip size="x-small" :color="goalTypeColor" variant="tonal">
           {{ goalTypeLabel }}
@@ -124,5 +127,15 @@ function formatDate(dateStr) {
 }
 .cursor-pointer {
   cursor: pointer;
+}
+.drag-handle {
+  cursor: grab;
+  opacity: 0.4;
+}
+.drag-handle:hover {
+  opacity: 0.8;
+}
+.min-width-0 {
+  min-width: 0;
 }
 </style>

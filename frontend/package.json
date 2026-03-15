@@ -9,12 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "axios": "^1.6.5",
     "pinia": "^2.1.7",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5",
-    "vuetify": "^3.5.1",
-    "@mdi/font": "^7.4.47"
+    "vuedraggable": "^4.1.0",
+    "vuetify": "^3.5.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.3",

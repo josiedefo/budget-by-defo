@@ -67,10 +67,10 @@
             <tr>
               <th>Date</th>
               <th>Type</th>
-              <th class="text-right">Amount</th>
-              <th class="text-right">Balance After</th>
-              <th>Note</th>
-              <th></th>
+              <th class="text-right" style="width:150px">Amount</th>
+              <th class="text-right" style="width:130px">Balance After</th>
+              <th style="width:220px">Note</th>
+              <th style="width:56px"></th>
             </tr>
           </thead>
           <tbody>
@@ -92,13 +92,15 @@
                 <td>
                   <v-text-field v-model="editForm.note" density="compact" hide-details placeholder="Note" />
                 </td>
-                <td class="text-no-wrap">
-                  <v-btn icon size="small" variant="text" color="primary" :loading="loading" @click="saveEdit(event.id)">
-                    <v-icon>mdi-check</v-icon>
-                  </v-btn>
-                  <v-btn icon size="small" variant="text" @click="cancelEdit">
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
+                <td>
+                  <div class="action-icons">
+                    <v-btn icon size="x-small" variant="text" color="primary" :loading="loading" @click="saveEdit(event.id)">
+                      <v-icon size="16">mdi-check</v-icon>
+                    </v-btn>
+                    <v-btn icon size="x-small" variant="text" @click="cancelEdit">
+                      <v-icon size="16">mdi-close</v-icon>
+                    </v-btn>
+                  </div>
                 </td>
               </tr>
               <!-- Normal row -->
@@ -109,18 +111,20 @@
                     {{ event.eventType === 'DEPOSIT' ? 'Deposit' : 'Withdrawal' }}
                   </v-chip>
                 </td>
-                <td class="text-right" :class="event.eventType === 'DEPOSIT' ? 'text-success' : 'text-error'">
+                <td class="text-right text-no-wrap" :class="event.eventType === 'DEPOSIT' ? 'text-success' : 'text-error'">
                   {{ event.eventType === 'DEPOSIT' ? '+' : '-' }}${{ formatAmount(event.amount) }}
                 </td>
                 <td class="text-right">${{ formatAmount(event.balanceAfter) }}</td>
                 <td class="text-medium-emphasis">{{ event.note || '—' }}</td>
-                <td class="text-no-wrap">
-                  <v-btn icon size="small" variant="text" @click="startEdit(event)">
-                    <v-icon size="small">mdi-pencil</v-icon>
-                  </v-btn>
-                  <v-btn icon size="small" variant="text" color="error" @click="confirmDelete(event)">
-                    <v-icon size="small">mdi-delete</v-icon>
-                  </v-btn>
+                <td>
+                  <div class="action-icons">
+                    <v-btn icon size="x-small" variant="text" @click="startEdit(event)">
+                      <v-icon size="16">mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn icon size="x-small" variant="text" color="error" @click="confirmDelete(event)">
+                      <v-icon size="16">mdi-delete</v-icon>
+                    </v-btn>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -275,3 +279,11 @@ function formatDate(dateStr) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
+
+<style scoped>
+.action-icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+</style>
