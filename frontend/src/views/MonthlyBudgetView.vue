@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-2 pa-sm-4">
     <MonthSelector ref="selectorRef" :year="year" :month="month" @change="navigateToMonth" />
 
     <v-row v-if="loading" class="justify-center mt-8">
@@ -24,9 +24,9 @@
       <v-row>
         <v-col cols="12">
           <div class="d-flex justify-end mb-2">
-            <v-btn color="primary" variant="tonal" @click="showAddSection = true">
+            <v-btn color="primary" variant="tonal" size="small" @click="showAddSection = true">
               <v-icon start>mdi-plus</v-icon>
-              Add Section
+              <span class="d-none d-sm-inline">Add Section</span>
             </v-btn>
           </div>
         </v-col>

@@ -1,18 +1,21 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-2 pa-sm-4">
     <!-- Pool Header -->
     <SavingsPoolHeader />
 
     <!-- Action Buttons -->
     <div class="d-flex ga-2 mb-4 flex-wrap">
       <v-btn variant="outlined" prepend-icon="mdi-bank" @click="showManageAccounts = true">
-        Manage Accounts
+        <span class="d-none d-sm-inline">Manage Accounts</span>
+        <span class="d-sm-none">Accounts</span>
       </v-btn>
       <v-btn color="primary" variant="elevated" prepend-icon="mdi-plus" @click="showDeposit = true">
-        Log Deposit
+        <span class="d-none d-sm-inline">Log Deposit</span>
+        <span class="d-sm-none">Deposit</span>
       </v-btn>
       <v-btn color="secondary" variant="elevated" prepend-icon="mdi-plus" @click="showCreateFund = true">
-        New Fund
+        <span class="d-none d-sm-inline">New Fund</span>
+        <span class="d-sm-none">Fund</span>
       </v-btn>
     </div>
 

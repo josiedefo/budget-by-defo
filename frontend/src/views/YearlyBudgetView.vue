@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-2 pa-sm-4">
     <v-card ref="selectorRef" class="mb-4">
       <v-card-text class="d-flex align-center justify-center">
         <v-btn icon variant="text" @click="selectedYear--">
@@ -42,35 +42,35 @@
       <v-card class="mb-4">
         <v-card-title>{{ selectedYear }} Summary</v-card-title>
         <v-card-text>
-          <v-row>
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-subtitle-2 text-medium-emphasis">Total Planned Income</div>
-              <div class="text-h5 text-success">{{ formatCurrency(yearlySummary.totalPlannedIncome) }}</div>
+          <v-row dense>
+            <v-col cols="6" sm="6" md="3">
+              <div class="text-caption text-medium-emphasis">Total Planned Income</div>
+              <div class="text-body-1 text-sm-h5 font-weight-bold text-success">{{ formatCurrency(yearlySummary.totalPlannedIncome) }}</div>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-subtitle-2 text-medium-emphasis">Total Actual Income</div>
-              <div class="text-h5 text-success">{{ formatCurrency(yearlySummary.totalActualIncome) }}</div>
+            <v-col cols="6" sm="6" md="3">
+              <div class="text-caption text-medium-emphasis">Total Actual Income</div>
+              <div class="text-body-1 text-sm-h5 font-weight-bold text-success">{{ formatCurrency(yearlySummary.totalActualIncome) }}</div>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-subtitle-2 text-medium-emphasis">Total Planned Expenses</div>
-              <div class="text-h5 text-error">{{ formatCurrency(yearlySummary.totalPlannedExpenses) }}</div>
+            <v-col cols="6" sm="6" md="3">
+              <div class="text-caption text-medium-emphasis">Total Planned Expenses</div>
+              <div class="text-body-1 text-sm-h5 font-weight-bold text-error">{{ formatCurrency(yearlySummary.totalPlannedExpenses) }}</div>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-subtitle-2 text-medium-emphasis">Total Actual Expenses</div>
-              <div class="text-h5 text-error">{{ formatCurrency(yearlySummary.totalActualExpenses) }}</div>
+            <v-col cols="6" sm="6" md="3">
+              <div class="text-caption text-medium-emphasis">Total Actual Expenses</div>
+              <div class="text-body-1 text-sm-h5 font-weight-bold text-error">{{ formatCurrency(yearlySummary.totalActualExpenses) }}</div>
             </v-col>
           </v-row>
-          <v-divider class="my-3"></v-divider>
-          <v-row>
-            <v-col cols="12" sm="6">
-              <div class="text-subtitle-2 text-medium-emphasis">Total Planned Savings</div>
-              <div class="text-h5" :class="yearlySummary.totalPlannedSavings >= 0 ? 'text-success' : 'text-error'">
+          <v-divider class="my-2"></v-divider>
+          <v-row dense>
+            <v-col cols="6" sm="6">
+              <div class="text-caption text-medium-emphasis">Total Planned Savings</div>
+              <div class="text-body-1 text-sm-h5 font-weight-bold" :class="yearlySummary.totalPlannedSavings >= 0 ? 'text-success' : 'text-error'">
                 {{ formatCurrency(yearlySummary.totalPlannedSavings) }}
               </div>
             </v-col>
-            <v-col cols="12" sm="6">
-              <div class="text-subtitle-2 text-medium-emphasis">Total Actual Savings</div>
-              <div class="text-h5" :class="yearlySummary.totalActualSavings >= 0 ? 'text-success' : 'text-error'">
+            <v-col cols="6" sm="6">
+              <div class="text-caption text-medium-emphasis">Total Actual Savings</div>
+              <div class="text-body-1 text-sm-h5 font-weight-bold" :class="yearlySummary.totalActualSavings >= 0 ? 'text-success' : 'text-error'">
                 {{ formatCurrency(yearlySummary.totalActualSavings) }}
               </div>
             </v-col>

@@ -1,41 +1,37 @@
 <template>
-  <v-card class="mb-4">
-    <v-card-text class="d-flex align-center justify-center">
-      <v-btn icon variant="text" @click="previousMonth">
-        <v-icon>mdi-chevron-left</v-icon>
-      </v-btn>
+  <div class="month-selector mb-2 mb-sm-4">
+    <v-btn icon variant="text" size="small" @click="previousMonth">
+      <v-icon size="18">mdi-chevron-left</v-icon>
+    </v-btn>
 
-      <v-select
-        v-model="selectedMonth"
-        :items="months"
-        item-title="name"
-        item-value="value"
-        density="compact"
-        hide-details
-        variant="outlined"
-        class="mx-2"
-        style="max-width: 150px"
-      ></v-select>
+    <v-select
+      v-model="selectedMonth"
+      :items="months"
+      item-title="name"
+      item-value="value"
+      density="compact"
+      hide-details
+      variant="outlined"
+      class="month-select mx-1"
+    ></v-select>
 
-      <v-select
-        v-model="selectedYear"
-        :items="years"
-        density="compact"
-        hide-details
-        variant="outlined"
-        class="mx-2"
-        style="max-width: 100px"
-      ></v-select>
+    <v-select
+      v-model="selectedYear"
+      :items="years"
+      density="compact"
+      hide-details
+      variant="outlined"
+      class="year-select mx-1"
+    ></v-select>
 
-      <v-btn icon variant="text" @click="nextMonth">
-        <v-icon>mdi-chevron-right</v-icon>
-      </v-btn>
+    <v-btn icon variant="text" size="small" @click="nextMonth">
+      <v-icon size="18">mdi-chevron-right</v-icon>
+    </v-btn>
 
-      <v-btn variant="text" color="primary" class="ml-4" @click="goToToday">
-        Today
-      </v-btn>
-    </v-card-text>
-  </v-card>
+    <v-btn variant="text" color="primary" size="small" class="ml-1 ml-sm-3 today-btn" @click="goToToday">
+      Today
+    </v-btn>
+  </div>
 </template>
 
 <script setup>
@@ -102,3 +98,41 @@ function goToToday() {
   selectedMonth.value = now.getMonth() + 1
 }
 </script>
+
+<style scoped>
+.month-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.month-select {
+  flex: 0 0 130px;
+  width: 130px;
+}
+
+.year-select {
+  flex: 0 0 88px;
+  width: 88px;
+}
+
+.today-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 599px) {
+  .month-select {
+    flex: 0 0 110px;
+    width: 110px;
+  }
+
+  .year-select {
+    flex: 0 0 80px;
+    width: 80px;
+  }
+}
+</style>

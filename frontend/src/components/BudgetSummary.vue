@@ -1,35 +1,35 @@
 <template>
   <v-card elevation="2">
     <v-card-text>
-      <v-row>
-        <v-col cols="12" sm="6" md="3">
-          <div class="text-subtitle-2 text-medium-emphasis">Planned Income</div>
-          <div class="text-h5 text-success">{{ formatCurrency(totalPlannedIncome) }}</div>
+      <v-row dense>
+        <v-col cols="6" sm="6" md="3">
+          <div class="text-caption text-medium-emphasis">Planned Income</div>
+          <div class="text-body-1 text-sm-h5 font-weight-bold text-success">{{ formatCurrency(totalPlannedIncome) }}</div>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="text-subtitle-2 text-medium-emphasis">Actual Income</div>
-          <div class="text-h5 text-success">{{ formatCurrency(totalActualIncome) }}</div>
+        <v-col cols="6" sm="6" md="3">
+          <div class="text-caption text-medium-emphasis">Actual Income</div>
+          <div class="text-body-1 text-sm-h5 font-weight-bold text-success">{{ formatCurrency(totalActualIncome) }}</div>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="text-subtitle-2 text-medium-emphasis">Planned Expenses</div>
-          <div class="text-h5 text-error">{{ formatCurrency(totalPlannedExpenses) }}</div>
+        <v-col cols="6" sm="6" md="3">
+          <div class="text-caption text-medium-emphasis">Planned Expenses</div>
+          <div class="text-body-1 text-sm-h5 font-weight-bold text-error">{{ formatCurrency(totalPlannedExpenses) }}</div>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="text-subtitle-2 text-medium-emphasis">Actual Expenses</div>
-          <div class="text-h5 text-error">{{ formatCurrency(totalActualExpenses) }}</div>
+        <v-col cols="6" sm="6" md="3">
+          <div class="text-caption text-medium-emphasis">Actual Expenses</div>
+          <div class="text-body-1 text-sm-h5 font-weight-bold text-error">{{ formatCurrency(totalActualExpenses) }}</div>
         </v-col>
       </v-row>
-      <v-divider class="my-3"></v-divider>
-      <v-row>
-        <v-col cols="12" sm="6">
-          <div class="text-subtitle-2 text-medium-emphasis">Planned Balance</div>
-          <div class="text-h5" :class="plannedBalance >= 0 ? 'text-success' : 'text-error'">
+      <v-divider class="my-2"></v-divider>
+      <v-row dense>
+        <v-col cols="6" sm="6">
+          <div class="text-caption text-medium-emphasis">Planned Balance</div>
+          <div class="text-body-1 text-sm-h5 font-weight-bold" :class="plannedBalance >= 0 ? 'text-success' : 'text-error'">
             {{ formatCurrency(plannedBalance) }}
           </div>
         </v-col>
-        <v-col cols="12" sm="6">
-          <div class="text-subtitle-2 text-medium-emphasis">Actual Balance</div>
-          <div class="text-h5" :class="actualBalance >= 0 ? 'text-success' : 'text-error'">
+        <v-col cols="6" sm="6">
+          <div class="text-caption text-medium-emphasis">Actual Balance</div>
+          <div class="text-body-1 text-sm-h5 font-weight-bold" :class="actualBalance >= 0 ? 'text-success' : 'text-error'">
             {{ formatCurrency(actualBalance) }}
           </div>
         </v-col>

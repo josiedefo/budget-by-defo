@@ -1,28 +1,28 @@
 <template>
   <v-app>
-    <v-app-bar color="primary" density="comfortable">
-      <v-app-bar-title>Budget App</v-app-bar-title>
+    <v-app-bar color="primary" density="compact">
+      <v-app-bar-title class="text-body-1 text-sm-h6">Budget App</v-app-bar-title>
       <v-spacer></v-spacer>
-      <v-btn-toggle v-model="viewMode" mandatory>
+      <v-btn-toggle v-model="viewMode" mandatory density="compact">
         <v-btn value="monthly" variant="text">
-          <v-icon start>mdi-calendar-month</v-icon>
-          Monthly
+          <v-icon>mdi-calendar-month</v-icon>
+          <span class="d-none d-sm-inline ml-1">Monthly</span>
         </v-btn>
         <v-btn value="yearly" variant="text">
-          <v-icon start>mdi-calendar</v-icon>
-          Yearly
+          <v-icon>mdi-calendar</v-icon>
+          <span class="d-none d-sm-inline ml-1">Yearly</span>
         </v-btn>
         <v-btn value="transactions" variant="text">
-          <v-icon start>mdi-swap-horizontal</v-icon>
-          Transactions
+          <v-icon>mdi-swap-horizontal</v-icon>
+          <span class="d-none d-sm-inline ml-1">Transactions</span>
         </v-btn>
         <v-btn value="planner" variant="text">
-          <v-icon start>mdi-calendar-text</v-icon>
-          Planner
+          <v-icon>mdi-calendar-text</v-icon>
+          <span class="d-none d-sm-inline ml-1">Planner</span>
         </v-btn>
         <v-btn value="savings" variant="text">
-          <v-icon start>mdi-piggy-bank</v-icon>
-          Savings
+          <v-icon>mdi-piggy-bank</v-icon>
+          <span class="d-none d-sm-inline ml-1">Savings</span>
         </v-btn>
       </v-btn-toggle>
     </v-app-bar>

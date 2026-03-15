@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-2 pa-sm-4">
     <MonthSelector ref="selectorRef" :year="year" :month="month" @change="navigateToMonth" />
 
     <v-row v-if="loading" class="justify-center mt-8">
@@ -16,20 +16,23 @@
       </div>
       <v-row class="mt-4">
         <v-col cols="12">
-          <div class="d-flex justify-space-between align-center mb-4">
-            <h2 class="text-h5">Plans for {{ monthName }} {{ year }}</h2>
-            <div class="d-flex ga-3 flex-wrap">
+          <div class="d-flex justify-space-between align-center mb-4 flex-wrap ga-2">
+            <h2 class="text-h6 text-sm-h5">Plans for {{ monthName }} {{ year }}</h2>
+            <div class="d-flex ga-2 flex-wrap">
               <v-btn variant="outlined" @click="showSubscriptionsDialog = true">
                 <v-icon start>mdi-repeat</v-icon>
-                Manage Recurring Payments
+                <span class="d-none d-sm-inline">Manage Recurring Payments</span>
+                <span class="d-sm-none">Recurring</span>
               </v-btn>
               <v-btn variant="outlined" color="success" @click="showSalariesDialog = true">
                 <v-icon start>mdi-currency-usd</v-icon>
-                Manage Salaries
+                <span class="d-none d-sm-inline">Manage Salaries</span>
+                <span class="d-sm-none">Salaries</span>
               </v-btn>
               <v-btn color="primary" @click="showCreateDialog = true">
                 <v-icon start>mdi-plus</v-icon>
-                Create Plan
+                <span class="d-none d-sm-inline">Create Plan</span>
+                <span class="d-sm-none">Plan</span>
               </v-btn>
             </div>
           </div>
