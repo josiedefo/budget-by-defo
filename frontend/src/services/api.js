@@ -149,4 +149,34 @@ export const salaryApi = {
   }
 }
 
+export const savingsApi = {
+  // Accounts
+  getAccounts() { return api.get('/savings/accounts') },
+  getAccount(id) { return api.get(`/savings/accounts/${id}`) },
+  createAccount(data) { return api.post('/savings/accounts', data) },
+  updateAccount(id, data) { return api.put(`/savings/accounts/${id}`, data) },
+  deleteAccount(id) { return api.delete(`/savings/accounts/${id}`) },
+  getPoolBalance() { return api.get('/savings/accounts/pool-balance') },
+  getAccountEvents(accountId) { return api.get(`/savings/accounts/${accountId}/events`) },
+  depositToAccount(accountId, data) { return api.post(`/savings/accounts/${accountId}/deposit`, data) },
+  withdrawFromAccount(accountId, data) { return api.post(`/savings/accounts/${accountId}/withdrawal`, data) },
+
+  // Funds
+  getFunds() { return api.get('/savings/funds') },
+  getFund(id) { return api.get(`/savings/funds/${id}`) },
+  createFund(data) { return api.post('/savings/funds', data) },
+  updateFund(id, data) { return api.put(`/savings/funds/${id}`, data) },
+  deleteFund(id) { return api.delete(`/savings/funds/${id}`) },
+  getSummary() { return api.get('/savings/funds/summary') },
+
+  // Events
+  getEventsForFund(fundId) { return api.get(`/savings/events/fund/${fundId}`) },
+  logDeposit(data) { return api.post('/savings/events/deposit', data) },
+  logWithdrawal(data) { return api.post('/savings/events/withdrawal', data) },
+  reallocate(data) { return api.post('/savings/events/reallocate', data) },
+  processPayout(fundId) { return api.post(`/savings/events/payout/${fundId}`) },
+  updateEvent(id, data) { return api.put(`/savings/events/${id}`, data) },
+  deleteEvent(id) { return api.delete(`/savings/events/${id}`) }
+}
+
 export default api

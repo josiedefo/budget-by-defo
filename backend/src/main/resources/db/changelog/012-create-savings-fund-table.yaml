@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 14
+      author: budget-app
+      changes:
+        - createTable:
+            tableName: savings_fund
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: goal_type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: DECIMAL(12,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_amount
+                  type: DECIMAL(12,2)
+              - column:
+                  name: deadline
+                  type: DATE
+              - column:
+                  name: ceiling
+                  type: DECIMAL(12,2)
+              - column:
+                  name: payout_date
+                  type: DATE
+              - column:
+                  name: payout_amount
+                  type: DECIMAL(12,2)
+              - column:
+                  name: is_system_fund
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_savings_fund_is_active
+            tableName: savings_fund
+            columns:
+              - column:
+                  name: is_active
+        - createIndex:
+            indexName: idx_savings_fund_is_system
+            tableName: savings_fund
+            columns:
+              - column:
+                  name: is_system_fund

@@ -20,6 +20,10 @@
           <v-icon start>mdi-calendar-text</v-icon>
           Planner
         </v-btn>
+        <v-btn value="savings" variant="text">
+          <v-icon start>mdi-piggy-bank</v-icon>
+          Savings
+        </v-btn>
       </v-btn-toggle>
     </v-app-bar>
 
@@ -44,6 +48,8 @@ onMounted(() => {
     viewMode.value = 'transactions'
   } else if (route.name === 'planner') {
     viewMode.value = 'planner'
+  } else if (route.name === 'savings') {
+    viewMode.value = 'savings'
   } else {
     viewMode.value = 'monthly'
   }
@@ -56,6 +62,8 @@ watch(() => route.name, (name) => {
     viewMode.value = 'transactions'
   } else if (name === 'planner') {
     viewMode.value = 'planner'
+  } else if (name === 'savings') {
+    viewMode.value = 'savings'
   } else {
     viewMode.value = 'monthly'
   }
@@ -74,6 +82,8 @@ watch(viewMode, (newValue) => {
     router.push({ name: 'transactions' })
   } else if (newValue === 'planner' && route.name !== 'planner') {
     router.push({ name: 'planner' })
+  } else if (newValue === 'savings' && route.name !== 'savings') {
+    router.push({ name: 'savings' })
   }
 })
 </script>

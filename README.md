@@ -36,6 +36,18 @@ A personal budget tracking application to manage your finances month by month.
 - **Quick Add to Plans** - Add salaries to plans as income items using the computed net pay
 - **Visual Indicator** - Plan items from salaries show a dollar icon
 
+### Savings
+- **Savings Pool** - Aggregate multiple physical savings accounts into a single tracked pool
+- **Fund Buckets** - Allocate pool money into named funds with five goal types: Target, Target with Deadline, Spend-Down, Spend-as-You-Go, and No Goal
+- **Deposit & Withdrawal** - Log deposits to funds and withdrawals from funds; pool enforcement prevents over-allocation
+- **Reallocation** - Move money between funds atomically with paired ledger events
+- **Spend-Down Payout** - Process scheduled payouts for spend-down funds once the payout date is reached
+- **Edit & Delete Events** - Correct deposit and withdrawal events; balance is automatically reversed or adjusted
+- **Event History** - Full per-fund event history with type badges (Deposit, Withdrawal, Reallocation, Payout)
+- **Account Management** - Add and manage physical savings accounts with balance and as-of date
+- **Account Event History** - Per-account deposit/withdrawal history; as-of date automatically reflects the latest transaction
+- **Summary Panel** - Year summary with total pool, allocated, unassigned, remaining-to-save, and upcoming deadlines
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -242,6 +254,40 @@ budget-by-defo/
 | `POST /api/salaries` | Create a salary |
 | `PUT /api/salaries/{id}` | Update a salary |
 | `DELETE /api/salaries/{id}` | Delete (deactivate) a salary |
+
+### Savings Accounts
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/savings/accounts` | List all active savings accounts |
+| `GET /api/savings/accounts/{id}` | Get a savings account |
+| `POST /api/savings/accounts` | Create a savings account |
+| `PUT /api/savings/accounts/{id}` | Update a savings account |
+| `DELETE /api/savings/accounts/{id}` | Deactivate a savings account |
+| `GET /api/savings/accounts/pool-balance` | Get total pool balance |
+| `GET /api/savings/accounts/{id}/events` | Get account event history |
+| `POST /api/savings/accounts/{id}/deposit` | Log a deposit to an account |
+| `POST /api/savings/accounts/{id}/withdrawal` | Log a withdrawal from an account |
+
+### Savings Funds
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/savings/funds` | List all active funds |
+| `GET /api/savings/funds/{id}` | Get a fund |
+| `POST /api/savings/funds` | Create a fund |
+| `PUT /api/savings/funds/{id}` | Update a fund |
+| `DELETE /api/savings/funds/{id}` | Deactivate a fund (must have zero balance) |
+| `GET /api/savings/funds/summary` | Get year summary with upcoming deadlines |
+
+### Savings Events
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/savings/events/fund/{fundId}` | Get event history for a fund |
+| `POST /api/savings/events/deposit` | Log a deposit to a fund |
+| `POST /api/savings/events/withdrawal` | Log a withdrawal from a fund |
+| `POST /api/savings/events/reallocate` | Move money between two funds |
+| `POST /api/savings/events/payout/{fundId}` | Process payout for a spend-down fund |
+| `PUT /api/savings/events/{id}` | Update a deposit or withdrawal event |
+| `DELETE /api/savings/events/{id}` | Delete a deposit or withdrawal event |
 
 ## License
 

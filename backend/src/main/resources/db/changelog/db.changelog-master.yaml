@@ -19,3 +19,11 @@ databaseChangeLog:
       file: db/changelog/009-create-salary-table.yaml
   - include:
       file: db/changelog/010-add-plan-item-from-salary.yaml
+  - include:
+      file: db/changelog/011-create-savings-account-table.yaml
+  - include:
+      file: db/changelog/012-create-savings-fund-table.yaml
+  - include:
+      file: db/changelog/013-create-savings-event-table.yaml
+  - include:
+      file: db/changelog/014-create-savings-account-event-table.yaml

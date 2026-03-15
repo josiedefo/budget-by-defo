@@ -3,6 +3,7 @@ import MonthlyBudgetView from '@/views/MonthlyBudgetView.vue'
 import YearlyBudgetView from '@/views/YearlyBudgetView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import PlannerView from '@/views/PlannerView.vue'
+import SavingsView from '@/views/SavingsView.vue'
 
 const routes = [
   {
@@ -38,6 +39,11 @@ const routes = [
     path: '/planner',
     name: 'planner',
     component: PlannerView
+  },
+  {
+    path: '/savings',
+    name: 'savings',
+    component: SavingsView
   }
 ]
 

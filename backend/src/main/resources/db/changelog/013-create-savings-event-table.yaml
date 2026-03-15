@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 15
+      author: budget-app
+      changes:
+        - createTable:
+            tableName: savings_event
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: fund_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(12,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: TEXT
+              - column:
+                  name: transaction_ref
+                  type: BIGINT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: savings_event
+            baseColumnNames: fund_id
+            constraintName: fk_savings_event_fund
+            referencedTableName: savings_fund
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_savings_event_fund_id
+            tableName: savings_event
+            columns:
+              - column:
+                  name: fund_id
+        - createIndex:
+            indexName: idx_savings_event_event_date
+            tableName: savings_event
+            columns:
+              - column:
+                  name: event_date
+        - createIndex:
+            indexName: idx_savings_event_type
+            tableName: savings_event
+            columns:
+              - column:
+                  name: event_type
