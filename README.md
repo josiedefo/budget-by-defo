@@ -15,7 +15,7 @@ A personal budget tracking application to manage your finances month by month.
 ### Transactions
 - **Transaction Tracking** - Record individual transactions with date, amount, description, and type
 - **Link to Budget** - Associate transactions with budget sections and items
-- **CSV Import** - Bulk import transactions from CSV files
+- **CSV Import** - Bulk import transactions from CSV files with column mapping; budget items that exist in the CSV but not in the budget month are auto-created in the correct section
 - **Click-to-View** - Click on actual amounts to view related transactions
 
 ### Planner
@@ -267,6 +267,8 @@ budget-by-defo/
 | `GET /api/savings/accounts/{id}/events` | Get account event history |
 | `POST /api/savings/accounts/{id}/deposit` | Log a deposit to an account |
 | `POST /api/savings/accounts/{id}/withdrawal` | Log a withdrawal from an account |
+| `PUT /api/savings/accounts/events/{eventId}` | Update an account deposit or withdrawal event |
+| `DELETE /api/savings/accounts/events/{eventId}` | Delete an account deposit or withdrawal event |
 
 ### Savings Funds
 | Endpoint | Description |

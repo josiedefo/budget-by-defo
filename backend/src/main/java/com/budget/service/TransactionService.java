@@ -4,11 +4,13 @@ import com.budget.dto.CreateTransactionRequest;
 import com.budget.dto.CsvImportRequest;
 import com.budget.dto.TransactionDTO;
 import com.budget.dto.UpdateTransactionRequest;
+import com.budget.model.Budget;
 import com.budget.model.BudgetItem;
 import com.budget.model.Section;
 import com.budget.model.Transaction;
 import com.budget.model.TransactionType;
 import com.budget.repository.BudgetItemRepository;
+import com.budget.repository.BudgetRepository;
 import com.budget.repository.SectionRepository;
 import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,6 +39,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final SectionRepository sectionRepository;
     private final BudgetItemRepository budgetItemRepository;
+    private final BudgetRepository budgetRepository;
 
     @Transactional(readOnly = true)
     public Page<TransactionDTO> getTransactions(
@@ -229,14 +232,21 @@ public class TransactionService {
                     transaction.setNote(row.get(noteCol).trim());
                 }
 
-                // Parse category/section (optional) - try to match to existing section
+                // Look up (but do NOT create) the budget for this transaction's month
+                LocalDate txDate = transaction.getTransactionDate();
+                Budget budget = budgetRepository.findByYearAndMonth(txDate.getYear(), txDate.getMonthValue())
+                    .orElse(null);
+
+                // Parse category/section (optional) - match within this budget month only if it exists
                 Integer categoryCol = request.getColumnMapping().get("category");
                 Section matchedSection = null;
-                if (categoryCol != null && categoryCol < row.size()) {
+                if (budget != null && categoryCol != null && categoryCol < row.size()) {
                     String categoryName = row.get(categoryCol).trim();
                     if (!categoryName.isEmpty()) {
-                        matchedSection = sectionRepository.findAll().stream()
-                            .filter(s -> s.getName().equalsIgnoreCase(categoryName))
+                        final String catName = categoryName;
+                        matchedSection = sectionRepository.findByBudgetIdOrderByDisplayOrderAsc(budget.getId())
+                            .stream()
+                            .filter(s -> s.getName().equalsIgnoreCase(catName))
                             .findFirst()
                             .orElse(null);
                         if (matchedSection != null) {
@@ -245,18 +255,31 @@ public class TransactionService {
                     }
                 }
 
-                // Parse budget item (optional) - try to match within the section
+                // Parse budget item (optional) - match or auto-create within the matched section
                 Integer budgetItemCol = request.getColumnMapping().get("budgetItem");
                 if (budgetItemCol != null && budgetItemCol < row.size() && matchedSection != null) {
                     String budgetItemName = row.get(budgetItemCol).trim();
                     if (!budgetItemName.isEmpty()) {
                         final Section section = matchedSection;
-                        budgetItemRepository.findAll().stream()
-                            .filter(bi -> bi.getSection() != null
-                                && bi.getSection().getName().equalsIgnoreCase(section.getName())
-                                && bi.getName().equalsIgnoreCase(budgetItemName))
+                        final String itemName = budgetItemName;
+                        BudgetItem matched = budgetItemRepository
+                            .findBySectionIdOrderByDisplayOrderAsc(section.getId())
+                            .stream()
+                            .filter(bi -> bi.getName().equalsIgnoreCase(itemName))
                             .findFirst()
-                            .ifPresent(transaction::setBudgetItem);
+                            .orElse(null);
+                        if (matched == null) {
+                            // Auto-create the budget item in this section
+                            int nextOrder = budgetItemRepository.findMaxDisplayOrderBySectionId(section.getId()) + 1;
+                            BudgetItem newItem = new BudgetItem();
+                            newItem.setName(itemName);
+                            newItem.setSection(section);
+                            newItem.setPlannedAmount(BigDecimal.ZERO);
+                            newItem.setActualAmount(BigDecimal.ZERO);
+                            newItem.setDisplayOrder(nextOrder);
+                            matched = budgetItemRepository.save(newItem);
+                        }
+                        transaction.setBudgetItem(matched);
                     }
                 }
 

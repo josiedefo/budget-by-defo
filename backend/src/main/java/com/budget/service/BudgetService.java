@@ -39,35 +39,31 @@ public class BudgetService {
 
     static {
         DEFAULT_SECTIONS.put("Income", new SectionConfig(true,
-            "Josie Salary", "Patrick Salary", "From Extra Savings", "From Vacation Savings",
-            "From Kids School Savings", "From Student Loan Savings", "From Njangui Savings",
-            "From Emergency Savings", "Refunds/Reimbursements", "Pat&Js LLC", "Taxes"));
+            "Josie Salary", "Patrick Salary"));
 
         DEFAULT_SECTIONS.put("Savings", new SectionConfig(false,
             "Njangui Savings", "Patrick Roth IRA", "Josie Roth IRA",
             "Joshua College Fund", "Joy College Fund", "Extra Savings"));
 
-        DEFAULT_SECTIONS.put("House", new SectionConfig(false,
+        DEFAULT_SECTIONS.put("House Bills", new SectionConfig(false,
             "Mortgage", "Electric/Power", "Water/Sewer/Trash", "Mobile Phone",
-            "Internet", "HOA", "House Supplies/Furnishings/Appliances", "Home Services"));
+             "HOA", "House Supplies/Furnishings/Appliances"));
 
         DEFAULT_SECTIONS.put("Daily Living", new SectionConfig(false,
             "Groceries", "Restaurants", "Patrick Allowance", "Josie Allowance",
-            "Grandma Expenses", "Clothing", "Hair", "Cosmetics", "Amusement",
-            "Sport", "Cameroon Fund", "Pat&Js LLC"));
+            "Clothing", "Hair", "Cosmetics", "Amusement"));
 
         DEFAULT_SECTIONS.put("Giving", new SectionConfig(false,
             "Tithe", "Gifts"));
 
         DEFAULT_SECTIONS.put("Transportation", new SectionConfig(false,
-            "Gas & Public Bus", "Services/Repairs/Parts", "Auto Insurance",
-            "Registration/License Renewal", "Tolls", "Traffic Ticket"));
+            "Gas & Public Bus", "Services/Repairs/Parts"));
 
         DEFAULT_SECTIONS.put("Children", new SectionConfig(false,
-            "Kids Supplies", "Kids Activities", "School"));
+            "Kids Supplies", "Kids Activities"));
 
         DEFAULT_SECTIONS.put("Education", new SectionConfig(false,
-            "Tuition", "Student Loan", "Books & Supplies"));
+            "Tuition", "Books & Supplies"));
 
         DEFAULT_SECTIONS.put("Vacation", new SectionConfig(false,
             "Vacation", "Airfare Travel", "Car Travel"));
@@ -76,8 +72,7 @@ public class BudgetService {
             "Life Insurance"));
 
         DEFAULT_SECTIONS.put("Misc", new SectionConfig(false,
-            "Transfer", "Interest Payment", "Filing Taxes", "Federal Taxes",
-            "State/Local Taxes", "Bank Fees", "Echange avec autrui"));
+            "Transfer", "Interest Payment"));
     }
 
     private static class SectionConfig {
@@ -281,5 +276,11 @@ public class BudgetService {
     public Budget getBudgetEntity(Long id) {
         return budgetRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Budget not found with id: " + id));
+    }
+
+    @Transactional
+    public Budget getOrCreateBudgetEntity(Integer year, Integer month) {
+        return budgetRepository.findByYearAndMonth(year, month)
+                .orElseGet(() -> createBudgetWithDefaults(year, month));
     }
 }
