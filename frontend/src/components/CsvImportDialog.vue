@@ -146,9 +146,8 @@ const dateFormatOptions = [
 
 const mappableFields = [
   { key: 'date', label: 'Date', required: true },
-  { key: 'type', label: 'Type (Income/Expense)', required: false },
   { key: 'merchant', label: 'Merchant/Description', required: false },
-  { key: 'amount', label: 'Amount', required: true },
+  { key: 'amount', label: 'Amount (positive = Income, negative = Expense)', required: true },
   { key: 'category', label: 'Section/Category', required: false },
   { key: 'budgetItem', label: 'Budget Item', required: false },
   { key: 'note', label: 'Note', required: false }
@@ -249,8 +248,6 @@ function autoDetectMapping() {
   headers.forEach((header, idx) => {
     if (header === 'date' || header.includes('transaction date')) {
       columnMapping.value.date = idx
-    } else if (header === 'type' || header.includes('transaction type')) {
-      columnMapping.value.type = idx
     } else if (header === 'merchant' || header.includes('description') || header.includes('payee')) {
       columnMapping.value.merchant = idx
     } else if (header === 'amount' || header.includes('value')) {

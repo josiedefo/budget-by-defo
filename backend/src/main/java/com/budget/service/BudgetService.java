@@ -149,26 +149,22 @@ public class BudgetService {
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
 
-        // Get transaction sums grouped by section name and budget item name
-        List<Object[]> transactionSums = transactionRepository.sumAmountsByBudgetItemNameAndDateRange(startDate, endDate);
+        // Get transaction sums grouped by budget item ID
+        List<Object[]> transactionSums = transactionRepository.sumAmountsByBudgetItemAndDateRange(startDate, endDate);
 
-        // Build a map of "sectionName|itemName" -> sum
-        Map<String, BigDecimal> actualAmounts = new HashMap<>();
+        // Build a map of budgetItemId -> signed sum (income positive, expense negative)
+        Map<Long, BigDecimal> actualAmounts = new HashMap<>();
         for (Object[] row : transactionSums) {
-            String sectionName = (String) row[0];
-            String itemName = (String) row[1];
-            BigDecimal sum = (BigDecimal) row[2];
-            String key = sectionName + "|" + itemName;
-            actualAmounts.put(key, sum);
+            Long itemId = (Long) row[0];
+            BigDecimal sum = (BigDecimal) row[1];
+            actualAmounts.put(itemId, sum);
         }
 
-        // Update each budget item's actual amount by matching names
+        // Update each budget item's actual amount by matching ID
         for (Section section : budget.getSections()) {
             for (BudgetItem item : section.getItems()) {
-                String key = section.getName() + "|" + item.getName();
-                BigDecimal actualAmount = actualAmounts.getOrDefault(key, BigDecimal.ZERO);
-                // For expense sections, negate the value so spending shows as positive
-                // (query returns income - expense, we want expense - income for expenses)
+                BigDecimal actualAmount = actualAmounts.getOrDefault(item.getId(), BigDecimal.ZERO);
+                // For expense sections, negate so spending shows as positive
                 if (!section.getIsIncome()) {
                     actualAmount = actualAmount.negate();
                 }

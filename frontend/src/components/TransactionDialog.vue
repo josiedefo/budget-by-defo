@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title>{{ isEditing ? 'Edit Transaction' : 'Add Transaction' }}</v-card-title>
       <v-card-text>
-        <v-form ref="form" v-model="valid">
+        <v-form v-model="valid">
           <v-select
             v-model="formData.type"
             :items="typeOptions"
@@ -86,8 +86,7 @@
 
 <script setup>
 import { ref, watch, computed, reactive } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useBudgetStore } from '@/stores/budget'
+import { budgetApi } from '@/services/api'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -96,12 +95,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'save', 'close'])
 
-const budgetStore = useBudgetStore()
-const { sections } = storeToRefs(budgetStore)
-
 const dialog = ref(props.modelValue)
 const valid = ref(false)
-const form = ref(null)
+const monthSections = ref([])
 
 const typeOptions = [
   { title: 'Income', value: 'INCOME' },
@@ -120,15 +116,25 @@ const formData = reactive({
 
 const isEditing = computed(() => !!props.transaction?.id)
 
-const availableSections = computed(() => {
-  return sections.value || []
-})
+const availableSections = computed(() => monthSections.value)
 
 const availableBudgetItems = computed(() => {
   if (!formData.sectionId) return []
-  const section = sections.value?.find(s => s.id === formData.sectionId)
+  const section = monthSections.value.find(s => s.id === formData.sectionId)
   return section?.items || []
 })
+
+async function loadSectionsForDate(dateStr) {
+  if (!dateStr) return
+  const [year, month] = dateStr.split('-').map(Number)
+  if (!year || !month) return
+  try {
+    const res = await budgetApi.getBudget(year, month, false)
+    monthSections.value = res.data?.sections || []
+  } catch {
+    monthSections.value = []
+  }
+}
 
 watch(() => props.modelValue, (val) => {
   dialog.value = val
@@ -139,6 +145,12 @@ watch(() => props.modelValue, (val) => {
 
 watch(dialog, (val) => {
   emit('update:modelValue', val)
+})
+
+watch(() => formData.transactionDate, (date) => {
+  formData.sectionId = null
+  formData.budgetItemId = null
+  loadSectionsForDate(date)
 })
 
 watch(() => formData.sectionId, () => {
@@ -154,6 +166,10 @@ function resetForm() {
     formData.note = props.transaction.note
     formData.sectionId = props.transaction.sectionId
     formData.budgetItemId = props.transaction.budgetItemId
+    loadSectionsForDate(props.transaction.transactionDate).then(() => {
+      formData.sectionId = props.transaction.sectionId
+      formData.budgetItemId = props.transaction.budgetItemId
+    })
   } else {
     formData.type = 'EXPENSE'
     formData.transactionDate = new Date().toISOString().split('T')[0]

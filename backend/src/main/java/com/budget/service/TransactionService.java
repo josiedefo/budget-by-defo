@@ -191,19 +191,6 @@ public class TransactionService {
                     continue; // Skip rows without date
                 }
 
-                // Parse type (default to EXPENSE if not mapped or invalid)
-                Integer typeCol = request.getColumnMapping().get("type");
-                if (typeCol != null && typeCol < row.size()) {
-                    String typeStr = row.get(typeCol).trim().toUpperCase();
-                    if (typeStr.contains("INCOME") || typeStr.contains("CREDIT") || typeStr.contains("DEPOSIT")) {
-                        transaction.setType(TransactionType.INCOME);
-                    } else {
-                        transaction.setType(TransactionType.EXPENSE);
-                    }
-                } else {
-                    transaction.setType(TransactionType.EXPENSE);
-                }
-
                 // Parse merchant
                 Integer merchantCol = request.getColumnMapping().get("merchant");
                 if (merchantCol != null && merchantCol < row.size()) {
@@ -212,7 +199,7 @@ public class TransactionService {
                     transaction.setMerchant("Unknown");
                 }
 
-                // Parse amount
+                // Parse amount; positive = INCOME, negative = EXPENSE
                 Integer amountCol = request.getColumnMapping().get("amount");
                 if (amountCol != null && amountCol < row.size()) {
                     String amountStr = row.get(amountCol).trim()
@@ -220,8 +207,9 @@ public class TransactionService {
                         .replace(",", "")
                         .replace("(", "-")
                         .replace(")", "");
-                    BigDecimal amount = new BigDecimal(amountStr).abs();
-                    transaction.setAmount(amount);
+                    BigDecimal rawAmount = new BigDecimal(amountStr);
+                    transaction.setAmount(rawAmount.abs());
+                    transaction.setType(rawAmount.signum() >= 0 ? TransactionType.INCOME : TransactionType.EXPENSE);
                 } else {
                     continue; // Skip rows without amount
                 }
