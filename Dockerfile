@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build backend
-FROM maven:3.9-eclipse-temurin-17 AS backend-build
+FROM maven:3.9-eclipse-temurin-25 AS backend-build
 WORKDIR /app/backend
 
 COPY backend/pom.xml ./
@@ -19,7 +19,7 @@ COPY --from=frontend-build /app/frontend/dist ./src/main/resources/static
 RUN mvn clean package -DskipTests
 
 # Stage 3: Runtime
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

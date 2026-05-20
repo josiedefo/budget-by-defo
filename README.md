@@ -53,12 +53,12 @@ A personal budget tracking application to manage your finances month by month.
 | Layer | Technology |
 |-------|------------|
 | Frontend | Vue 3, Vuetify 3, Pinia, Vue Router |
-| Backend | Java 17, Spring Boot 3.2, Spring Data JPA |
+| Backend | Java 25, Spring Boot 3.5, Spring Data JPA |
 | Database | PostgreSQL 17 |
 
 ## Prerequisites
 
-- Java 17 or higher
+- Java 25 or higher
 - Node.js 18 or higher
 - Docker and Docker Compose
 

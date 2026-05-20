@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(mvn clean *)",
+      "Bash(java -version)",
+      "Bash(mvn -version)",
+      "Bash(ls \"C:\\\\Users\\\\sjgae\\\\.m2\\\\repository\\\\org\\\\projectlombok\\\\lombok\\\\\" 2>&1)",
+      "Read(//c/Users/sjgae/.m2/repository/org/projectlombok/**)",
+      "Bash(mvn dependency:get -Dartifact=org.springframework.boot:spring-boot-starter-parent:3.6.0:pom)",
+      "Bash(docker pull *)",
+      "Bash(wait)"
     ]
   }
 }
