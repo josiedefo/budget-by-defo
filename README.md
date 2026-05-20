@@ -145,30 +145,16 @@ Internet → AWS App Runner (Docker container)
 
 ### Build and Deploy
 
-```bash
-# Set variables
-AWS_REGION=us-east-1
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-ECR_REPO=budget-by-defo
+Use the included PowerShell script (requires AWS CLI and Docker):
 
-# Authenticate with ECR
-aws ecr get-login-password --region $AWS_REGION \
-  | docker login --username AWS --password-stdin \
-    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-# Build, tag, and push
-docker build -t $ECR_REPO .
-docker tag $ECR_REPO:latest \
-  $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
-docker push \
-  $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
-
-# Trigger redeployment
-SERVICE_ARN=$(aws apprunner list-services --region $AWS_REGION \
-  --query "ServiceSummaryList[?ServiceName=='budget-by-defo'].ServiceArn" \
-  --output text)
-aws apprunner start-deployment --service-arn $SERVICE_ARN --region $AWS_REGION
+```powershell
+.\deploy.ps1                      # deploys to us-east-1 (default)
+.\deploy.ps1 -Region us-west-2    # override region
 ```
+
+Or type `/deploy` in Claude Code for a guided one-click deployment.
+
+The script handles ECR authentication, Docker build & push, and triggers the App Runner redeployment automatically.
 
 ### App Runner Environment Variables
 

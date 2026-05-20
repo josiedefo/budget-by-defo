@@ -24,9 +24,14 @@ $ECR_URI = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 $IMAGE_URI = "$ECR_URI/${ECR_REPO}:latest"
 
 # ── 2. Authenticate Docker with ECR ────────────────────────────────────────
+# Note: --password is used instead of --password-stdin because Docker Desktop's
+# Windows credential helper (credsStore: desktop) does not handle piped stdin
+# correctly and returns 400. The security warning from Docker is expected.
 Write-Step "Authenticating Docker with ECR..."
-aws ecr get-login-password --region $AWS_REGION |
-    docker login --username AWS --password-stdin $ECR_URI
+$loginPassword = aws ecr get-login-password --region $AWS_REGION
+if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to get ECR login password"; exit 1 }
+docker login --username AWS --password $loginPassword $ECR_URI
+if ($LASTEXITCODE -ne 0) { Write-Fail "Docker ECR login failed"; exit 1 }
 Write-OK "Docker authenticated with ECR"
 
 # ── 3. Build Docker image ───────────────────────────────────────────────────
@@ -42,10 +47,11 @@ Write-OK "Pushed: $IMAGE_URI"
 
 # ── 5. Trigger App Runner redeployment ─────────────────────────────────────
 Write-Step "Triggering App Runner redeployment..."
+$APP_RUNNER_SERVICE = "$ECR_REPO-service"
 $SERVICE_ARN = aws apprunner list-services --region $AWS_REGION `
-    --query "ServiceSummaryList[?ServiceName=='$ECR_REPO'].ServiceArn" `
+    --query "ServiceSummaryList[?ServiceName=='$APP_RUNNER_SERVICE'].ServiceArn" `
     --output text
-if (-not $SERVICE_ARN) { Write-Fail "Could not find App Runner service '$ECR_REPO' in $AWS_REGION"; exit 1 }
+if (-not $SERVICE_ARN) { Write-Fail "Could not find App Runner service '$APP_RUNNER_SERVICE' in $AWS_REGION"; exit 1 }
 aws apprunner start-deployment --service-arn $SERVICE_ARN --region $AWS_REGION | Out-Null
 Write-OK "Deployment triggered for service: $SERVICE_ARN"
 
