@@ -117,7 +117,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="transaction in transactions" :key="transaction.id">
+            <tr
+              v-for="transaction in transactions"
+              :key="transaction.id"
+              class="transaction-row"
+              :title="'View in budget for ' + formatDate(transaction.transactionDate)"
+              @click="viewBudget(transaction)"
+            >
               <td>{{ formatDate(transaction.transactionDate) }}</td>
               <td>
                 <v-chip
@@ -132,6 +138,7 @@
                 <span v-if="transaction.sectionName">{{ transaction.sectionName }}</span>
                 <span v-if="transaction.budgetItemName"> / {{ transaction.budgetItemName }}</span>
                 <span v-if="!transaction.sectionName && !transaction.budgetItemName" class="text-grey">-</span>
+                <v-icon v-if="transaction.budgetItemId" size="x-small" class="ml-1 text-medium-emphasis">mdi-open-in-new</v-icon>
               </td>
               <td class="text-right">
                 <span :class="transaction.type === 'INCOME' ? 'text-success' : 'text-error'">
@@ -140,8 +147,8 @@
               </td>
               <td class="text-truncate" style="max-width: 200px;">{{ transaction.note }}</td>
               <td class="text-center">
-                <v-btn icon="mdi-pencil" variant="text" size="small" @click="openEditDialog(transaction)"></v-btn>
-                <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="confirmDelete(transaction)"></v-btn>
+                <v-btn icon="mdi-pencil" variant="text" size="small" @click.stop="openEditDialog(transaction)"></v-btn>
+                <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click.stop="confirmDelete(transaction)"></v-btn>
               </td>
             </tr>
           </tbody>
@@ -306,6 +313,14 @@ function handleImportComplete() {
   transactionStore.fetchTransactions()
 }
 
+function viewBudget(transaction) {
+  const parts = transaction.transactionDate.split('-')
+  const year = Number(parts[0])
+  const month = Number(parts[1])
+  const query = transaction.budgetItemId ? { highlightItemId: transaction.budgetItemId } : {}
+  router.push({ name: 'monthly', params: { year, month }, query })
+}
+
 onMounted(async () => {
   // Load current month's budget to populate section/budget item dropdowns
   const now = new Date()
@@ -331,3 +346,13 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.transaction-row {
+  cursor: pointer;
+}
+
+.transaction-row:hover {
+  background-color: rgba(var(--v-theme-primary), 0.06);
+}
+</style>

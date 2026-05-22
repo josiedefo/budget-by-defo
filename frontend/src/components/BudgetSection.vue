@@ -33,7 +33,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in section.items" :key="item.id" :class="{ 'excluded-item': item.isExcludedFromBudget }">
+        <tr
+          v-for="item in section.items"
+          :key="item.id"
+          :ref="el => setItemRef(el, item.id)"
+          :class="{
+            'excluded-item': item.isExcludedFromBudget,
+            'highlight-pulse': item.id === highlightItemId
+          }"
+        >
           <td>
             <v-checkbox
               :model-value="!item.isExcludedFromBudget"
@@ -110,7 +118,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -120,7 +128,23 @@ const props = defineProps({
   totalPlannedIncome: { type: Number, default: 0 },
   totalActualIncome: { type: Number, default: 0 },
   year: { type: Number, required: true },
-  month: { type: Number, required: true }
+  month: { type: Number, required: true },
+  highlightItemId: { type: Number, default: null }
+})
+
+// Map item id → element ref so we can scroll to it
+const itemRefs = ref({})
+function setItemRef(el, itemId) {
+  if (el) itemRefs.value[itemId] = el
+}
+
+watch(() => props.highlightItemId, async (id) => {
+  if (!id) return
+  const itemInSection = props.section.items.some(i => i.id === id)
+  if (!itemInSection) return
+  await nextTick()
+  const el = itemRefs.value[id]
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section', 'toggle-exclusion'])
@@ -266,5 +290,16 @@ function viewPlan(item) {
 
 .excluded-item td:first-child {
   text-decoration: none;
+}
+
+@keyframes highlight-pulse {
+  0%   { background-color: transparent; }
+  20%  { background-color: rgba(var(--v-theme-primary), 0.22); }
+  60%  { background-color: rgba(var(--v-theme-primary), 0.22); }
+  100% { background-color: transparent; }
+}
+
+.highlight-pulse {
+  animation: highlight-pulse 1.5s ease-in-out forwards;
 }
 </style>

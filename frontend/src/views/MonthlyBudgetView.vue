@@ -44,6 +44,7 @@
             :total-actual-income="totalActualIncome"
             :year="year"
             :month="month"
+            :highlight-item-id="highlightItemId"
             @add-item="openAddItemDialog(section.id)"
             @update-item="handleUpdateItem"
             @delete-item="handleDeleteItem"
@@ -76,7 +77,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBudgetStore } from '@/stores/budget'
 import MonthSelector from '@/components/MonthSelector.vue'
@@ -92,6 +93,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const route = useRoute()
 const budgetStore = useBudgetStore()
 const { currentBudget, sections, loading, error, totalPlannedIncome, totalActualIncome } = storeToRefs(budgetStore)
 
@@ -106,11 +108,20 @@ const showAddSection = ref(false)
 const showAddItem = ref(false)
 const showCopyDialog = ref(false)
 const selectedSectionId = ref(null)
+const highlightItemId = ref(null)
 
 const targetHasData = computed(() => (currentBudget.value?.sections?.length ?? 0) > 0)
 
 async function loadBudget() {
   await budgetStore.fetchBudget(props.year, props.month)
+
+  // Handle incoming highlight — set it after data loads, then clear after 1.5s
+  const id = route.query.highlightItemId ? Number(route.query.highlightItemId) : null
+  if (id) {
+    highlightItemId.value = id
+    router.replace({ query: {} })
+    setTimeout(() => { highlightItemId.value = null }, 1500)
+  }
 }
 
 function navigateToMonth({ year, month }) {

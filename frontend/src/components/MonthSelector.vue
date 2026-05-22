@@ -116,8 +116,8 @@ function goToToday() {
 }
 
 .year-select {
-  flex: 0 0 88px;
-  width: 88px;
+  flex: 0 0 105px;
+  width: 105px;
 }
 
 .today-btn {
@@ -131,8 +131,8 @@ function goToToday() {
   }
 
   .year-select {
-    flex: 0 0 80px;
-    width: 80px;
+    flex: 0 0 88px;
+    width: 88px;
   }
 }
 </style>

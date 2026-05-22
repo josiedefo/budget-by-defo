@@ -9,7 +9,14 @@
       "Read(//c/Users/sjgae/.m2/repository/org/projectlombok/**)",
       "Bash(mvn dependency:get -Dartifact=org.springframework.boot:spring-boot-starter-parent:3.6.0:pom)",
       "Bash(docker pull *)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "PowerShell(docker logout 762891556894.dkr.ecr.us-east-1.amazonaws.com 2>&1)",
+      "Bash(Get-ChildItem -Path \"c:\\\\josie\\\\tech\\\\workspace\\\\2026\\\\budget-by-defo\\\\frontend\\\\src\" -Recurse -Name)",
+      "Bash(xargs cat)",
+      "Bash(xargs ls -la)",
+      "Bash(npm run *)",
+      "PowerShell(.\\deploy.ps1*)",
+      "PowerShell(.\\\\deploy.ps1)"
     ]
   }
 }
