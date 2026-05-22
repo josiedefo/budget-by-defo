@@ -22,6 +22,10 @@ export const budgetApi = {
     return api.post('/budgets', null, {
       params: { year, month }
     })
+  },
+
+  copyBudget(targetYear, targetMonth, sourceYear, sourceMonth) {
+    return api.post(`/budgets/${targetYear}/${targetMonth}/copy`, { sourceYear, sourceMonth })
   }
 }
 

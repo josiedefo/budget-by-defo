@@ -268,6 +268,64 @@ public class BudgetService {
         return summary;
     }
 
+    @Transactional
+    public BudgetDTO copyBudget(Integer sourceYear, Integer sourceMonth,
+                                Integer targetYear, Integer targetMonth) {
+        // Guard: source and target cannot be the same month
+        if (sourceYear.equals(targetYear) && sourceMonth.equals(targetMonth)) {
+            throw new IllegalArgumentException("Source and target month cannot be the same");
+        }
+
+        // Load source budget — 404 if not found
+        Budget source = budgetRepository.findByYearAndMonthWithSectionsAndItems(sourceYear, sourceMonth)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "No budget found for " + sourceYear + "/" + sourceMonth));
+
+        // Resolve or create target budget
+        Budget target = budgetRepository.findByYearAndMonth(targetYear, targetMonth)
+                .orElseGet(() -> {
+                    Budget b = new Budget(targetYear, targetMonth);
+                    b.setSections(new LinkedHashSet<>());
+                    return budgetRepository.save(b);
+                });
+
+        // Clear existing target sections — orphanRemoval=true fires DELETEs before new INSERTs
+        if (!target.getSections().isEmpty()) {
+            target.getSections().clear();
+            budgetRepository.saveAndFlush(target);
+        }
+
+        // Copy each section and its items from source to target
+        for (Section srcSection : source.getSections()) {
+            Section newSection = new Section();
+            newSection.setName(srcSection.getName());
+            newSection.setDisplayOrder(srcSection.getDisplayOrder());
+            newSection.setIsIncome(srcSection.getIsIncome());
+            newSection.setBudget(target);
+            newSection.setItems(new LinkedHashSet<>());
+
+            // Items lazy-load safely within @Transactional via @BatchSize(25)
+            for (BudgetItem srcItem : srcSection.getItems()) {
+                BudgetItem newItem = new BudgetItem();
+                newItem.setName(srcItem.getName());
+                newItem.setDisplayOrder(srcItem.getDisplayOrder());
+                newItem.setPlannedAmount(srcItem.getPlannedAmount());
+                newItem.setActualAmount(BigDecimal.ZERO); // never copy actual amounts
+                newItem.setIsExcludedFromBudget(srcItem.getIsExcludedFromBudget());
+                newItem.setSection(newSection);
+                newSection.getItems().add(newItem);
+            }
+
+            target.getSections().add(newSection);
+        }
+
+        target = budgetRepository.save(target);
+        populateActualAmountsFromTransactions(target, targetYear, targetMonth);
+        BudgetDTO dto = BudgetDTO.fromEntity(target);
+        populatePlanIds(dto, targetYear, targetMonth);
+        return dto;
+    }
+
     @Transactional(readOnly = true)
     public Budget getBudgetEntity(Long id) {
         return budgetRepository.findById(id)

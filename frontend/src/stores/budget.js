@@ -156,6 +156,22 @@ export const useBudgetStore = defineStore('budget', () => {
     currentBudget.value.totalExpenses = actualExpenses
   }
 
+  async function copyBudget(targetYear, targetMonth, sourceYear, sourceMonth) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await budgetApi.copyBudget(targetYear, targetMonth, sourceYear, sourceMonth)
+      currentBudget.value = response.data
+      recalculateTotals()
+      return { success: true }
+    } catch (e) {
+      error.value = e.response?.data?.error || 'Failed to copy budget'
+      return { success: false }
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function toggleItemExclusion(sectionId, itemId, excluded) {
     try {
       const response = await itemApi.update(itemId, { isExcludedFromBudget: excluded })
@@ -192,6 +208,7 @@ export const useBudgetStore = defineStore('budget', () => {
     addItem,
     updateItem,
     deleteItem,
-    toggleItemExclusion
+    toggleItemExclusion,
+    copyBudget
   }
 })

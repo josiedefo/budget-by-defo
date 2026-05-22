@@ -1,8 +1,10 @@
 package com.budget.controller;
 
 import com.budget.dto.BudgetDTO;
+import com.budget.dto.CopyBudgetRequest;
 import com.budget.dto.YearlySummaryDTO;
 import com.budget.service.BudgetService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +46,16 @@ public class BudgetController {
             @RequestParam Integer year,
             @RequestParam Integer month) {
         BudgetDTO budget = budgetService.createBudget(year, month);
+        return ResponseEntity.ok(budget);
+    }
+
+    @PostMapping("/{year}/{month}/copy")
+    public ResponseEntity<BudgetDTO> copyBudget(
+            @PathVariable Integer year,
+            @PathVariable Integer month,
+            @Valid @RequestBody CopyBudgetRequest request) {
+        BudgetDTO budget = budgetService.copyBudget(
+                request.getSourceYear(), request.getSourceMonth(), year, month);
         return ResponseEntity.ok(budget);
     }
 }

@@ -23,7 +23,11 @@
 
       <v-row>
         <v-col cols="12">
-          <div class="d-flex justify-end mb-2">
+          <div class="d-flex justify-end mb-2 ga-2">
+            <v-btn variant="tonal" size="small" @click="showCopyDialog = true">
+              <v-icon start>mdi-content-copy</v-icon>
+              <span class="d-none d-sm-inline">Copy from...</span>
+            </v-btn>
             <v-btn color="primary" variant="tonal" size="small" @click="showAddSection = true">
               <v-icon start>mdi-plus</v-icon>
               <span class="d-none d-sm-inline">Add Section</span>
@@ -59,6 +63,14 @@
       v-model="showAddItem"
       @save="handleAddItem"
     />
+
+    <CopyBudgetDialog
+      v-model="showCopyDialog"
+      :target-year="year"
+      :target-month="month"
+      :target-has-data="targetHasData"
+      @save="handleCopyBudget"
+    />
   </v-container>
 </template>
 
@@ -72,6 +84,7 @@ import BudgetSummary from '@/components/BudgetSummary.vue'
 import BudgetSection from '@/components/BudgetSection.vue'
 import AddSectionDialog from '@/components/AddSectionDialog.vue'
 import AddItemDialog from '@/components/AddItemDialog.vue'
+import CopyBudgetDialog from '@/components/CopyBudgetDialog.vue'
 
 const props = defineProps({
   year: { type: Number, required: true },
@@ -91,7 +104,10 @@ const showStickyLabel = ref(false)
 
 const showAddSection = ref(false)
 const showAddItem = ref(false)
+const showCopyDialog = ref(false)
 const selectedSectionId = ref(null)
+
+const targetHasData = computed(() => (currentBudget.value?.sections?.length ?? 0) > 0)
 
 async function loadBudget() {
   await budgetStore.fetchBudget(props.year, props.month)
@@ -130,6 +146,12 @@ async function handleDeleteSection(sectionId) {
 
 async function handleToggleExclusion({ sectionId, itemId, excluded }) {
   await budgetStore.toggleItemExclusion(sectionId, itemId, excluded)
+}
+
+async function handleCopyBudget({ sourceYear, sourceMonth }) {
+  const result = await budgetStore.copyBudget(props.year, props.month, sourceYear, sourceMonth)
+  if (result.success) showCopyDialog.value = false
+  // On failure: dialog stays open; budgetStore.error is shown inside the dialog
 }
 
 let observer = null
