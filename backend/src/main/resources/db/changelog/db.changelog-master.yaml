@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/014-create-savings-account-event-table.yaml
   - include:
       file: db/changelog/015-add-transaction-ref-to-savings-account-event.yaml
+  - include:
+      file: db/changelog/016-add-index-to-savings-event-transaction-ref.yaml

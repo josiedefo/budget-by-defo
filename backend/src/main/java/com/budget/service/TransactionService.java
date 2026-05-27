@@ -7,12 +7,14 @@ import com.budget.dto.UpdateTransactionRequest;
 import com.budget.model.Budget;
 import com.budget.model.BudgetItem;
 import com.budget.model.SavingsAccountEvent;
+import com.budget.model.SavingsEvent;
 import com.budget.model.Section;
 import com.budget.model.Transaction;
 import com.budget.model.TransactionType;
 import com.budget.repository.BudgetItemRepository;
 import com.budget.repository.BudgetRepository;
 import com.budget.repository.SavingsAccountEventRepository;
+import com.budget.repository.SavingsEventRepository;
 import com.budget.repository.SectionRepository;
 import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -45,6 +47,7 @@ public class TransactionService {
     private final BudgetItemRepository budgetItemRepository;
     private final BudgetRepository budgetRepository;
     private final SavingsAccountEventRepository savingsAccountEventRepository;
+    private final SavingsEventRepository savingsEventRepository;
 
     @Transactional(readOnly = true)
     public Page<TransactionDTO> getTransactions(
@@ -86,20 +89,33 @@ public class TransactionService {
             .map(TransactionDTO::fromEntity)
             .collect(Collectors.toList());
 
-        // Bulk-populate linked savings account info (one query for the whole page)
+        // Bulk-populate linked savings account + fund info (one query each for the whole page)
         if (!dtos.isEmpty()) {
             List<Long> transactionIds = dtos.stream().map(TransactionDTO::getId).collect(Collectors.toList());
-            Map<Long, SavingsAccountEvent> linkedEvents = savingsAccountEventRepository
+
+            Map<Long, SavingsAccountEvent> linkedAccountEvents = savingsAccountEventRepository
                 .findByTransactionIdIn(transactionIds)
                 .stream()
                 .collect(Collectors.toMap(e -> e.getTransaction().getId(), e -> e));
+            Map<Long, SavingsEvent> linkedFundEvents = savingsEventRepository
+                .findByTransactionRefIn(transactionIds)
+                .stream()
+                .collect(Collectors.toMap(SavingsEvent::getTransactionRef, e -> e));
+
             for (TransactionDTO dto : dtos) {
-                SavingsAccountEvent event = linkedEvents.get(dto.getId());
-                if (event != null) {
-                    dto.setLinkedSavingsAccountEventId(event.getId());
-                    dto.setLinkedSavingsAccountId(event.getAccount().getId());
-                    dto.setLinkedSavingsAccountName(event.getAccount().getName());
-                    dto.setLinkedSavingsEventType(event.getEventType());
+                SavingsAccountEvent accountEvent = linkedAccountEvents.get(dto.getId());
+                if (accountEvent != null) {
+                    dto.setLinkedSavingsAccountEventId(accountEvent.getId());
+                    dto.setLinkedSavingsAccountId(accountEvent.getAccount().getId());
+                    dto.setLinkedSavingsAccountName(accountEvent.getAccount().getName());
+                    dto.setLinkedSavingsEventType(accountEvent.getEventType());
+                }
+                SavingsEvent fundEvent = linkedFundEvents.get(dto.getId());
+                if (fundEvent != null) {
+                    dto.setLinkedSavingsFundEventId(fundEvent.getId());
+                    dto.setLinkedSavingsFundId(fundEvent.getFund().getId());
+                    dto.setLinkedSavingsFundName(fundEvent.getFund().getName());
+                    dto.setLinkedSavingsFundEventType(fundEvent.getEventType());
                 }
             }
         }
@@ -117,6 +133,12 @@ public class TransactionService {
             dto.setLinkedSavingsAccountId(event.getAccount().getId());
             dto.setLinkedSavingsAccountName(event.getAccount().getName());
             dto.setLinkedSavingsEventType(event.getEventType());
+        });
+        savingsEventRepository.findByTransactionRef(id).ifPresent(event -> {
+            dto.setLinkedSavingsFundEventId(event.getId());
+            dto.setLinkedSavingsFundId(event.getFund().getId());
+            dto.setLinkedSavingsFundName(event.getFund().getName());
+            dto.setLinkedSavingsFundEventType(event.getEventType());
         });
         return dto;
     }

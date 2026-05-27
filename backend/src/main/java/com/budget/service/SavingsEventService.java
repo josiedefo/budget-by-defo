@@ -1,5 +1,6 @@
 package com.budget.service;
 
+import com.budget.dto.LinkTransactionToFundRequest;
 import com.budget.dto.LogDepositRequest;
 import com.budget.dto.LogWithdrawalRequest;
 import com.budget.dto.ReallocateRequest;
@@ -9,9 +10,11 @@ import com.budget.model.FundGoalType;
 import com.budget.model.SavingsEvent;
 import com.budget.model.SavingsEventType;
 import com.budget.model.SavingsFund;
+import com.budget.model.Transaction;
 import com.budget.repository.SavingsAccountRepository;
 import com.budget.repository.SavingsEventRepository;
 import com.budget.repository.SavingsFundRepository;
+import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ public class SavingsEventService {
     private final SavingsAccountRepository savingsAccountRepository;
     private final SavingsEventRepository savingsEventRepository;
     private final SavingsFundService savingsFundService;
+    private final TransactionRepository transactionRepository;
 
     public List<SavingsEventDTO> getEventsForFund(Long fundId) {
         return savingsEventRepository.findByFundIdOrderByDateDesc(fundId)
@@ -222,6 +226,47 @@ public class SavingsEventService {
 
         savingsFundRepository.save(fund);
         savingsEventRepository.delete(event);
+    }
+
+    @Transactional
+    public SavingsEventDTO linkTransactionToFund(LinkTransactionToFundRequest request) {
+        Transaction transaction = transactionRepository.findById(request.getTransactionId())
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + request.getTransactionId()));
+
+        if (savingsEventRepository.findByTransactionRef(request.getTransactionId()).isPresent()) {
+            throw new IllegalStateException("This transaction is already linked to a savings fund event");
+        }
+
+        SavingsFund fund = savingsFundRepository.findById(request.getFundId())
+                .orElseThrow(() -> new EntityNotFoundException("Fund not found: " + request.getFundId()));
+
+        BigDecimal amount = transaction.getAmount();
+        SavingsEventType eventType = request.getEventType();
+
+        if (eventType == SavingsEventType.WITHDRAWAL && fund.getBalance().compareTo(amount) < 0) {
+            throw new IllegalStateException("Insufficient fund balance for withdrawal");
+        }
+
+        BigDecimal newBalance = eventType == SavingsEventType.DEPOSIT_ALLOCATED
+                ? fund.getBalance().add(amount)
+                : fund.getBalance().subtract(amount);
+        fund.setBalance(newBalance);
+        savingsFundRepository.save(fund);
+
+        String note = (request.getNote() != null && !request.getNote().isBlank())
+                ? request.getNote()
+                : transaction.getMerchant();
+
+        SavingsEvent event = new SavingsEvent();
+        event.setFund(fund);
+        event.setEventType(eventType);
+        event.setAmount(amount);
+        event.setEventDate(transaction.getTransactionDate());
+        event.setNote(note);
+        event.setTransactionRef(transaction.getId());
+        event = savingsEventRepository.save(event);
+
+        return SavingsEventDTO.fromEntity(event);
     }
 
     private SavingsEvent buildEvent(SavingsFund fund, SavingsEventType type,

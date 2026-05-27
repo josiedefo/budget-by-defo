@@ -149,11 +149,11 @@
               <td class="text-center">
                 <v-btn icon="mdi-pencil" variant="text" size="small" @click.stop="openEditDialog(transaction)"></v-btn>
                 <v-btn
-                  :icon="transaction.linkedSavingsAccountEventId ? 'mdi-bank' : 'mdi-bank-outline'"
+                  :icon="(transaction.linkedSavingsAccountEventId || transaction.linkedSavingsFundEventId) ? 'mdi-bank' : 'mdi-bank-outline'"
                   variant="text"
                   size="small"
-                  :color="transaction.linkedSavingsAccountEventId ? 'teal' : undefined"
-                  :title="transaction.linkedSavingsAccountEventId ? 'Linked to ' + transaction.linkedSavingsAccountName : 'Link to savings account'"
+                  :color="(transaction.linkedSavingsAccountEventId || transaction.linkedSavingsFundEventId) ? 'teal' : undefined"
+                  :title="(transaction.linkedSavingsAccountEventId || transaction.linkedSavingsFundEventId) ? 'Savings linked' : 'Link to savings'"
                   @click.stop="openSavingsLinkDialog(transaction)"
                 ></v-btn>
                 <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click.stop="confirmDelete(transaction)"></v-btn>
@@ -338,22 +338,40 @@ function openSavingsLinkDialog(transaction) {
   showSavingsLinkDialog.value = true
 }
 
-function handleLinked(eventDto) {
-  updateLinkedSavings(linkingTransaction.value.id, {
-    linkedSavingsAccountEventId: eventDto.id,
-    linkedSavingsAccountId: eventDto.accountId,
-    linkedSavingsAccountName: eventDto.accountName,
-    linkedSavingsEventType: eventDto.eventType
-  })
+function handleLinked({ type, eventDto }) {
+  if (type === 'account') {
+    updateLinkedSavings(linkingTransaction.value.id, {
+      linkedSavingsAccountEventId: eventDto.id,
+      linkedSavingsAccountId: eventDto.accountId,
+      linkedSavingsAccountName: eventDto.accountName,
+      linkedSavingsEventType: eventDto.eventType
+    })
+  } else if (type === 'fund') {
+    updateLinkedSavings(linkingTransaction.value.id, {
+      linkedSavingsFundEventId: eventDto.id,
+      linkedSavingsFundId: eventDto.fundId,
+      linkedSavingsFundName: eventDto.fundName,
+      linkedSavingsFundEventType: eventDto.eventType
+    })
+  }
 }
 
-function handleUnlinked() {
-  updateLinkedSavings(linkingTransaction.value.id, {
-    linkedSavingsAccountEventId: null,
-    linkedSavingsAccountId: null,
-    linkedSavingsAccountName: null,
-    linkedSavingsEventType: null
-  })
+function handleUnlinked({ type }) {
+  if (type === 'account') {
+    updateLinkedSavings(linkingTransaction.value.id, {
+      linkedSavingsAccountEventId: null,
+      linkedSavingsAccountId: null,
+      linkedSavingsAccountName: null,
+      linkedSavingsEventType: null
+    })
+  } else if (type === 'fund') {
+    updateLinkedSavings(linkingTransaction.value.id, {
+      linkedSavingsFundEventId: null,
+      linkedSavingsFundId: null,
+      linkedSavingsFundName: null,
+      linkedSavingsFundEventType: null
+    })
+  }
 }
 
 function viewBudget(transaction) {

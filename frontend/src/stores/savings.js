@@ -397,6 +397,50 @@ export const useSavingsStore = defineStore('savings', () => {
     }
   }
 
+  async function linkTransactionToFund(data) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await savingsApi.linkTransactionToFund(data)
+      const eventDto = response.data
+      // Optimistically update the fund balance in the store
+      const fIdx = funds.value.findIndex(f => f.id === data.fundId)
+      if (fIdx !== -1) {
+        const current = parseFloat(funds.value[fIdx].balance)
+        const amt = parseFloat(data.amount || eventDto.amount)
+        const updated = eventDto.eventType === 'DEPOSIT_ALLOCATED' ? current + amt : current - amt
+        funds.value[fIdx] = { ...funds.value[fIdx], balance: updated }
+      }
+      return eventDto
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to link transaction to savings fund'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function unlinkTransactionFromFund(eventId, fundId, amount, eventType) {
+    loading.value = true
+    error.value = null
+    try {
+      await savingsApi.deleteEvent(eventId)
+      // Optimistically reverse the fund balance change
+      const fIdx = funds.value.findIndex(f => f.id === fundId)
+      if (fIdx !== -1) {
+        const current = parseFloat(funds.value[fIdx].balance)
+        const amt = parseFloat(amount)
+        const updated = eventType === 'DEPOSIT_ALLOCATED' ? current - amt : current + amt
+        funds.value[fIdx] = { ...funds.value[fIdx], balance: updated }
+      }
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to unlink transaction from savings fund'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchEventsForAccount(accountId) {
     loading.value = true
     error.value = null
@@ -447,6 +491,8 @@ export const useSavingsStore = defineStore('savings', () => {
     updateEvent,
     deleteEvent,
     linkTransactionToAccount,
-    unlinkTransactionEvent
+    unlinkTransactionEvent,
+    linkTransactionToFund,
+    unlinkTransactionFromFund
   }
 })

@@ -183,7 +183,8 @@ export const savingsApi = {
   reallocate(data) { return api.post('/savings/events/reallocate', data) },
   processPayout(fundId) { return api.post(`/savings/events/payout/${fundId}`) },
   updateEvent(id, data) { return api.put(`/savings/events/${id}`, data) },
-  deleteEvent(id) { return api.delete(`/savings/events/${id}`) }
+  deleteEvent(id) { return api.delete(`/savings/events/${id}`) },
+  linkTransactionToFund(data) { return api.post('/savings/events/link-transaction', data) }
 }
 
 export default api

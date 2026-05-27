@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 18
+      author: budget-app
+      comment: Add index on savings_event.transaction_ref for efficient lookup by linked transaction
+      changes:
+        - createIndex:
+            indexName: idx_se_transaction_ref
+            tableName: savings_event
+            columns:
+              - column:
+                  name: transaction_ref

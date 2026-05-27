@@ -1,9 +1,9 @@
 <template>
-  <v-dialog :model-value="modelValue" max-width="460" persistent @update:model-value="$emit('update:modelValue', $event)">
+  <v-dialog :model-value="modelValue" max-width="500" persistent @update:model-value="$emit('update:modelValue', $event)">
     <v-card>
       <v-card-title class="text-h6 pt-4 px-4">
         <v-icon start color="teal">mdi-bank</v-icon>
-        {{ isLinked ? 'Savings Account Link' : 'Link to Savings Account' }}
+        Savings Links
       </v-card-title>
 
       <v-card-text class="px-4">
@@ -25,77 +25,158 @@
           </div>
         </v-sheet>
 
-        <!-- Already linked state -->
-        <template v-if="isLinked">
-          <v-alert type="success" variant="tonal" density="compact" icon="mdi-check-circle">
+        <!-- ── Savings Account Section ── -->
+        <div class="text-subtitle-2 text-medium-emphasis mb-2">
+          <v-icon size="small" class="mr-1">mdi-bank-outline</v-icon>
+          Savings Account
+        </div>
+
+        <!-- Account: linked state -->
+        <template v-if="isAccountLinked">
+          <v-alert type="success" variant="tonal" density="compact" icon="mdi-check-circle" class="mb-2">
             Linked to <strong>{{ transaction.linkedSavingsAccountName }}</strong>
             as a <strong>{{ transaction.linkedSavingsEventType }}</strong>
           </v-alert>
-          <p class="text-body-2 text-medium-emphasis mt-3">
-            Unlinking will reverse the {{ transaction.linkedSavingsEventType === 'DEPOSIT' ? 'deposit' : 'withdrawal' }}
-            of {{ formatCurrency(transaction?.amount) }} from this account.
-          </p>
+          <div class="d-flex justify-end mb-1">
+            <v-btn
+              color="error"
+              variant="text"
+              size="small"
+              :loading="unlinkingAccount"
+              @click="unlinkAccount"
+            >
+              <v-icon start size="small">mdi-link-off</v-icon>
+              Unlink Account
+            </v-btn>
+          </div>
         </template>
 
-        <!-- Unlinked state: form -->
+        <!-- Account: unlinked form -->
         <template v-else>
           <v-select
             v-model="selectedAccountId"
             :items="savingsStore.accounts"
             item-title="name"
             item-value="id"
-            label="Savings Account *"
+            label="Savings Account"
             variant="outlined"
             density="comfortable"
             :loading="savingsStore.loading && savingsStore.accounts.length === 0"
             no-data-text="No savings accounts found"
-            class="mb-3"
+            clearable
+            class="mb-2"
           />
-
-          <div class="mb-3">
-            <p class="text-body-2 text-medium-emphasis mb-2">Event Type *</p>
-            <v-btn-toggle v-model="eventType" mandatory color="teal" density="comfortable" rounded="lg">
-              <v-btn value="DEPOSIT" prepend-icon="mdi-arrow-down-circle-outline">Deposit</v-btn>
-              <v-btn value="WITHDRAWAL" prepend-icon="mdi-arrow-up-circle-outline">Withdrawal</v-btn>
+          <div class="d-flex align-center gap-2 mb-2">
+            <v-btn-toggle v-model="accountEventType" mandatory color="teal" density="comfortable" rounded="lg">
+              <v-btn value="DEPOSIT" prepend-icon="mdi-arrow-down-circle-outline" size="small">Deposit</v-btn>
+              <v-btn value="WITHDRAWAL" prepend-icon="mdi-arrow-up-circle-outline" size="small">Withdrawal</v-btn>
             </v-btn-toggle>
+            <v-spacer />
+            <v-btn
+              color="teal"
+              variant="tonal"
+              size="small"
+              :disabled="!selectedAccountId || linkingAccount"
+              :loading="linkingAccount"
+              @click="linkAccount"
+            >
+              <v-icon start size="small">mdi-link</v-icon>
+              Link
+            </v-btn>
           </div>
-
           <v-text-field
-            v-model="note"
+            v-model="accountNote"
             label="Note (optional)"
             variant="outlined"
-            density="comfortable"
+            density="compact"
             :placeholder="transaction?.merchant"
+            class="mb-1"
           />
         </template>
 
-        <v-alert v-if="linkError" type="error" variant="tonal" density="compact" class="mt-2">
-          {{ linkError }}
+        <v-alert v-if="accountError" type="error" variant="tonal" density="compact" class="mb-2">
+          {{ accountError }}
+        </v-alert>
+
+        <v-divider class="my-4" />
+
+        <!-- ── Savings Fund Section ── -->
+        <div class="text-subtitle-2 text-medium-emphasis mb-2">
+          <v-icon size="small" class="mr-1">mdi-piggy-bank-outline</v-icon>
+          Savings Fund
+        </div>
+
+        <!-- Fund: linked state -->
+        <template v-if="isFundLinked">
+          <v-alert type="success" variant="tonal" density="compact" icon="mdi-check-circle" class="mb-2">
+            Linked to <strong>{{ transaction.linkedSavingsFundName }}</strong>
+            as a <strong>{{ fundEventTypeLabel(transaction.linkedSavingsFundEventType) }}</strong>
+          </v-alert>
+          <div class="d-flex justify-end mb-1">
+            <v-btn
+              color="error"
+              variant="text"
+              size="small"
+              :loading="unlinkingFund"
+              @click="unlinkFund"
+            >
+              <v-icon start size="small">mdi-link-off</v-icon>
+              Unlink Fund
+            </v-btn>
+          </div>
+        </template>
+
+        <!-- Fund: unlinked form -->
+        <template v-else>
+          <v-select
+            v-model="selectedFundId"
+            :items="savingsStore.userFunds"
+            item-title="name"
+            item-value="id"
+            label="Savings Fund"
+            variant="outlined"
+            density="comfortable"
+            :loading="savingsStore.loading && savingsStore.funds.length === 0"
+            no-data-text="No savings funds found"
+            clearable
+            class="mb-2"
+          />
+          <div class="d-flex align-center gap-2 mb-2">
+            <v-btn-toggle v-model="fundEventType" mandatory color="teal" density="comfortable" rounded="lg">
+              <v-btn value="DEPOSIT_ALLOCATED" prepend-icon="mdi-arrow-down-circle-outline" size="small">Deposit</v-btn>
+              <v-btn value="WITHDRAWAL" prepend-icon="mdi-arrow-up-circle-outline" size="small">Withdrawal</v-btn>
+            </v-btn-toggle>
+            <v-spacer />
+            <v-btn
+              color="teal"
+              variant="tonal"
+              size="small"
+              :disabled="!selectedFundId || linkingFund"
+              :loading="linkingFund"
+              @click="linkFund"
+            >
+              <v-icon start size="small">mdi-link</v-icon>
+              Link
+            </v-btn>
+          </div>
+          <v-text-field
+            v-model="fundNote"
+            label="Note (optional)"
+            variant="outlined"
+            density="compact"
+            :placeholder="transaction?.merchant"
+            class="mb-1"
+          />
+        </template>
+
+        <v-alert v-if="fundError" type="error" variant="tonal" density="compact" class="mb-2">
+          {{ fundError }}
         </v-alert>
       </v-card-text>
 
       <v-card-actions class="px-4 pb-4">
         <v-spacer />
-        <template v-if="isLinked">
-          <v-btn variant="text" @click="close">Close</v-btn>
-          <v-btn color="error" variant="tonal" :loading="linking" @click="unlink">
-            <v-icon start>mdi-link-off</v-icon>
-            Unlink
-          </v-btn>
-        </template>
-        <template v-else>
-          <v-btn variant="text" @click="close">Cancel</v-btn>
-          <v-btn
-            color="teal"
-            variant="tonal"
-            :disabled="!selectedAccountId || linking"
-            :loading="linking"
-            @click="link"
-          >
-            <v-icon start>mdi-link</v-icon>
-            Link
-          </v-btn>
-        </template>
+        <v-btn variant="text" @click="close">Close</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -114,26 +195,44 @@ const emit = defineEmits(['update:modelValue', 'linked', 'unlinked'])
 
 const savingsStore = useSavingsStore()
 
+// Account section state
 const selectedAccountId = ref(null)
-const eventType = ref('DEPOSIT')
-const note = ref('')
-const linking = ref(false)
-const linkError = ref(null)
+const accountEventType = ref('DEPOSIT')
+const accountNote = ref('')
+const linkingAccount = ref(false)
+const unlinkingAccount = ref(false)
+const accountError = ref(null)
 
-const isLinked = computed(() => !!props.transaction?.linkedSavingsAccountEventId)
+// Fund section state
+const selectedFundId = ref(null)
+const fundEventType = ref('DEPOSIT_ALLOCATED')
+const fundNote = ref('')
+const linkingFund = ref(false)
+const unlinkingFund = ref(false)
+const fundError = ref(null)
+
+const isAccountLinked = computed(() => !!props.transaction?.linkedSavingsAccountEventId)
+const isFundLinked = computed(() => !!props.transaction?.linkedSavingsFundEventId)
+
+function fundEventTypeLabel(type) {
+  return type === 'DEPOSIT_ALLOCATED' ? 'Deposit' : 'Withdrawal'
+}
 
 // Reset form state when dialog opens
 watch(() => props.modelValue, (open) => {
   if (open) {
-    linkError.value = null
-    note.value = ''
+    accountError.value = null
+    fundError.value = null
+    accountNote.value = ''
+    fundNote.value = ''
     selectedAccountId.value = null
-    // Default event type: EXPENSE transaction → DEPOSIT into savings, INCOME → WITHDRAWAL
-    eventType.value = props.transaction?.type === 'INCOME' ? 'WITHDRAWAL' : 'DEPOSIT'
-    // Ensure accounts are loaded
-    if (savingsStore.accounts.length === 0) {
-      savingsStore.fetchAccounts()
-    }
+    selectedFundId.value = null
+    // Default event types based on transaction type
+    accountEventType.value = props.transaction?.type === 'INCOME' ? 'WITHDRAWAL' : 'DEPOSIT'
+    fundEventType.value = props.transaction?.type === 'INCOME' ? 'WITHDRAWAL' : 'DEPOSIT_ALLOCATED'
+    // Ensure data is loaded
+    if (savingsStore.accounts.length === 0) savingsStore.fetchAccounts()
+    if (savingsStore.funds.length === 0) savingsStore.fetchFunds()
   }
 })
 
@@ -146,28 +245,29 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString()
 }
 
-async function link() {
+// ── Account actions ──
+
+async function linkAccount() {
   if (!selectedAccountId.value) return
-  linking.value = true
-  linkError.value = null
+  linkingAccount.value = true
+  accountError.value = null
   try {
     const eventDto = await savingsStore.linkTransactionToAccount(selectedAccountId.value, {
       transactionId: props.transaction.id,
-      eventType: eventType.value,
-      note: note.value || null
+      eventType: accountEventType.value,
+      note: accountNote.value || null
     })
-    emit('linked', eventDto)
-    close()
+    emit('linked', { type: 'account', eventDto })
   } catch (e) {
-    linkError.value = e.response?.data?.message || 'Failed to link transaction. Please try again.'
+    accountError.value = e.response?.data?.message || 'Failed to link transaction. Please try again.'
   } finally {
-    linking.value = false
+    linkingAccount.value = false
   }
 }
 
-async function unlink() {
-  linking.value = true
-  linkError.value = null
+async function unlinkAccount() {
+  unlinkingAccount.value = true
+  accountError.value = null
   try {
     await savingsStore.unlinkTransactionEvent(
       props.transaction.linkedSavingsAccountEventId,
@@ -175,12 +275,50 @@ async function unlink() {
       props.transaction.amount,
       props.transaction.linkedSavingsEventType
     )
-    emit('unlinked')
-    close()
+    emit('unlinked', { type: 'account' })
   } catch (e) {
-    linkError.value = e.response?.data?.message || 'Failed to unlink. Please try again.'
+    accountError.value = e.response?.data?.message || 'Failed to unlink. Please try again.'
   } finally {
-    linking.value = false
+    unlinkingAccount.value = false
+  }
+}
+
+// ── Fund actions ──
+
+async function linkFund() {
+  if (!selectedFundId.value) return
+  linkingFund.value = true
+  fundError.value = null
+  try {
+    const eventDto = await savingsStore.linkTransactionToFund({
+      transactionId: props.transaction.id,
+      fundId: selectedFundId.value,
+      eventType: fundEventType.value,
+      note: fundNote.value || null
+    })
+    emit('linked', { type: 'fund', eventDto })
+  } catch (e) {
+    fundError.value = e.response?.data?.message || 'Failed to link transaction. Please try again.'
+  } finally {
+    linkingFund.value = false
+  }
+}
+
+async function unlinkFund() {
+  unlinkingFund.value = true
+  fundError.value = null
+  try {
+    await savingsStore.unlinkTransactionFromFund(
+      props.transaction.linkedSavingsFundEventId,
+      props.transaction.linkedSavingsFundId,
+      props.transaction.amount,
+      props.transaction.linkedSavingsFundEventType
+    )
+    emit('unlinked', { type: 'fund' })
+  } catch (e) {
+    fundError.value = e.response?.data?.message || 'Failed to unlink. Please try again.'
+  } finally {
+    unlinkingFund.value = false
   }
 }
 

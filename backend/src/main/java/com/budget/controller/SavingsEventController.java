@@ -1,5 +1,6 @@
 package com.budget.controller;
 
+import com.budget.dto.LinkTransactionToFundRequest;
 import com.budget.dto.LogDepositRequest;
 import com.budget.dto.LogWithdrawalRequest;
 import com.budget.dto.ReallocateRequest;
@@ -50,6 +51,11 @@ public class SavingsEventController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateSavingsEventRequest request) {
         return savingsEventService.updateEvent(id, request);
+    }
+
+    @PostMapping("/link-transaction")
+    public SavingsEventDTO linkTransactionToFund(@Valid @RequestBody LinkTransactionToFundRequest request) {
+        return savingsEventService.linkTransactionToFund(request);
     }
 
     @DeleteMapping("/{id}")

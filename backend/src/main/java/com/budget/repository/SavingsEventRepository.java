@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface SavingsEventRepository extends JpaRepository<SavingsEvent, Long> {
 
@@ -18,4 +19,10 @@ public interface SavingsEventRepository extends JpaRepository<SavingsEvent, Long
            "WHERE e.fund.id = :fundId AND e.eventType = 'WITHDRAWAL' " +
            "AND YEAR(e.eventDate) = :year")
     BigDecimal sumWithdrawalsForFundInYear(@Param("fundId") Long fundId, @Param("year") int year);
+
+    @Query("SELECT e FROM SavingsEvent e JOIN FETCH e.fund WHERE e.transactionRef = :transactionRef")
+    Optional<SavingsEvent> findByTransactionRef(@Param("transactionRef") Long transactionRef);
+
+    @Query("SELECT e FROM SavingsEvent e JOIN FETCH e.fund WHERE e.transactionRef IN :transactionRefs")
+    List<SavingsEvent> findByTransactionRefIn(@Param("transactionRefs") List<Long> transactionRefs);
 }
