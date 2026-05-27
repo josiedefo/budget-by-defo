@@ -124,6 +124,13 @@ export const useTransactionStore = defineStore('transaction', () => {
     }
   }
 
+  function updateLinkedSavings(transactionId, linkedData) {
+    const idx = transactions.value.findIndex(t => t.id === transactionId)
+    if (idx !== -1) {
+      transactions.value[idx] = { ...transactions.value[idx], ...linkedData }
+    }
+  }
+
   return {
     transactions,
     loading,
@@ -137,6 +144,7 @@ export const useTransactionStore = defineStore('transaction', () => {
     clearFilters,
     createTransaction,
     updateTransaction,
-    deleteTransaction
+    deleteTransaction,
+    updateLinkedSavings
   }
 })

@@ -2,6 +2,7 @@ package com.budget.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import com.budget.model.Transaction;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -41,6 +42,11 @@ public class SavingsAccountEvent {
 
     @Column(columnDefinition = "TEXT")
     private String note;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transaction_id", nullable = true)
+    @JsonIgnore
+    private Transaction transaction;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

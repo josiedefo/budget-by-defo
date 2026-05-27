@@ -3,6 +3,7 @@ package com.budget.service;
 import com.budget.dto.AccountDepositRequest;
 import com.budget.dto.AccountWithdrawalRequest;
 import com.budget.dto.CreateSavingsAccountRequest;
+import com.budget.dto.LinkTransactionToAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
 import com.budget.dto.SavingsAccountEventDTO;
 import com.budget.dto.UpdateSavingsAccountEventRequest;
@@ -10,8 +11,10 @@ import com.budget.dto.UpdateSavingsAccountRequest;
 import com.budget.model.SavingsAccount;
 import com.budget.model.SavingsAccountEvent;
 import com.budget.model.SavingsAccountEventType;
+import com.budget.model.Transaction;
 import com.budget.repository.SavingsAccountEventRepository;
 import com.budget.repository.SavingsAccountRepository;
+import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ public class SavingsAccountService {
 
     private final SavingsAccountRepository savingsAccountRepository;
     private final SavingsAccountEventRepository savingsAccountEventRepository;
+    private final TransactionRepository transactionRepository;
 
     public List<SavingsAccountDTO> getAllAccounts() {
         List<SavingsAccount> accounts = savingsAccountRepository.findAllByIsActiveTrueOrderByNameAsc();
@@ -241,6 +245,50 @@ public class SavingsAccountService {
         event.setBalanceAfter(newBalance);
         event.setEventDate(request.getEventDate());
         event.setNote(request.getNote());
+        event = savingsAccountEventRepository.save(event);
+
+        return SavingsAccountEventDTO.fromEntity(event);
+    }
+
+    @Transactional
+    public SavingsAccountEventDTO linkTransactionToAccount(Long accountId, LinkTransactionToAccountRequest request) {
+        SavingsAccount account = savingsAccountRepository.findById(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Savings account not found: " + accountId));
+
+        Transaction transaction = transactionRepository.findById(request.getTransactionId())
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + request.getTransactionId()));
+
+        // Reject if transaction is already linked to any savings account event
+        if (savingsAccountEventRepository.findByTransactionId(request.getTransactionId()).isPresent()) {
+            throw new IllegalStateException("This transaction is already linked to a savings account event");
+        }
+
+        BigDecimal amount = transaction.getAmount();
+        SavingsAccountEventType eventType = request.getEventType();
+
+        if (eventType == SavingsAccountEventType.WITHDRAWAL && account.getBalance().compareTo(amount) < 0) {
+            throw new IllegalStateException("Insufficient account balance for withdrawal");
+        }
+
+        BigDecimal newBalance = eventType == SavingsAccountEventType.DEPOSIT
+                ? account.getBalance().add(amount)
+                : account.getBalance().subtract(amount);
+        account.setBalance(newBalance);
+        account.setAsOfDate(transaction.getTransactionDate());
+        account = savingsAccountRepository.save(account);
+
+        String note = (request.getNote() != null && !request.getNote().isBlank())
+                ? request.getNote()
+                : transaction.getMerchant();
+
+        SavingsAccountEvent event = new SavingsAccountEvent();
+        event.setAccount(account);
+        event.setEventType(eventType);
+        event.setAmount(amount);
+        event.setBalanceAfter(newBalance);
+        event.setEventDate(transaction.getTransactionDate());
+        event.setNote(note);
+        event.setTransaction(transaction);
         event = savingsAccountEventRepository.save(event);
 
         return SavingsAccountEventDTO.fromEntity(event);

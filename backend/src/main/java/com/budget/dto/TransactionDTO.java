@@ -1,5 +1,6 @@
 package com.budget.dto;
 
+import com.budget.model.SavingsAccountEventType;
 import com.budget.model.Transaction;
 import com.budget.model.TransactionType;
 import lombok.Data;
@@ -23,6 +24,12 @@ public class TransactionDTO {
     private BigDecimal amount;
     private String note;
     private LocalDateTime createdAt;
+
+    // Linked savings account event (populated separately, not from entity)
+    private Long linkedSavingsAccountEventId;
+    private Long linkedSavingsAccountId;
+    private String linkedSavingsAccountName;
+    private SavingsAccountEventType linkedSavingsEventType;
 
     public static TransactionDTO fromEntity(Transaction transaction) {
         TransactionDTO dto = new TransactionDTO();

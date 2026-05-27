@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface SavingsAccountEventRepository extends JpaRepository<SavingsAccountEvent, Long> {
 
@@ -20,4 +21,12 @@ public interface SavingsAccountEventRepository extends JpaRepository<SavingsAcco
 
     @Query("SELECT MAX(e.eventDate) FROM SavingsAccountEvent e WHERE e.account.id = :accountId")
     LocalDate findLatestEventDateByAccountId(@Param("accountId") Long accountId);
+
+    @Query("SELECT e FROM SavingsAccountEvent e JOIN FETCH e.account " +
+           "WHERE e.transaction.id = :transactionId")
+    Optional<SavingsAccountEvent> findByTransactionId(@Param("transactionId") Long transactionId);
+
+    @Query("SELECT e FROM SavingsAccountEvent e JOIN FETCH e.account " +
+           "WHERE e.transaction.id IN :transactionIds")
+    List<SavingsAccountEvent> findByTransactionIdIn(@Param("transactionIds") List<Long> transactionIds);
 }

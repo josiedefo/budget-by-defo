@@ -23,7 +23,9 @@
       "Bash(mvn clean spring-boot:run:*)",
       "Bash(docker volume prune:*)",
       "Bash(powershell:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "PowerShell(.\\\\deploy.ps1 2>&1)",
+      "PowerShell(powershell.exe -ExecutionPolicy Bypass -File \".\\\\deploy.ps1\")"
     ]
   }
 }

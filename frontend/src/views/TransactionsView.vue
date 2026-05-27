@@ -148,6 +148,14 @@
               <td class="text-truncate" style="max-width: 200px;">{{ transaction.note }}</td>
               <td class="text-center">
                 <v-btn icon="mdi-pencil" variant="text" size="small" @click.stop="openEditDialog(transaction)"></v-btn>
+                <v-btn
+                  :icon="transaction.linkedSavingsAccountEventId ? 'mdi-bank' : 'mdi-bank-outline'"
+                  variant="text"
+                  size="small"
+                  :color="transaction.linkedSavingsAccountEventId ? 'teal' : undefined"
+                  :title="transaction.linkedSavingsAccountEventId ? 'Linked to ' + transaction.linkedSavingsAccountName : 'Link to savings account'"
+                  @click.stop="openSavingsLinkDialog(transaction)"
+                ></v-btn>
                 <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click.stop="confirmDelete(transaction)"></v-btn>
               </td>
             </tr>
@@ -191,6 +199,14 @@
       v-model="showImportDialog"
       @imported="handleImportComplete"
     />
+
+    <!-- Savings Link Dialog -->
+    <SavingsLinkDialog
+      v-model="showSavingsLinkDialog"
+      :transaction="linkingTransaction"
+      @linked="handleLinked"
+      @unlinked="handleUnlinked"
+    />
   </v-container>
 </template>
 
@@ -202,11 +218,13 @@ import { useTransactionStore } from '@/stores/transaction'
 import { useBudgetStore } from '@/stores/budget'
 import TransactionDialog from '@/components/TransactionDialog.vue'
 import CsvImportDialog from '@/components/CsvImportDialog.vue'
+import SavingsLinkDialog from '@/components/SavingsLinkDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const transactionStore = useTransactionStore()
 const budgetStore = useBudgetStore()
+const { updateLinkedSavings } = transactionStore
 const { transactions, loading, error, hasMore, filters } = storeToRefs(transactionStore)
 const { loadMore } = transactionStore
 
@@ -225,8 +243,10 @@ function clearCategoryFilter() {
 const showDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showImportDialog = ref(false)
+const showSavingsLinkDialog = ref(false)
 const editingTransaction = ref(null)
 const deletingTransaction = ref(null)
+const linkingTransaction = ref(null)
 
 const typeOptions = [
   { title: 'Income', value: 'INCOME' },
@@ -311,6 +331,29 @@ async function handleDelete() {
 function handleImportComplete() {
   showImportDialog.value = false
   transactionStore.fetchTransactions()
+}
+
+function openSavingsLinkDialog(transaction) {
+  linkingTransaction.value = transaction
+  showSavingsLinkDialog.value = true
+}
+
+function handleLinked(eventDto) {
+  updateLinkedSavings(linkingTransaction.value.id, {
+    linkedSavingsAccountEventId: eventDto.id,
+    linkedSavingsAccountId: eventDto.accountId,
+    linkedSavingsAccountName: eventDto.accountName,
+    linkedSavingsEventType: eventDto.eventType
+  })
+}
+
+function handleUnlinked() {
+  updateLinkedSavings(linkingTransaction.value.id, {
+    linkedSavingsAccountEventId: null,
+    linkedSavingsAccountId: null,
+    linkedSavingsAccountName: null,
+    linkedSavingsEventType: null
+  })
 }
 
 function viewBudget(transaction) {

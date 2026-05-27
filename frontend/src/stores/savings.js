@@ -356,6 +356,47 @@ export const useSavingsStore = defineStore('savings', () => {
     }
   }
 
+  async function linkTransactionToAccount(accountId, data) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await savingsApi.linkTransaction(accountId, data)
+      const eventDto = response.data
+      // Optimistically update the account balance in the store
+      const aIdx = accounts.value.findIndex(a => a.id === accountId)
+      if (aIdx !== -1) {
+        accounts.value[aIdx] = { ...accounts.value[aIdx], balance: eventDto.balanceAfter }
+      }
+      return eventDto
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to link transaction to savings account'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function unlinkTransactionEvent(eventId, accountId, amount, eventType) {
+    loading.value = true
+    error.value = null
+    try {
+      await savingsApi.deleteAccountEvent(eventId)
+      // Optimistically reverse the account balance change
+      const aIdx = accounts.value.findIndex(a => a.id === accountId)
+      if (aIdx !== -1) {
+        const current = parseFloat(accounts.value[aIdx].balance)
+        const amt = parseFloat(amount)
+        const updated = eventType === 'DEPOSIT' ? current - amt : current + amt
+        accounts.value[aIdx] = { ...accounts.value[aIdx], balance: updated }
+      }
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to unlink transaction from savings account'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchEventsForAccount(accountId) {
     loading.value = true
     error.value = null
@@ -404,6 +445,8 @@ export const useSavingsStore = defineStore('savings', () => {
     reallocate,
     processPayout,
     updateEvent,
-    deleteEvent
+    deleteEvent,
+    linkTransactionToAccount,
+    unlinkTransactionEvent
   }
 })

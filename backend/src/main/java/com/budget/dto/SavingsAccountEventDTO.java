@@ -20,6 +20,7 @@ public class SavingsAccountEventDTO {
     private BigDecimal balanceAfter;
     private LocalDate eventDate;
     private String note;
+    private Long transactionId;
     private LocalDateTime createdAt;
 
     public static SavingsAccountEventDTO fromEntity(SavingsAccountEvent event) {
@@ -32,6 +33,7 @@ public class SavingsAccountEventDTO {
         dto.setBalanceAfter(event.getBalanceAfter());
         dto.setEventDate(event.getEventDate());
         dto.setNote(event.getNote());
+        dto.setTransactionId(event.getTransaction() != null ? event.getTransaction().getId() : null);
         dto.setCreatedAt(event.getCreatedAt());
         return dto;
     }

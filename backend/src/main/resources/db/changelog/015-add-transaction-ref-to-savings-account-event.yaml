@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 17
+      author: budget-app
+      comment: Add transaction_id FK to savings_account_event for budget-to-savings linking
+      changes:
+        - addColumn:
+            tableName: savings_account_event
+            columns:
+              - column:
+                  name: transaction_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: savings_account_event
+            baseColumnNames: transaction_id
+            constraintName: fk_sae_transaction
+            referencedTableName: transaction
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - createIndex:
+            indexName: idx_sae_transaction_id
+            tableName: savings_account_event
+            columns:
+              - column:
+                  name: transaction_id

@@ -3,6 +3,7 @@ package com.budget.controller;
 import com.budget.dto.AccountDepositRequest;
 import com.budget.dto.AccountWithdrawalRequest;
 import com.budget.dto.CreateSavingsAccountRequest;
+import com.budget.dto.LinkTransactionToAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
 import com.budget.dto.SavingsAccountEventDTO;
 import com.budget.dto.UpdateSavingsAccountEventRequest;
@@ -74,6 +75,13 @@ public class SavingsAccountController {
             @PathVariable Long id,
             @Valid @RequestBody AccountWithdrawalRequest request) {
         return savingsAccountService.logWithdrawal(id, request);
+    }
+
+    @PostMapping("/{id}/link-transaction")
+    public SavingsAccountEventDTO linkTransaction(
+            @PathVariable Long id,
+            @Valid @RequestBody LinkTransactionToAccountRequest request) {
+        return savingsAccountService.linkTransactionToAccount(id, request);
     }
 
     @PutMapping("/events/{eventId}")

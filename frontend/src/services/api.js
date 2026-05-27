@@ -166,6 +166,7 @@ export const savingsApi = {
   withdrawFromAccount(accountId, data) { return api.post(`/savings/accounts/${accountId}/withdrawal`, data) },
   updateAccountEvent(eventId, data) { return api.put(`/savings/accounts/events/${eventId}`, data) },
   deleteAccountEvent(eventId) { return api.delete(`/savings/accounts/events/${eventId}`) },
+  linkTransaction(accountId, data) { return api.post(`/savings/accounts/${accountId}/link-transaction`, data) },
 
   // Funds
   getFunds() { return api.get('/savings/funds') },

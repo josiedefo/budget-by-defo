@@ -6,11 +6,13 @@ import com.budget.dto.TransactionDTO;
 import com.budget.dto.UpdateTransactionRequest;
 import com.budget.model.Budget;
 import com.budget.model.BudgetItem;
+import com.budget.model.SavingsAccountEvent;
 import com.budget.model.Section;
 import com.budget.model.Transaction;
 import com.budget.model.TransactionType;
 import com.budget.repository.BudgetItemRepository;
 import com.budget.repository.BudgetRepository;
+import com.budget.repository.SavingsAccountEventRepository;
 import com.budget.repository.SectionRepository;
 import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,7 +24,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,7 @@ public class TransactionService {
     private final SectionRepository sectionRepository;
     private final BudgetItemRepository budgetItemRepository;
     private final BudgetRepository budgetRepository;
+    private final SavingsAccountEventRepository savingsAccountEventRepository;
 
     @Transactional(readOnly = true)
     public Page<TransactionDTO> getTransactions(
@@ -81,6 +86,24 @@ public class TransactionService {
             .map(TransactionDTO::fromEntity)
             .collect(Collectors.toList());
 
+        // Bulk-populate linked savings account info (one query for the whole page)
+        if (!dtos.isEmpty()) {
+            List<Long> transactionIds = dtos.stream().map(TransactionDTO::getId).collect(Collectors.toList());
+            Map<Long, SavingsAccountEvent> linkedEvents = savingsAccountEventRepository
+                .findByTransactionIdIn(transactionIds)
+                .stream()
+                .collect(Collectors.toMap(e -> e.getTransaction().getId(), e -> e));
+            for (TransactionDTO dto : dtos) {
+                SavingsAccountEvent event = linkedEvents.get(dto.getId());
+                if (event != null) {
+                    dto.setLinkedSavingsAccountEventId(event.getId());
+                    dto.setLinkedSavingsAccountId(event.getAccount().getId());
+                    dto.setLinkedSavingsAccountName(event.getAccount().getName());
+                    dto.setLinkedSavingsEventType(event.getEventType());
+                }
+            }
+        }
+
         return new PageImpl<>(dtos, pageable, transactions.getTotalElements());
     }
 
@@ -88,7 +111,14 @@ public class TransactionService {
     public TransactionDTO getTransaction(Long id) {
         Transaction transaction = transactionRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + id));
-        return TransactionDTO.fromEntity(transaction);
+        TransactionDTO dto = TransactionDTO.fromEntity(transaction);
+        savingsAccountEventRepository.findByTransactionId(id).ifPresent(event -> {
+            dto.setLinkedSavingsAccountEventId(event.getId());
+            dto.setLinkedSavingsAccountId(event.getAccount().getId());
+            dto.setLinkedSavingsAccountName(event.getAccount().getName());
+            dto.setLinkedSavingsEventType(event.getEventType());
+        });
+        return dto;
     }
 
     @Transactional
