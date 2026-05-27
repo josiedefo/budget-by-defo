@@ -5,7 +5,7 @@
 
       <v-card-text class="px-4">
         <p class="text-body-2 text-medium-emphasis mb-4">
-          Sections and planned amounts will be copied. Actual amounts are not copied.
+          Planned amounts will be copied to matching items. Existing items and their transactions are preserved.
         </p>
 
         <v-row dense>
@@ -42,7 +42,7 @@
           density="compact"
           class="mt-2"
         >
-          This will replace all sections and items in <strong>{{ targetMonthLabel }}</strong>.
+          Planned amounts in <strong>{{ targetMonthLabel }}</strong> will be updated from the selected month. Existing items and transactions are preserved.
         </v-alert>
 
         <v-alert

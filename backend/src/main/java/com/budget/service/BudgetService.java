@@ -289,34 +289,94 @@ public class BudgetService {
                     return budgetRepository.save(b);
                 });
 
-        // Clear existing target sections — orphanRemoval=true fires DELETEs before new INSERTs
-        if (!target.getSections().isEmpty()) {
-            target.getSections().clear();
-            budgetRepository.saveAndFlush(target);
-        }
+        if (target.getSections().isEmpty()) {
+            // Full copy: target is new/empty — create all sections and items from source
+            for (Section srcSection : source.getSections()) {
+                Section newSection = new Section();
+                newSection.setName(srcSection.getName());
+                newSection.setDisplayOrder(srcSection.getDisplayOrder());
+                newSection.setIsIncome(srcSection.getIsIncome());
+                newSection.setBudget(target);
+                newSection.setItems(new LinkedHashSet<>());
 
-        // Copy each section and its items from source to target
-        for (Section srcSection : source.getSections()) {
-            Section newSection = new Section();
-            newSection.setName(srcSection.getName());
-            newSection.setDisplayOrder(srcSection.getDisplayOrder());
-            newSection.setIsIncome(srcSection.getIsIncome());
-            newSection.setBudget(target);
-            newSection.setItems(new LinkedHashSet<>());
+                // Items lazy-load safely within @Transactional via @BatchSize(25)
+                for (BudgetItem srcItem : srcSection.getItems()) {
+                    BudgetItem newItem = new BudgetItem();
+                    newItem.setName(srcItem.getName());
+                    newItem.setDisplayOrder(srcItem.getDisplayOrder());
+                    newItem.setPlannedAmount(srcItem.getPlannedAmount());
+                    newItem.setActualAmount(BigDecimal.ZERO); // never copy actual amounts
+                    newItem.setIsExcludedFromBudget(srcItem.getIsExcludedFromBudget());
+                    newItem.setSection(newSection);
+                    newSection.getItems().add(newItem);
+                }
 
-            // Items lazy-load safely within @Transactional via @BatchSize(25)
-            for (BudgetItem srcItem : srcSection.getItems()) {
-                BudgetItem newItem = new BudgetItem();
-                newItem.setName(srcItem.getName());
-                newItem.setDisplayOrder(srcItem.getDisplayOrder());
-                newItem.setPlannedAmount(srcItem.getPlannedAmount());
-                newItem.setActualAmount(BigDecimal.ZERO); // never copy actual amounts
-                newItem.setIsExcludedFromBudget(srcItem.getIsExcludedFromBudget());
-                newItem.setSection(newSection);
-                newSection.getItems().add(newItem);
+                target.getSections().add(newSection);
+            }
+        } else {
+            // Merge copy: target already has sections — match by name and update planned amounts only.
+            // This preserves existing item IDs so transaction links remain intact.
+            Map<String, Section> targetSectionsByName = new HashMap<>();
+            for (Section s : target.getSections()) {
+                targetSectionsByName.put(s.getName().toLowerCase(), s);
             }
 
-            target.getSections().add(newSection);
+            for (Section srcSection : source.getSections()) {
+                Section targetSection = targetSectionsByName.get(srcSection.getName().toLowerCase());
+                if (targetSection != null) {
+                    // Update section metadata
+                    targetSection.setDisplayOrder(srcSection.getDisplayOrder());
+                    targetSection.setIsIncome(srcSection.getIsIncome());
+
+                    // Build item lookup for this target section
+                    Map<String, BudgetItem> targetItemsByName = new HashMap<>();
+                    for (BudgetItem item : targetSection.getItems()) {
+                        targetItemsByName.put(item.getName().toLowerCase(), item);
+                    }
+
+                    // Match source items to target items by name; preserve IDs for transaction link integrity
+                    for (BudgetItem srcItem : srcSection.getItems()) {
+                        BudgetItem targetItem = targetItemsByName.get(srcItem.getName().toLowerCase());
+                        if (targetItem != null) {
+                            // Preserve existing item ID — just update planned amount and metadata
+                            targetItem.setPlannedAmount(srcItem.getPlannedAmount());
+                            targetItem.setDisplayOrder(srcItem.getDisplayOrder());
+                            targetItem.setIsExcludedFromBudget(srcItem.getIsExcludedFromBudget());
+                        } else {
+                            // New item in source not found in target — add it
+                            BudgetItem newItem = new BudgetItem();
+                            newItem.setName(srcItem.getName());
+                            newItem.setDisplayOrder(srcItem.getDisplayOrder());
+                            newItem.setPlannedAmount(srcItem.getPlannedAmount());
+                            newItem.setActualAmount(BigDecimal.ZERO);
+                            newItem.setIsExcludedFromBudget(srcItem.getIsExcludedFromBudget());
+                            newItem.setSection(targetSection);
+                            targetSection.getItems().add(newItem);
+                        }
+                    }
+                } else {
+                    // Source section not found in target — create it with all its items
+                    Section newSection = new Section();
+                    newSection.setName(srcSection.getName());
+                    newSection.setDisplayOrder(srcSection.getDisplayOrder());
+                    newSection.setIsIncome(srcSection.getIsIncome());
+                    newSection.setBudget(target);
+                    newSection.setItems(new LinkedHashSet<>());
+
+                    for (BudgetItem srcItem : srcSection.getItems()) {
+                        BudgetItem newItem = new BudgetItem();
+                        newItem.setName(srcItem.getName());
+                        newItem.setDisplayOrder(srcItem.getDisplayOrder());
+                        newItem.setPlannedAmount(srcItem.getPlannedAmount());
+                        newItem.setActualAmount(BigDecimal.ZERO);
+                        newItem.setIsExcludedFromBudget(srcItem.getIsExcludedFromBudget());
+                        newItem.setSection(newSection);
+                        newSection.getItems().add(newItem);
+                    }
+
+                    target.getSections().add(newSection);
+                }
+            }
         }
 
         target = budgetRepository.save(target);
