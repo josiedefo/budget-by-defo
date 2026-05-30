@@ -118,6 +118,17 @@
                 <td class="text-medium-emphasis">{{ event.note || '—' }}</td>
                 <td>
                   <div class="action-icons">
+                    <v-btn
+                      v-if="event.transactionId"
+                      icon
+                      size="x-small"
+                      variant="text"
+                      color="teal"
+                      title="View linked transaction"
+                      @click="goToTransaction(event.transactionId)"
+                    >
+                      <v-icon size="16">mdi-open-in-new</v-icon>
+                    </v-btn>
                     <v-btn icon size="x-small" variant="text" @click="startEdit(event)">
                       <v-icon size="16">mdi-pencil</v-icon>
                     </v-btn>
@@ -162,6 +173,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
 
 const props = defineProps({
@@ -170,6 +182,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
+const router = useRouter()
 const savingsStore = useSavingsStore()
 const { accountEvents, loading } = storeToRefs(savingsStore)
 
@@ -264,6 +277,11 @@ async function executeDelete() {
     deleteDialogOpen.value = false
     deletingEvent.value = null
   } catch {}
+}
+
+function goToTransaction(id) {
+  close()
+  router.push({ name: 'transactions', query: { highlightId: id } })
 }
 
 function close() {

@@ -78,6 +78,17 @@
               </td>
               <td class="text-medium-emphasis">{{ event.note || '—' }}</td>
               <td class="text-no-wrap">
+                <v-btn
+                  v-if="event.transactionRef"
+                  icon
+                  size="small"
+                  variant="text"
+                  color="teal"
+                  title="View linked transaction"
+                  @click="goToTransaction(event.transactionRef)"
+                >
+                  <v-icon size="small">mdi-open-in-new</v-icon>
+                </v-btn>
                 <template v-if="isEditable(event.eventType)">
                   <v-btn icon size="small" variant="text" @click="startEdit(event)">
                     <v-icon size="small">mdi-pencil</v-icon>
@@ -113,8 +124,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
 
+const router = useRouter()
 const savingsStore = useSavingsStore()
 const { funds, events, loading } = storeToRefs(savingsStore)
 
@@ -133,6 +146,10 @@ async function onFundSelected(id) {
     editError.value = null
     await savingsStore.fetchEventsForFund(id)
   }
+}
+
+function goToTransaction(id) {
+  router.push({ name: 'transactions', query: { highlightId: id } })
 }
 
 function isEditable(type) {
