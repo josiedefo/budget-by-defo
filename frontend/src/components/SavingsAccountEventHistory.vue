@@ -281,7 +281,7 @@ async function executeDelete() {
 
 function goToTransaction(id) {
   close()
-  router.push({ name: 'transactions', query: { highlightId: id } })
+  router.push({ name: 'transactions', query: { transactionId: id } })
 }
 
 function close() {

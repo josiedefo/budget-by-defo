@@ -13,6 +13,7 @@ export const useTransactionStore = defineStore('transaction', () => {
     totalPages: 0
   })
   const filters = ref({
+    transactionId: null,
     startDate: null,
     endDate: null,
     type: null,
@@ -75,6 +76,7 @@ export const useTransactionStore = defineStore('transaction', () => {
 
   function clearFilters() {
     filters.value = {
+      transactionId: null,
       startDate: null,
       endDate: null,
       type: null,
@@ -125,10 +127,8 @@ export const useTransactionStore = defineStore('transaction', () => {
   }
 
   function updateLinkedSavings(transactionId, linkedData) {
-    const idx = transactions.value.findIndex(t => t.id === transactionId)
-    if (idx !== -1) {
-      transactions.value[idx] = { ...transactions.value[idx], ...linkedData }
-    }
+    const tx = transactions.value.find(t => t.id === transactionId)
+    if (tx) Object.assign(tx, linkedData)
   }
 
   return {

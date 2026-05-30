@@ -120,8 +120,7 @@
             <tr
               v-for="transaction in transactions"
               :key="transaction.id"
-              :id="'tx-' + transaction.id"
-              :class="['transaction-row', { 'highlight-row': highlightedId === transaction.id }]"
+              class="transaction-row"
               :title="'View in budget for ' + formatDate(transaction.transactionDate)"
               @click="viewBudget(transaction)"
             >
@@ -212,7 +211,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed, nextTick } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTransactionStore } from '@/stores/transaction'
@@ -248,7 +247,6 @@ const showSavingsLinkDialog = ref(false)
 const editingTransaction = ref(null)
 const deletingTransaction = ref(null)
 const linkingTransaction = ref(null)
-const highlightedId = ref(null)
 
 const typeOptions = [
   { title: 'Income', value: 'INCOME' },
@@ -389,19 +387,10 @@ onMounted(async () => {
   const now = new Date()
   await budgetStore.fetchBudget(now.getFullYear(), now.getMonth() + 1)
 
-  const { highlightId, sectionName, budgetItemName, startDate, endDate } = route.query
+  const { transactionId, sectionName, budgetItemName, startDate, endDate } = route.query
 
-  if (highlightId) {
-    // Clear all filters and fetch so the linked transaction is as likely as possible to be visible
-    transactionStore.clearFilters()
-    await transactionStore.fetchTransactions()
-    highlightedId.value = Number(highlightId)
-    await nextTick()
-    const el = document.getElementById('tx-' + highlightId)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-    setTimeout(() => { highlightedId.value = null }, 2500)
+  if (transactionId) {
+    transactionStore.setFilters({ transactionId: Number(transactionId) })
   } else if (sectionName || budgetItemName || startDate || endDate) {
     const filters = {}
     if (sectionName) filters.sectionName = sectionName
@@ -430,14 +419,4 @@ onMounted(async () => {
   background-color: rgba(var(--v-theme-primary), 0.06);
 }
 
-@keyframes flashHighlight {
-  0%   { background-color: transparent; }
-  20%  { background-color: rgba(0, 150, 136, 0.25); }
-  80%  { background-color: rgba(0, 150, 136, 0.25); }
-  100% { background-color: transparent; }
-}
-
-.highlight-row {
-  animation: flashHighlight 2.5s ease-in-out forwards;
-}
 </style>

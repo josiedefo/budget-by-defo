@@ -51,6 +51,7 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public Page<TransactionDTO> getTransactions(
+            Long transactionId,
             LocalDate startDate,
             LocalDate endDate,
             TransactionType type,
@@ -73,6 +74,7 @@ public class TransactionService {
         String typeStr = type != null ? type.name() : null;
 
         Page<Transaction> transactions = transactionRepository.findWithFilters(
+            transactionId,
             startDate,
             endDate,
             typeStr,

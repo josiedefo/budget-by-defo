@@ -28,7 +28,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query(value = "SELECT t.* FROM transaction t " +
            "LEFT JOIN section s ON s.id = t.section_id " +
            "LEFT JOIN budget_item bi ON bi.id = t.budget_item_id " +
-           "WHERE (CAST(:startDate AS DATE) IS NULL OR t.transaction_date >= CAST(:startDate AS DATE)) " +
+           "WHERE (CAST(:transactionId AS BIGINT) IS NULL OR t.id = CAST(:transactionId AS BIGINT)) " +
+           "AND (CAST(:startDate AS DATE) IS NULL OR t.transaction_date >= CAST(:startDate AS DATE)) " +
            "AND (CAST(:endDate AS DATE) IS NULL OR t.transaction_date <= CAST(:endDate AS DATE)) " +
            "AND (CAST(:type AS VARCHAR) IS NULL OR t.type = CAST(:type AS VARCHAR)) " +
            "AND (CAST(:sectionId AS BIGINT) IS NULL OR s.id = CAST(:sectionId AS BIGINT)) " +
@@ -40,7 +41,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            countQuery = "SELECT COUNT(*) FROM transaction t " +
            "LEFT JOIN section s ON s.id = t.section_id " +
            "LEFT JOIN budget_item bi ON bi.id = t.budget_item_id " +
-           "WHERE (CAST(:startDate AS DATE) IS NULL OR t.transaction_date >= CAST(:startDate AS DATE)) " +
+           "WHERE (CAST(:transactionId AS BIGINT) IS NULL OR t.id = CAST(:transactionId AS BIGINT)) " +
+           "AND (CAST(:startDate AS DATE) IS NULL OR t.transaction_date >= CAST(:startDate AS DATE)) " +
            "AND (CAST(:endDate AS DATE) IS NULL OR t.transaction_date <= CAST(:endDate AS DATE)) " +
            "AND (CAST(:type AS VARCHAR) IS NULL OR t.type = CAST(:type AS VARCHAR)) " +
            "AND (CAST(:sectionId AS BIGINT) IS NULL OR s.id = CAST(:sectionId AS BIGINT)) " +
@@ -50,6 +52,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "AND (CAST(:merchant AS VARCHAR) IS NULL OR LOWER(t.merchant) LIKE CAST(:merchant AS VARCHAR))",
            nativeQuery = true)
     Page<Transaction> findWithFilters(
+        @Param("transactionId") Long transactionId,
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate,
         @Param("type") String type,

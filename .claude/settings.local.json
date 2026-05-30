@@ -25,7 +25,9 @@
       "Bash(powershell:*)",
       "Bash(curl:*)",
       "PowerShell(.\\\\deploy.ps1 2>&1)",
-      "PowerShell(powershell.exe -ExecutionPolicy Bypass -File \".\\\\deploy.ps1\")"
+      "PowerShell(powershell.exe -ExecutionPolicy Bypass -File \".\\\\deploy.ps1\")",
+      "Bash(npx vite *)",
+      "Bash(mvn compile *)"
     ]
   }
 }

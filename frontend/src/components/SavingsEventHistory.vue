@@ -149,7 +149,7 @@ async function onFundSelected(id) {
 }
 
 function goToTransaction(id) {
-  router.push({ name: 'transactions', query: { highlightId: id } })
+  router.push({ name: 'transactions', query: { transactionId: id } })
 }
 
 function isEditable(type) {

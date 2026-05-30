@@ -25,6 +25,7 @@ public class TransactionController {
 
     @GetMapping
     public ResponseEntity<Page<TransactionDTO>> getTransactions(
+            @RequestParam(required = false) Long transactionId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) TransactionType type,
@@ -37,7 +38,7 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size) {
 
         Page<TransactionDTO> transactions = transactionService.getTransactions(
-            startDate, endDate, type, sectionId, budgetItemId, sectionName, budgetItemName, merchant, page, size);
+            transactionId, startDate, endDate, type, sectionId, budgetItemId, sectionName, budgetItemName, merchant, page, size);
         return ResponseEntity.ok(transactions);
     }
 
