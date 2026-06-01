@@ -17,6 +17,9 @@ A personal budget tracking application to manage your finances month by month.
 - **Link to Budget** - Associate transactions with budget sections and items
 - **CSV Import** - Bulk import transactions from CSV files with column mapping; budget items that exist in the CSV but not in the budget month are auto-created in the correct section
 - **Click-to-View** - Click on actual amounts to view related transactions
+- **Uncategorized Filter** - One-click chip to show only transactions not yet assigned to any budget section
+- **Link to Savings** - Link any transaction to a savings account event or savings fund event; bank icon on each row turns teal when linked
+- **Bulk Link by Budget Item** - From the Monthly Budget view, bulk-link all transactions for a budget item to a savings account or fund in one action; icon turns teal when all transactions are linked
 
 ### Planner
 - **Monthly Plans** - Create detailed plans for individual budget items
@@ -47,6 +50,8 @@ A personal budget tracking application to manage your finances month by month.
 - **Account Management** - Add and manage physical savings accounts with balance and as-of date
 - **Account Event History** - Per-account deposit/withdrawal history; as-of date automatically reflects the latest transaction
 - **Summary Panel** - Year summary with total pool, allocated, unassigned, remaining-to-save, and upcoming deadlines
+- **Transaction Links** - Link a budget transaction to a savings account event or fund event; navigate directly from a savings event back to the linked transaction
+- **Bulk Transaction Links** - From the Monthly Budget view, bulk-link all transactions for a budget item to a savings account or fund; linked state shown in the dialog and reflected on the budget item icon
 
 ## Tech Stack
 
@@ -209,7 +214,7 @@ budget-by-defo/
 ### Transactions
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/transactions` | List transactions with filters |
+| `GET /api/transactions` | List transactions with filters (startDate, endDate, type, merchant, sectionName, budgetItemName, transactionId, uncategorized) |
 | `POST /api/transactions` | Create a transaction |
 | `PUT /api/transactions/{id}` | Update a transaction |
 | `DELETE /api/transactions/{id}` | Delete a transaction |
@@ -266,7 +271,13 @@ budget-by-defo/
 | `DELETE /api/savings/funds/{id}` | Deactivate a fund (must have zero balance) |
 | `GET /api/savings/funds/summary` | Get year summary with upcoming deadlines |
 
-### Savings Events
+### Savings Accounts — Transaction Links
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/savings/accounts/{id}/link-transaction` | Link a single transaction to an account event |
+| `POST /api/savings/accounts/{id}/bulk-link-budget-item` | Bulk-link all transactions for a budget item to an account |
+
+### Savings Events (Fund)
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/savings/events/fund/{fundId}` | Get event history for a fund |
@@ -276,6 +287,13 @@ budget-by-defo/
 | `POST /api/savings/events/payout/{fundId}` | Process payout for a spend-down fund |
 | `PUT /api/savings/events/{id}` | Update a deposit or withdrawal event |
 | `DELETE /api/savings/events/{id}` | Delete a deposit or withdrawal event |
+| `POST /api/savings/events/link-transaction` | Link a single transaction to a fund event |
+| `POST /api/savings/events/bulk-link-budget-item` | Bulk-link all transactions for a budget item to a fund |
+
+### Savings — Link Status
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/savings/link-status/budget-items` | Batch link status for budget items (`ids`, `startDate`, `endDate`) |
 
 ## License
 
