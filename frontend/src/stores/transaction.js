@@ -21,7 +21,8 @@ export const useTransactionStore = defineStore('transaction', () => {
     budgetItemId: null,
     sectionName: null,
     budgetItemName: null,
-    merchant: ''
+    merchant: '',
+    uncategorized: false
   })
 
   const hasMore = computed(() => pagination.value.page < pagination.value.totalPages - 1)
@@ -87,6 +88,7 @@ export const useTransactionStore = defineStore('transaction', () => {
       sectionName: null,
       budgetItemName: null,
       merchant: '',
+      uncategorized: false,
       ...newFilters
     }
     fetchTransactions(true)
@@ -102,7 +104,8 @@ export const useTransactionStore = defineStore('transaction', () => {
       budgetItemId: null,
       sectionName: null,
       budgetItemName: null,
-      merchant: ''
+      merchant: '',
+      uncategorized: false
     }
     fetchTransactions(true)
   }

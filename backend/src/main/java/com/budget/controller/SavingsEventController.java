@@ -1,5 +1,7 @@
 package com.budget.controller;
 
+import com.budget.dto.BulkLinkBudgetItemToFundRequest;
+import com.budget.dto.BulkLinkResult;
 import com.budget.dto.LinkTransactionToFundRequest;
 import com.budget.dto.LogDepositRequest;
 import com.budget.dto.LogWithdrawalRequest;
@@ -56,6 +58,11 @@ public class SavingsEventController {
     @PostMapping("/link-transaction")
     public SavingsEventDTO linkTransactionToFund(@Valid @RequestBody LinkTransactionToFundRequest request) {
         return savingsEventService.linkTransactionToFund(request);
+    }
+
+    @PostMapping("/bulk-link-budget-item")
+    public BulkLinkResult bulkLinkBudgetItem(@Valid @RequestBody BulkLinkBudgetItemToFundRequest request) {
+        return savingsEventService.bulkLinkBudgetItem(request);
     }
 
     @DeleteMapping("/{id}")

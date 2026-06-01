@@ -1,5 +1,7 @@
 package com.budget.service;
 
+import com.budget.dto.BulkLinkBudgetItemToFundRequest;
+import com.budget.dto.BulkLinkResult;
 import com.budget.dto.LinkTransactionToFundRequest;
 import com.budget.dto.LogDepositRequest;
 import com.budget.dto.LogWithdrawalRequest;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -267,6 +270,79 @@ public class SavingsEventService {
         event = savingsEventRepository.save(event);
 
         return SavingsEventDTO.fromEntity(event);
+    }
+
+    @Transactional
+    public BulkLinkResult bulkLinkBudgetItem(BulkLinkBudgetItemToFundRequest request) {
+        SavingsFund fund = savingsFundRepository.findById(request.getFundId())
+                .orElseThrow(() -> new EntityNotFoundException("Fund not found: " + request.getFundId()));
+
+        List<Transaction> transactions = (request.getStartDate() != null && request.getEndDate() != null)
+                ? transactionRepository.findByBudgetItemIdAndTransactionDateBetweenOrderByTransactionDateAsc(
+                        request.getBudgetItemId(), request.getStartDate(), request.getEndDate())
+                : transactionRepository.findByBudgetItemIdOrderByTransactionDateDesc(request.getBudgetItemId());
+
+        if (transactions.isEmpty()) {
+            return new BulkLinkResult(0, 0, 0, BigDecimal.ZERO);
+        }
+
+        List<Long> txIds = transactions.stream().map(Transaction::getId).collect(Collectors.toList());
+        Set<Long> alreadyLinked = savingsEventRepository.findByTransactionRefIn(txIds)
+                .stream()
+                .map(SavingsEvent::getTransactionRef)
+                .collect(Collectors.toSet());
+
+        List<Transaction> toLink = transactions.stream()
+                .filter(tx -> !alreadyLinked.contains(tx.getId()))
+                .collect(Collectors.toList());
+
+        int skipped = alreadyLinked.size();
+
+        if (toLink.isEmpty()) {
+            return new BulkLinkResult(0, skipped, transactions.size(), BigDecimal.ZERO);
+        }
+
+        BigDecimal totalAmount = toLink.stream().map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        SavingsEventType eventType = request.getEventType();
+
+        // Pre-flight balance checks
+        if (eventType == SavingsEventType.WITHDRAWAL && fund.getBalance().compareTo(totalAmount) < 0) {
+            throw new IllegalStateException(
+                    "Insufficient fund balance for bulk withdrawal. " +
+                    "Balance: " + fund.getBalance() + ", total: " + totalAmount);
+        }
+        if (eventType == SavingsEventType.DEPOSIT_ALLOCATED) {
+            BigDecimal currentFundTotal = savingsFundRepository.sumAllActiveFundBalances();
+            BigDecimal poolBalance = savingsAccountRepository.sumActiveBalances();
+            if (currentFundTotal.add(totalAmount).compareTo(poolBalance) > 0) {
+                throw new IllegalStateException(
+                        "Bulk deposit would exceed savings pool. Pool: " + poolBalance +
+                        ", current fund total: " + currentFundTotal + ", deposit total: " + totalAmount);
+            }
+        }
+
+        String noteTemplate = (request.getNote() != null && !request.getNote().isBlank())
+                ? request.getNote() : null;
+
+        for (Transaction tx : toLink) {
+            fund.setBalance(eventType == SavingsEventType.DEPOSIT_ALLOCATED
+                    ? fund.getBalance().add(tx.getAmount())
+                    : fund.getBalance().subtract(tx.getAmount()));
+
+            SavingsEvent event = new SavingsEvent();
+            event.setFund(fund);
+            event.setEventType(eventType);
+            event.setAmount(tx.getAmount());
+            event.setEventDate(tx.getTransactionDate());
+            event.setNote(noteTemplate != null ? noteTemplate : tx.getMerchant());
+            event.setTransactionRef(tx.getId());
+            savingsEventRepository.save(event);
+        }
+
+        savingsFundRepository.save(fund);
+
+        return new BulkLinkResult(toLink.size(), skipped, transactions.size(), totalAmount);
     }
 
     private SavingsEvent buildEvent(SavingsFund fund, SavingsEventType type,

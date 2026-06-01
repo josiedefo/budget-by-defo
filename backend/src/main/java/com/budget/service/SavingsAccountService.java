@@ -2,6 +2,8 @@ package com.budget.service;
 
 import com.budget.dto.AccountDepositRequest;
 import com.budget.dto.AccountWithdrawalRequest;
+import com.budget.dto.BulkLinkBudgetItemRequest;
+import com.budget.dto.BulkLinkResult;
 import com.budget.dto.CreateSavingsAccountRequest;
 import com.budget.dto.LinkTransactionToAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -292,5 +295,77 @@ public class SavingsAccountService {
         event = savingsAccountEventRepository.save(event);
 
         return SavingsAccountEventDTO.fromEntity(event);
+    }
+
+    @Transactional
+    public BulkLinkResult bulkLinkBudgetItem(Long accountId, BulkLinkBudgetItemRequest request) {
+        SavingsAccount account = savingsAccountRepository.findById(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Savings account not found: " + accountId));
+
+        // Load transactions for this budget item (optionally scoped to a date range)
+        List<Transaction> transactions = (request.getStartDate() != null && request.getEndDate() != null)
+                ? transactionRepository.findByBudgetItemIdAndTransactionDateBetweenOrderByTransactionDateAsc(
+                        request.getBudgetItemId(), request.getStartDate(), request.getEndDate())
+                : transactionRepository.findByBudgetItemIdOrderByTransactionDateDesc(request.getBudgetItemId());
+
+        if (transactions.isEmpty()) {
+            return new BulkLinkResult(0, 0, 0, BigDecimal.ZERO);
+        }
+
+        // Find which transactions are already linked to any savings account event
+        List<Long> txIds = transactions.stream().map(Transaction::getId).collect(Collectors.toList());
+        Set<Long> alreadyLinked = savingsAccountEventRepository.findByTransactionIdIn(txIds)
+                .stream()
+                .map(e -> e.getTransaction().getId())
+                .collect(Collectors.toSet());
+
+        List<Transaction> toLink = transactions.stream()
+                .filter(tx -> !alreadyLinked.contains(tx.getId()))
+                .collect(Collectors.toList());
+
+        int skipped = alreadyLinked.size();
+
+        if (toLink.isEmpty()) {
+            return new BulkLinkResult(0, skipped, transactions.size(), BigDecimal.ZERO);
+        }
+
+        // Pre-flight balance check for withdrawals
+        if (request.getEventType() == SavingsAccountEventType.WITHDRAWAL) {
+            BigDecimal total = toLink.stream().map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (account.getBalance().compareTo(total) < 0) {
+                throw new IllegalStateException(
+                        "Insufficient account balance for bulk withdrawal. " +
+                        "Balance: " + account.getBalance() + ", total: " + total);
+            }
+        }
+
+        BigDecimal totalLinked = BigDecimal.ZERO;
+        String noteTemplate = (request.getNote() != null && !request.getNote().isBlank())
+                ? request.getNote() : null;
+
+        for (Transaction tx : toLink) {
+            BigDecimal newBalance = request.getEventType() == SavingsAccountEventType.DEPOSIT
+                    ? account.getBalance().add(tx.getAmount())
+                    : account.getBalance().subtract(tx.getAmount());
+            account.setBalance(newBalance);
+            account.setAsOfDate(tx.getTransactionDate());
+
+            SavingsAccountEvent event = new SavingsAccountEvent();
+            event.setAccount(account);
+            event.setEventType(request.getEventType());
+            event.setAmount(tx.getAmount());
+            event.setBalanceAfter(newBalance);
+            event.setEventDate(tx.getTransactionDate());
+            event.setNote(noteTemplate != null ? noteTemplate : tx.getMerchant());
+            event.setTransaction(tx);
+            savingsAccountEventRepository.save(event);
+
+            totalLinked = totalLinked.add(tx.getAmount());
+        }
+
+        savingsAccountRepository.save(account);
+
+        return new BulkLinkResult(toLink.size(), skipped, transactions.size(), totalLinked);
     }
 }

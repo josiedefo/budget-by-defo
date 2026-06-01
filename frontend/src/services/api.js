@@ -167,6 +167,7 @@ export const savingsApi = {
   updateAccountEvent(eventId, data) { return api.put(`/savings/accounts/events/${eventId}`, data) },
   deleteAccountEvent(eventId) { return api.delete(`/savings/accounts/events/${eventId}`) },
   linkTransaction(accountId, data) { return api.post(`/savings/accounts/${accountId}/link-transaction`, data) },
+  bulkLinkBudgetItem(accountId, data) { return api.post(`/savings/accounts/${accountId}/bulk-link-budget-item`, data) },
 
   // Funds
   getFunds() { return api.get('/savings/funds') },
@@ -184,7 +185,11 @@ export const savingsApi = {
   processPayout(fundId) { return api.post(`/savings/events/payout/${fundId}`) },
   updateEvent(id, data) { return api.put(`/savings/events/${id}`, data) },
   deleteEvent(id) { return api.delete(`/savings/events/${id}`) },
-  linkTransactionToFund(data) { return api.post('/savings/events/link-transaction', data) }
+  linkTransactionToFund(data) { return api.post('/savings/events/link-transaction', data) },
+  bulkLinkBudgetItemToFund(data) { return api.post('/savings/events/bulk-link-budget-item', data) },
+  getBudgetItemLinkStatuses(ids, startDate, endDate) {
+    return api.get('/savings/link-status/budget-items', { params: { ids, startDate, endDate } })
+  }
 }
 
 export default api

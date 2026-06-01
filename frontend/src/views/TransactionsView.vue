@@ -53,6 +53,20 @@
             </v-btn>
           </v-col>
         </v-row>
+        <v-row class="mt-n2">
+          <v-col cols="12" class="pt-0 d-flex align-center ga-2">
+            <v-chip
+              :color="filters.uncategorized ? 'warning' : undefined"
+              :variant="filters.uncategorized ? 'tonal' : 'outlined'"
+              size="small"
+              prepend-icon="mdi-tag-off-outline"
+              clickable
+              @click="toggleUncategorized"
+            >
+              Uncategorized only
+            </v-chip>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
 
@@ -286,6 +300,10 @@ function handleClearFilters() {
   localFilters.type = null
   localFilters.merchant = ''
   transactionStore.clearFilters()
+}
+
+function toggleUncategorized() {
+  transactionStore.setFilters({ uncategorized: !filters.value.uncategorized })
 }
 
 function openAddDialog() {

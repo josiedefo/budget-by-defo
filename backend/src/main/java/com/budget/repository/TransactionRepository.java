@@ -25,6 +25,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByBudgetItemIdOrderByTransactionDateDesc(Long budgetItemId);
 
+    List<Transaction> findByBudgetItemIdAndTransactionDateBetweenOrderByTransactionDateAsc(
+        Long budgetItemId, LocalDate startDate, LocalDate endDate);
+
     @Query(value = "SELECT t.* FROM transaction t " +
            "LEFT JOIN section s ON s.id = t.section_id " +
            "LEFT JOIN budget_item bi ON bi.id = t.budget_item_id " +
@@ -37,6 +40,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "AND (CAST(:sectionName AS VARCHAR) IS NULL OR s.name = CAST(:sectionName AS VARCHAR)) " +
            "AND (CAST(:budgetItemName AS VARCHAR) IS NULL OR bi.name = CAST(:budgetItemName AS VARCHAR)) " +
            "AND (CAST(:merchant AS VARCHAR) IS NULL OR LOWER(t.merchant) LIKE CAST(:merchant AS VARCHAR)) " +
+           "AND (:uncategorized = false OR t.section_id IS NULL) " +
            "ORDER BY t.transaction_date DESC",
            countQuery = "SELECT COUNT(*) FROM transaction t " +
            "LEFT JOIN section s ON s.id = t.section_id " +
@@ -49,7 +53,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "AND (CAST(:budgetItemId AS BIGINT) IS NULL OR bi.id = CAST(:budgetItemId AS BIGINT)) " +
            "AND (CAST(:sectionName AS VARCHAR) IS NULL OR s.name = CAST(:sectionName AS VARCHAR)) " +
            "AND (CAST(:budgetItemName AS VARCHAR) IS NULL OR bi.name = CAST(:budgetItemName AS VARCHAR)) " +
-           "AND (CAST(:merchant AS VARCHAR) IS NULL OR LOWER(t.merchant) LIKE CAST(:merchant AS VARCHAR))",
+           "AND (CAST(:merchant AS VARCHAR) IS NULL OR LOWER(t.merchant) LIKE CAST(:merchant AS VARCHAR)) " +
+           "AND (:uncategorized = false OR t.section_id IS NULL)",
            nativeQuery = true)
     Page<Transaction> findWithFilters(
         @Param("transactionId") Long transactionId,
@@ -61,6 +66,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         @Param("sectionName") String sectionName,
         @Param("budgetItemName") String budgetItemName,
         @Param("merchant") String merchant,
+        @Param("uncategorized") boolean uncategorized,
         Pageable pageable);
 
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = :type AND " +

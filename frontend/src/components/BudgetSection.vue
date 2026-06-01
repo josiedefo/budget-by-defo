@@ -29,7 +29,7 @@
           <th class="text-right">Planned</th>
           <th class="text-right">Actual</th>
           <th class="text-right">Diff</th>
-          <th style="width: 50px"></th>
+          <th style="width: 80px"></th>
         </tr>
       </thead>
       <tbody>
@@ -79,7 +79,18 @@
           <td class="text-right" :class="getDiffClass(item)">
             {{ formatCurrency(getItemDiff(item)) }}
           </td>
-          <td>
+          <td class="text-no-wrap">
+            <v-btn
+              v-if="item.actualAmount > 0"
+              icon
+              size="x-small"
+              variant="text"
+              :color="isFullyLinked(item) ? 'teal' : 'grey'"
+              :title="isFullyLinked(item) ? 'All transactions linked to savings' : 'Bulk link transactions to savings'"
+              @click.stop="openBulkSavingsLink(item)"
+            >
+              <v-icon size="small">mdi-bank-transfer</v-icon>
+            </v-btn>
             <v-btn icon size="x-small" variant="text" color="error" @click="deleteItem(item.id)">
               <v-icon size="small">mdi-delete</v-icon>
             </v-btn>
@@ -115,11 +126,21 @@
       </tfoot>
     </v-table>
   </v-card>
+
+  <BulkSavingsLinkDialog
+    v-model="showBulkSavingsLink"
+    :budget-item="bulkLinkItem"
+    :year="year"
+    :month="month"
+    @status-changed="handleStatusChanged"
+  />
 </template>
 
 <script setup>
-import { computed, watch, nextTick, ref } from 'vue'
+import { computed, watch, nextTick, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import BulkSavingsLinkDialog from '@/components/BulkSavingsLinkDialog.vue'
+import { savingsApi } from '@/services/api'
 
 const router = useRouter()
 
@@ -130,6 +151,44 @@ const props = defineProps({
   year: { type: Number, required: true },
   month: { type: Number, required: true },
   highlightItemId: { type: Number, default: null }
+})
+
+const showBulkSavingsLink = ref(false)
+const bulkLinkItem = ref(null)
+// Map of budgetItemId → BudgetItemLinkStatus (fetched from API)
+const linkStatusMap = ref({})
+
+function openBulkSavingsLink(item) {
+  bulkLinkItem.value = item
+  showBulkSavingsLink.value = true
+}
+
+function handleStatusChanged(itemId, status) {
+  linkStatusMap.value = { ...linkStatusMap.value, [itemId]: status }
+}
+
+function isFullyLinked(item) {
+  const status = linkStatusMap.value[item.id]
+  return status?.allLinkedToAccount || status?.allLinkedToFund
+}
+
+async function fetchLinkStatuses() {
+  const itemsWithActual = props.section.items.filter(i => (i.actualAmount || 0) > 0)
+  if (itemsWithActual.length === 0) return
+  const y = props.year
+  const m = props.month
+  const startDate = `${y}-${String(m).padStart(2, '0')}-01`
+  const lastDay = new Date(y, m, 0).getDate()
+  const endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  try {
+    const ids = itemsWithActual.map(i => i.id)
+    const response = await savingsApi.getBudgetItemLinkStatuses(ids, startDate, endDate)
+    linkStatusMap.value = { ...linkStatusMap.value, ...response.data }
+  } catch { /* silently ignore — icon just stays grey */ }
+}
+
+onMounted(() => {
+  fetchLinkStatuses()
 })
 
 // Map item id → element ref so we can scroll to it

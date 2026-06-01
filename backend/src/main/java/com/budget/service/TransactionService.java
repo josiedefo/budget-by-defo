@@ -60,6 +60,7 @@ public class TransactionService {
             String sectionName,
             String budgetItemName,
             String merchant,
+            boolean uncategorized,
             int page,
             int size) {
         // Use unsorted pageable since native query already has ORDER BY clause
@@ -83,6 +84,7 @@ public class TransactionService {
             sectionName,
             budgetItemName,
             merchantPattern,
+            uncategorized,
             pageable
         );
 

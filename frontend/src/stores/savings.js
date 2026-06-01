@@ -420,6 +420,38 @@ export const useSavingsStore = defineStore('savings', () => {
     }
   }
 
+  async function bulkLinkBudgetItemToAccount(accountId, data) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await savingsApi.bulkLinkBudgetItem(accountId, data)
+      // Re-fetch account to get accurate balance after bulk update
+      await fetchAccounts()
+      return response.data
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to bulk link budget item to savings account'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function bulkLinkBudgetItemToFund(data) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await savingsApi.bulkLinkBudgetItemToFund(data)
+      // Re-fetch funds to get accurate balance after bulk update
+      await fetchFunds()
+      return response.data
+    } catch (e) {
+      error.value = e.response?.data?.message || 'Failed to bulk link budget item to savings fund'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function unlinkTransactionFromFund(eventId, fundId, amount, eventType) {
     loading.value = true
     error.value = null
@@ -493,6 +525,8 @@ export const useSavingsStore = defineStore('savings', () => {
     linkTransactionToAccount,
     unlinkTransactionEvent,
     linkTransactionToFund,
-    unlinkTransactionFromFund
+    unlinkTransactionFromFund,
+    bulkLinkBudgetItemToAccount,
+    bulkLinkBudgetItemToFund
   }
 })

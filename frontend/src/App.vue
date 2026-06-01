@@ -65,10 +65,12 @@ onMounted(() => {
   }
 })
 
-watch(() => route.name, (name) => {
+// Watch both route.name AND route.params so month-to-month navigation
+// (same name, different params) also updates the remembered month.
+watch(() => ({ name: route.name, year: route.params.year, month: route.params.month }), ({ name, year, month }) => {
   if (name === 'monthly') {
-    lastMonthlyYear.value = Number(route.params.year)
-    lastMonthlyMonth.value = Number(route.params.month)
+    if (year) lastMonthlyYear.value = Number(year)
+    if (month) lastMonthlyMonth.value = Number(month)
     viewMode.value = 'monthly'
   } else if (name === 'yearly') {
     viewMode.value = 'yearly'

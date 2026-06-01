@@ -34,11 +34,12 @@ public class TransactionController {
             @RequestParam(required = false) String sectionName,
             @RequestParam(required = false) String budgetItemName,
             @RequestParam(required = false) String merchant,
+            @RequestParam(defaultValue = "false") boolean uncategorized,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Page<TransactionDTO> transactions = transactionService.getTransactions(
-            transactionId, startDate, endDate, type, sectionId, budgetItemId, sectionName, budgetItemName, merchant, page, size);
+            transactionId, startDate, endDate, type, sectionId, budgetItemId, sectionName, budgetItemName, merchant, uncategorized, page, size);
         return ResponseEntity.ok(transactions);
     }
 
