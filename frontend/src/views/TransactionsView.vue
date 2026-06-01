@@ -229,6 +229,7 @@ const { transactions, loading, error, hasMore, filters } = storeToRefs(transacti
 const { loadMore } = transactionStore
 
 const activeFilterText = computed(() => {
+  if (filters.value.transactionId) return `Transaction #${filters.value.transactionId}`
   const parts = []
   if (filters.value.sectionName) parts.push(filters.value.sectionName)
   if (filters.value.budgetItemName) parts.push(filters.value.budgetItemName)
@@ -237,6 +238,10 @@ const activeFilterText = computed(() => {
 
 function clearCategoryFilter() {
   router.replace({ query: {} })
+  localFilters.startDate = null
+  localFilters.endDate = null
+  localFilters.type = null
+  localFilters.merchant = ''
   transactionStore.clearFilters()
 }
 
@@ -390,20 +395,19 @@ onMounted(async () => {
   const { transactionId, sectionName, budgetItemName, startDate, endDate } = route.query
 
   if (transactionId) {
-    transactionStore.setFilters({ transactionId: Number(transactionId) })
+    // Replace all filters — never merge with stale filters from a previous session
+    localFilters.startDate = null
+    localFilters.endDate = null
+    localFilters.type = null
+    localFilters.merchant = ''
+    transactionStore.replaceFilters({ transactionId: Number(transactionId) })
   } else if (sectionName || budgetItemName || startDate || endDate) {
-    const filters = {}
-    if (sectionName) filters.sectionName = sectionName
-    if (budgetItemName) filters.budgetItemName = budgetItemName
-    if (startDate) {
-      filters.startDate = startDate
-      localFilters.startDate = startDate
-    }
-    if (endDate) {
-      filters.endDate = endDate
-      localFilters.endDate = endDate
-    }
-    transactionStore.setFilters(filters)
+    const newFilters = {}
+    if (sectionName) newFilters.sectionName = sectionName
+    if (budgetItemName) newFilters.budgetItemName = budgetItemName
+    if (startDate) { newFilters.startDate = startDate; localFilters.startDate = startDate }
+    if (endDate) { newFilters.endDate = endDate; localFilters.endDate = endDate }
+    transactionStore.replaceFilters(newFilters)
   } else {
     transactionStore.fetchTransactions()
   }

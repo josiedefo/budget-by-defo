@@ -41,8 +41,18 @@ const router = useRouter()
 const route = useRoute()
 const viewMode = ref('monthly')
 
+// Track the last monthly year/month so navigating back to Monthly
+// returns to the same month the user was on, not the current month.
+const now = new Date()
+const lastMonthlyYear = ref(now.getFullYear())
+const lastMonthlyMonth = ref(now.getMonth() + 1)
+
 onMounted(() => {
-  if (route.name === 'yearly') {
+  if (route.name === 'monthly') {
+    lastMonthlyYear.value = Number(route.params.year)
+    lastMonthlyMonth.value = Number(route.params.month)
+    viewMode.value = 'monthly'
+  } else if (route.name === 'yearly') {
     viewMode.value = 'yearly'
   } else if (route.name === 'transactions') {
     viewMode.value = 'transactions'
@@ -56,7 +66,11 @@ onMounted(() => {
 })
 
 watch(() => route.name, (name) => {
-  if (name === 'yearly') {
+  if (name === 'monthly') {
+    lastMonthlyYear.value = Number(route.params.year)
+    lastMonthlyMonth.value = Number(route.params.month)
+    viewMode.value = 'monthly'
+  } else if (name === 'yearly') {
     viewMode.value = 'yearly'
   } else if (name === 'transactions') {
     viewMode.value = 'transactions'
@@ -70,14 +84,10 @@ watch(() => route.name, (name) => {
 })
 
 watch(viewMode, (newValue) => {
-  const now = new Date()
-  const year = route.params.year || now.getFullYear()
-  const month = route.params.month || now.getMonth() + 1
-
   if (newValue === 'monthly' && route.name !== 'monthly') {
-    router.push({ name: 'monthly', params: { year, month } })
+    router.push({ name: 'monthly', params: { year: lastMonthlyYear.value, month: lastMonthlyMonth.value } })
   } else if (newValue === 'yearly' && route.name !== 'yearly') {
-    router.push({ name: 'yearly', params: { year } })
+    router.push({ name: 'yearly', params: { year: lastMonthlyYear.value } })
   } else if (newValue === 'transactions' && route.name !== 'transactions') {
     router.push({ name: 'transactions' })
   } else if (newValue === 'planner' && route.name !== 'planner') {

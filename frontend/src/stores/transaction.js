@@ -74,6 +74,24 @@ export const useTransactionStore = defineStore('transaction', () => {
     fetchTransactions(true)
   }
 
+  // Replace ALL filters at once — use this for URL-driven navigation so
+  // stale filters from a previous session don't bleed into the new query.
+  function replaceFilters(newFilters) {
+    filters.value = {
+      transactionId: null,
+      startDate: null,
+      endDate: null,
+      type: null,
+      sectionId: null,
+      budgetItemId: null,
+      sectionName: null,
+      budgetItemName: null,
+      merchant: '',
+      ...newFilters
+    }
+    fetchTransactions(true)
+  }
+
   function clearFilters() {
     filters.value = {
       transactionId: null,
@@ -141,6 +159,7 @@ export const useTransactionStore = defineStore('transaction', () => {
     fetchTransactions,
     loadMore,
     setFilters,
+    replaceFilters,
     clearFilters,
     createTransaction,
     updateTransaction,
