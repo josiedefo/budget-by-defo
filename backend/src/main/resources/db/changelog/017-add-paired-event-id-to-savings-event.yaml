@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-add-paired-event-id-to-savings-event
+      author: budget-app
+      changes:
+        - addColumn:
+            tableName: savings_event
+            columns:
+              - column:
+                  name: paired_event_id
+                  type: bigint
+                  constraints:
+                    nullable: true

@@ -182,7 +182,7 @@ function goToTransaction(id) {
 }
 
 function isEditable(type) {
-  return type === 'DEPOSIT_ALLOCATED' || type === 'WITHDRAWAL'
+  return ['DEPOSIT_ALLOCATED', 'WITHDRAWAL', 'REALLOCATION_IN', 'REALLOCATION_OUT'].includes(type)
 }
 
 function startEdit(event) {

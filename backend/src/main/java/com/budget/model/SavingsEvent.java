@@ -42,6 +42,9 @@ public class SavingsEvent {
     @Column(name = "transaction_ref")
     private Long transactionRef;
 
+    @Column(name = "paired_event_id")
+    private Long pairedEventId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

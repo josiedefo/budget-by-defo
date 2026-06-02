@@ -129,6 +129,12 @@ public class SavingsEventService {
         outEvent = savingsEventRepository.save(outEvent);
         inEvent = savingsEventRepository.save(inEvent);
 
+        // Cross-link the paired events so either can be found from the other
+        outEvent.setPairedEventId(inEvent.getId());
+        inEvent.setPairedEventId(outEvent.getId());
+        outEvent = savingsEventRepository.save(outEvent);
+        inEvent = savingsEventRepository.save(inEvent);
+
         return List.of(SavingsEventDTO.fromEntity(outEvent), SavingsEventDTO.fromEntity(inEvent));
     }
 
@@ -165,8 +171,13 @@ public class SavingsEventService {
         SavingsEvent event = savingsEventRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found: " + id));
 
-        if (event.getEventType() != SavingsEventType.DEPOSIT_ALLOCATED
-                && event.getEventType() != SavingsEventType.WITHDRAWAL) {
+        SavingsEventType type = event.getEventType();
+
+        if (type == SavingsEventType.REALLOCATION_IN || type == SavingsEventType.REALLOCATION_OUT) {
+            return updateReallocationEvent(event, request);
+        }
+
+        if (type != SavingsEventType.DEPOSIT_ALLOCATED && type != SavingsEventType.WITHDRAWAL) {
             throw new IllegalStateException("Cannot edit this event type");
         }
 
@@ -174,7 +185,7 @@ public class SavingsEventService {
         BigDecimal oldAmount = event.getAmount();
         BigDecimal newAmount = request.getAmount();
 
-        if (event.getEventType() == SavingsEventType.DEPOSIT_ALLOCATED) {
+        if (type == SavingsEventType.DEPOSIT_ALLOCATED) {
             BigDecimal updatedBalance = fund.getBalance().subtract(oldAmount).add(newAmount);
             // Pool enforcement
             BigDecimal otherFundsTotal = savingsFundRepository.sumAllActiveFundBalances().subtract(fund.getBalance());
@@ -203,19 +214,66 @@ public class SavingsEventService {
         return SavingsEventDTO.fromEntity(event);
     }
 
+    private SavingsEventDTO updateReallocationEvent(SavingsEvent event, UpdateSavingsEventRequest request) {
+        if (event.getPairedEventId() == null) {
+            throw new IllegalStateException("Reallocation event has no paired event — cannot update");
+        }
+        SavingsEvent paired = savingsEventRepository.findById(event.getPairedEventId())
+                .orElseThrow(() -> new EntityNotFoundException("Paired reallocation event not found"));
+
+        // Identify which event is OUT (source) and which is IN (destination)
+        SavingsEvent outEvent = event.getEventType() == SavingsEventType.REALLOCATION_OUT ? event : paired;
+        SavingsEvent inEvent  = event.getEventType() == SavingsEventType.REALLOCATION_IN  ? event : paired;
+
+        SavingsFund source      = outEvent.getFund();
+        SavingsFund destination = inEvent.getFund();
+        BigDecimal oldAmount    = outEvent.getAmount();
+        BigDecimal newAmount    = request.getAmount();
+
+        // Reverse old amounts, then apply new ones
+        BigDecimal newSourceBalance = source.getBalance().add(oldAmount).subtract(newAmount);
+        if (newSourceBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException(String.format(
+                    "Insufficient balance in source fund \"%s\": available $%.2f after reversal, required $%.2f",
+                    source.getName(), source.getBalance().add(oldAmount), newAmount));
+        }
+        source.setBalance(newSourceBalance);
+        destination.setBalance(destination.getBalance().subtract(oldAmount).add(newAmount));
+
+        savingsFundRepository.save(source);
+        savingsFundRepository.save(destination);
+
+        outEvent.setAmount(newAmount);
+        outEvent.setEventDate(request.getEventDate());
+        outEvent.setNote(request.getNote());
+        inEvent.setAmount(newAmount);
+        inEvent.setEventDate(request.getEventDate());
+        inEvent.setNote(request.getNote());
+        savingsEventRepository.save(outEvent);
+        savingsEventRepository.save(inEvent);
+
+        return SavingsEventDTO.fromEntity(event.getEventType() == SavingsEventType.REALLOCATION_OUT ? outEvent : inEvent);
+    }
+
     @Transactional
     public void deleteEvent(Long id) {
         SavingsEvent event = savingsEventRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found: " + id));
 
-        if (event.getEventType() != SavingsEventType.DEPOSIT_ALLOCATED
-                && event.getEventType() != SavingsEventType.WITHDRAWAL) {
+        SavingsEventType type = event.getEventType();
+
+        if (type == SavingsEventType.REALLOCATION_IN || type == SavingsEventType.REALLOCATION_OUT) {
+            deleteReallocationPair(event);
+            return;
+        }
+
+        if (type != SavingsEventType.DEPOSIT_ALLOCATED && type != SavingsEventType.WITHDRAWAL) {
             throw new IllegalStateException("Cannot delete this event type");
         }
 
         SavingsFund fund = event.getFund();
 
-        if (event.getEventType() == SavingsEventType.DEPOSIT_ALLOCATED) {
+        if (type == SavingsEventType.DEPOSIT_ALLOCATED) {
             BigDecimal updatedBalance = fund.getBalance().subtract(event.getAmount());
             if (updatedBalance.compareTo(BigDecimal.ZERO) < 0) {
                 throw new IllegalStateException(
@@ -229,6 +287,36 @@ public class SavingsEventService {
 
         savingsFundRepository.save(fund);
         savingsEventRepository.delete(event);
+    }
+
+    private void deleteReallocationPair(SavingsEvent event) {
+        if (event.getPairedEventId() == null) {
+            throw new IllegalStateException("Reallocation event has no paired event — cannot delete");
+        }
+        SavingsEvent paired = savingsEventRepository.findById(event.getPairedEventId())
+                .orElseThrow(() -> new EntityNotFoundException("Paired reallocation event not found"));
+
+        SavingsEvent outEvent = event.getEventType() == SavingsEventType.REALLOCATION_OUT ? event : paired;
+        SavingsEvent inEvent  = event.getEventType() == SavingsEventType.REALLOCATION_IN  ? event : paired;
+
+        SavingsFund source      = outEvent.getFund();
+        SavingsFund destination = inEvent.getFund();
+        BigDecimal amount       = outEvent.getAmount();
+
+        // Reverse: add back to source, subtract from destination
+        source.setBalance(source.getBalance().add(amount));
+        BigDecimal newDestBalance = destination.getBalance().subtract(amount);
+        if (newDestBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException(String.format(
+                    "Cannot delete reallocation: destination fund \"%s\" balance would go negative",
+                    destination.getName()));
+        }
+        destination.setBalance(newDestBalance);
+
+        savingsFundRepository.save(source);
+        savingsFundRepository.save(destination);
+        savingsEventRepository.delete(outEvent);
+        savingsEventRepository.delete(inEvent);
     }
 
     @Transactional
@@ -247,7 +335,10 @@ public class SavingsEventService {
         SavingsEventType eventType = request.getEventType();
 
         if (eventType == SavingsEventType.WITHDRAWAL && fund.getBalance().compareTo(amount) < 0) {
-            throw new IllegalStateException("Insufficient fund balance for withdrawal");
+            throw new IllegalStateException(String.format(
+                "Insufficient balance in fund \"%s\": available $%.2f, required $%.2f. " +
+                "Consider logging a deposit to the fund first.",
+                fund.getName(), fund.getBalance(), amount));
         }
 
         BigDecimal newBalance = eventType == SavingsEventType.DEPOSIT_ALLOCATED

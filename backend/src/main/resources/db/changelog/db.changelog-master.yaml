@@ -31,3 +31,5 @@ databaseChangeLog:
       file: db/changelog/015-add-transaction-ref-to-savings-account-event.yaml
   - include:
       file: db/changelog/016-add-index-to-savings-event-transaction-ref.yaml
+  - include:
+      file: db/changelog/017-add-paired-event-id-to-savings-event.yaml
