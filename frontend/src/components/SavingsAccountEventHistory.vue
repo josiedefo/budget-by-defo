@@ -76,7 +76,7 @@
           <tbody>
             <template v-for="event in accountEvents" :key="event.id">
               <!-- Edit row -->
-              <tr v-if="editingEventId === event.id">
+              <tr v-if="editingEventId === event.id" :ref="el => setRowRef(el, event.id)">
                 <td>
                   <v-text-field v-model="editForm.eventDate" type="date" density="compact" hide-details style="min-width:130px" />
                 </td>
@@ -104,7 +104,11 @@
                 </td>
               </tr>
               <!-- Normal row -->
-              <tr v-else>
+              <tr
+                v-else
+                :ref="el => setRowRef(el, event.id)"
+                :class="{ 'highlight-flash': flashingEventId === event.id }"
+              >
                 <td class="text-no-wrap">{{ formatDate(event.eventDate) }}</td>
                 <td>
                   <v-chip size="x-small" :color="event.eventType === 'DEPOSIT' ? 'success' : 'error'" variant="tonal">
@@ -171,14 +175,15 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
 
 const props = defineProps({
   modelValue: Boolean,
-  account: { type: Object, default: null }
+  account: { type: Object, default: null },
+  highlightEventId: { type: Number, default: null }
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -187,6 +192,13 @@ const savingsStore = useSavingsStore()
 const { accountEvents, loading } = storeToRefs(savingsStore)
 
 const showForm = ref(false)
+const flashingEventId = ref(null)
+const rowRefs = {}
+
+function setRowRef(el, eventId) {
+  if (el) rowRefs[eventId] = el
+  else delete rowRefs[eventId]
+}
 const formError = ref(null)
 const logForm = ref({ type: 'DEPOSIT', amount: '', eventDate: today(), note: '' })
 
@@ -196,13 +208,20 @@ const editError = ref(null)
 const deleteDialogOpen = ref(false)
 const deletingEvent = ref(null)
 
-watch(() => props.modelValue, (open) => {
+watch(() => props.modelValue, async (open) => {
   if (open && props.account?.id) {
-    savingsStore.fetchEventsForAccount(props.account.id)
+    await savingsStore.fetchEventsForAccount(props.account.id)
+    if (props.highlightEventId) {
+      await nextTick()
+      flashingEventId.value = props.highlightEventId
+      rowRefs[props.highlightEventId]?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      setTimeout(() => { flashingEventId.value = null }, 1800)
+    }
   }
   if (!open) {
     cancelForm()
     cancelEdit()
+    flashingEventId.value = null
   }
 })
 
@@ -303,5 +322,15 @@ function formatDate(dateStr) {
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+@keyframes flash-highlight {
+  0%   { background-color: rgba(0, 150, 136, 0.35); }
+  70%  { background-color: rgba(0, 150, 136, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.highlight-flash {
+  animation: flash-highlight 1.8s ease-out forwards;
 }
 </style>

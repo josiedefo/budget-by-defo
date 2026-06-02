@@ -66,7 +66,11 @@
               </td>
             </tr>
             <!-- Normal row -->
-            <tr v-else>
+            <tr
+              v-else
+              :ref="el => setRowRef(el, event.id)"
+              :class="{ 'highlight-flash': flashingEventId === event.id }"
+            >
               <td class="text-no-wrap">{{ formatDate(event.eventDate) }}</td>
               <td>
                 <v-chip size="x-small" :color="eventTypeColor(event.eventType)" variant="tonal">
@@ -122,17 +126,42 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
+
+const props = defineProps({
+  initialFundId: { type: Number, default: null },
+  highlightEventId: { type: Number, default: null }
+})
 
 const router = useRouter()
 const savingsStore = useSavingsStore()
 const { funds, events, loading } = storeToRefs(savingsStore)
 
 const selectedId = ref(null)
+const flashingEventId = ref(null)
+const rowRefs = {}
 const editingEventId = ref(null)
+
+function setRowRef(el, eventId) {
+  if (el) rowRefs[eventId] = el
+  else delete rowRefs[eventId]
+}
+
+onMounted(async () => {
+  if (props.initialFundId) {
+    selectedId.value = props.initialFundId
+    await savingsStore.fetchEventsForFund(props.initialFundId)
+    if (props.highlightEventId) {
+      await nextTick()
+      flashingEventId.value = props.highlightEventId
+      rowRefs[props.highlightEventId]?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      setTimeout(() => { flashingEventId.value = null }, 1800)
+    }
+  }
+})
 const editForm = ref({ amount: '', eventDate: '', note: '' })
 const editError = ref(null)
 const deleteDialogOpen = ref(false)
@@ -223,3 +252,15 @@ function formatDate(dateStr) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
+
+<style scoped>
+@keyframes flash-highlight {
+  0%   { background-color: rgba(0, 150, 136, 0.35); }
+  70%  { background-color: rgba(0, 150, 136, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.highlight-flash {
+  animation: flash-highlight 1.8s ease-out forwards;
+}
+</style>

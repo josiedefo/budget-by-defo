@@ -46,7 +46,7 @@
                 </v-btn>
               </template>
               <template v-else>
-                <v-btn icon size="small" variant="text" @click="openHistory(account)">
+                <v-btn icon size="small" variant="text" @click="$emit('open-history', account)">
                   <v-icon>mdi-history</v-icon>
                 </v-btn>
                 <v-btn icon size="small" variant="text" @click="startEdit(account)">
@@ -88,17 +88,15 @@
     </v-card>
   </v-dialog>
 
-  <SavingsAccountEventHistory v-model="historyDialogOpen" :account="historyAccount" />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSavingsStore } from '@/stores/savings'
-import SavingsAccountEventHistory from './SavingsAccountEventHistory.vue'
 
 defineProps({ modelValue: Boolean })
-defineEmits(['update:modelValue'])
+defineEmits(['update:modelValue', 'open-history'])
 
 const savingsStore = useSavingsStore()
 const { accounts, loading, error } = storeToRefs(savingsStore)
@@ -106,13 +104,6 @@ const { accounts, loading, error } = storeToRefs(savingsStore)
 const editingId = ref(null)
 const editForm = ref({ name: '', balance: 0, asOfDate: '' })
 const newForm = ref({ name: '', balance: '', asOfDate: '' })
-const historyDialogOpen = ref(false)
-const historyAccount = ref(null)
-
-function openHistory(account) {
-  historyAccount.value = account
-  historyDialogOpen.value = true
-}
 
 function startEdit(account) {
   editingId.value = account.id

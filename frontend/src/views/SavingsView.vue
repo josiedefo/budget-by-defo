@@ -51,7 +51,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="history">
-        <SavingsEventHistory />
+        <SavingsEventHistory :initial-fund-id="historyFundId" :highlight-event-id="historyFundEventId" />
       </v-tabs-window-item>
 
       <v-tabs-window-item value="summary">
@@ -60,7 +60,8 @@
     </v-tabs-window>
 
     <!-- Dialogs -->
-    <ManageAccountsDialog v-model="showManageAccounts" />
+    <ManageAccountsDialog v-model="showManageAccounts" @open-history="openAccountHistory" />
+    <SavingsAccountEventHistory v-model="showAccountHistory" :account="historyAccount" :highlight-event-id="historyAccountEventId" />
     <LogDepositDialog v-model="showDeposit" />
     <LogWithdrawalDialog v-model="showWithdrawal" :fund-id="selectedFundForAction?.id" />
     <ReallocateDialog v-model="showReallocate" :source-fund-id="selectedFundForAction?.id" />
@@ -103,8 +104,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRoute, useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
 
+import SavingsAccountEventHistory from '@/components/SavingsAccountEventHistory.vue'
 import SavingsPoolHeader from '@/components/SavingsPoolHeader.vue'
 import SavingsFundList from '@/components/SavingsFundList.vue'
 import SavingsEventHistory from '@/components/SavingsEventHistory.vue'
@@ -116,6 +119,8 @@ import ReallocateDialog from '@/components/ReallocateDialog.vue'
 import CreateFundDialog from '@/components/CreateFundDialog.vue'
 import EditFundDialog from '@/components/EditFundDialog.vue'
 
+const route = useRoute()
+const router = useRouter()
 const savingsStore = useSavingsStore()
 const { loading, error } = storeToRefs(savingsStore)
 
@@ -123,6 +128,11 @@ const activeTab = ref('funds')
 const selectedFundForAction = ref(null)
 
 const showManageAccounts = ref(false)
+const showAccountHistory = ref(false)
+const historyAccount = ref(null)
+const historyAccountEventId = ref(null)
+const historyFundId = ref(null)
+const historyFundEventId = ref(null)
 const showDeposit = ref(false)
 const showWithdrawal = ref(false)
 const showReallocate = ref(false)
@@ -136,7 +146,33 @@ onMounted(async () => {
     savingsStore.fetchAccounts(),
     savingsStore.fetchFunds()
   ])
+  handleQueryParams()
 })
+
+function handleQueryParams() {
+  const { accountId, highlightEventId, tab, fundId, highlightFundEventId } = route.query
+  if (accountId) {
+    const account = savingsStore.accounts.find(a => a.id === parseInt(accountId))
+    if (account) {
+      historyAccount.value = account
+      historyAccountEventId.value = highlightEventId ? parseInt(highlightEventId) : null
+      showAccountHistory.value = true
+    }
+    router.replace({ name: 'savings' })
+  }
+  if (tab === 'history') {
+    activeTab.value = 'history'
+    historyFundId.value = fundId ? parseInt(fundId) : null
+    historyFundEventId.value = highlightFundEventId ? parseInt(highlightFundEventId) : null
+    router.replace({ name: 'savings' })
+  }
+}
+
+function openAccountHistory(account) {
+  historyAccount.value = account
+  historyAccountEventId.value = null
+  showAccountHistory.value = true
+}
 
 function openWithdraw(fund) {
   selectedFundForAction.value = fund

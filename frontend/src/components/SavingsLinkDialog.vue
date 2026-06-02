@@ -34,7 +34,8 @@
         <!-- Account: linked state -->
         <template v-if="isAccountLinked">
           <v-alert type="success" variant="tonal" density="compact" icon="mdi-check-circle" class="mb-2">
-            Linked to <strong>{{ transaction.linkedSavingsAccountName }}</strong>
+            Linked to
+            <a class="savings-link" @click="goToAccountHistory">{{ transaction.linkedSavingsAccountName }}</a>
             as a <strong>{{ transaction.linkedSavingsEventType }}</strong>
           </v-alert>
           <div class="d-flex justify-end mb-1">
@@ -109,7 +110,8 @@
         <!-- Fund: linked state -->
         <template v-if="isFundLinked">
           <v-alert type="success" variant="tonal" density="compact" icon="mdi-check-circle" class="mb-2">
-            Linked to <strong>{{ transaction.linkedSavingsFundName }}</strong>
+            Linked to
+            <a class="savings-link" @click="goToFundHistory">{{ transaction.linkedSavingsFundName }}</a>
             as a <strong>{{ fundEventTypeLabel(transaction.linkedSavingsFundEventType) }}</strong>
           </v-alert>
           <div class="d-flex justify-end mb-1">
@@ -184,6 +186,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
 
 const props = defineProps({
@@ -193,6 +196,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'linked', 'unlinked'])
 
+const router = useRouter()
 const savingsStore = useSavingsStore()
 
 // Account section state
@@ -322,7 +326,42 @@ async function unlinkFund() {
   }
 }
 
+function goToAccountHistory() {
+  close()
+  router.push({
+    name: 'savings',
+    query: {
+      accountId: props.transaction.linkedSavingsAccountId,
+      highlightEventId: props.transaction.linkedSavingsAccountEventId
+    }
+  })
+}
+
+function goToFundHistory() {
+  close()
+  router.push({
+    name: 'savings',
+    query: {
+      tab: 'history',
+      fundId: props.transaction.linkedSavingsFundId,
+      highlightFundEventId: props.transaction.linkedSavingsFundEventId
+    }
+  })
+}
+
 function close() {
   emit('update:modelValue', false)
 }
 </script>
+
+<style scoped>
+.savings-link {
+  color: rgb(var(--v-theme-teal));
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.savings-link:hover {
+  opacity: 0.8;
+}
+</style>
