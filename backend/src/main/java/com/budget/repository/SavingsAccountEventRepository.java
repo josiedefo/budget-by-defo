@@ -15,6 +15,10 @@ public interface SavingsAccountEventRepository extends JpaRepository<SavingsAcco
            "WHERE e.account.id = :accountId ORDER BY e.eventDate DESC, e.createdAt DESC")
     List<SavingsAccountEvent> findByAccountIdOrderByDateDesc(@Param("accountId") Long accountId);
 
+    @Query("SELECT e FROM SavingsAccountEvent e JOIN FETCH e.account " +
+           "WHERE e.account.id = :accountId ORDER BY e.eventDate ASC, e.createdAt ASC")
+    List<SavingsAccountEvent> findByAccountIdOrderByDateAsc(@Param("accountId") Long accountId);
+
     @Query("SELECT e.account.id, MAX(e.eventDate) FROM SavingsAccountEvent e " +
            "WHERE e.account.id IN :accountIds GROUP BY e.account.id")
     List<Object[]> findLatestEventDatesForAccounts(@Param("accountIds") List<Long> accountIds);

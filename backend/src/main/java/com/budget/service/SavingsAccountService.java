@@ -145,10 +145,23 @@ public class SavingsAccountService {
     public List<SavingsAccountEventDTO> getEventsForAccount(Long accountId) {
         savingsAccountRepository.findById(accountId)
                 .orElseThrow(() -> new EntityNotFoundException("Savings account not found: " + accountId));
-        return savingsAccountEventRepository.findByAccountIdOrderByDateDesc(accountId)
-                .stream()
-                .map(SavingsAccountEventDTO::fromEntity)
-                .collect(Collectors.toList());
+
+        List<SavingsAccountEvent> events = savingsAccountEventRepository.findByAccountIdOrderByDateAsc(accountId);
+
+        // Recompute balanceAfter chronologically so it's correct regardless of insertion order
+        BigDecimal running = BigDecimal.ZERO;
+        List<SavingsAccountEventDTO> dtos = new java.util.ArrayList<>();
+        for (SavingsAccountEvent event : events) {
+            running = event.getEventType() == SavingsAccountEventType.DEPOSIT
+                    ? running.add(event.getAmount())
+                    : running.subtract(event.getAmount());
+            SavingsAccountEventDTO dto = SavingsAccountEventDTO.fromEntity(event);
+            dto.setBalanceAfter(running);
+            dtos.add(dto);
+        }
+
+        java.util.Collections.reverse(dtos);
+        return dtos;
     }
 
     @Transactional

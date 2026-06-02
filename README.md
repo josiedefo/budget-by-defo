@@ -48,7 +48,7 @@ A personal budget tracking application to manage your finances month by month.
 - **Edit & Delete Events** - Correct deposit and withdrawal events; balance is automatically reversed or adjusted
 - **Event History** - Full per-fund event history with type badges (Deposit, Withdrawal, Reallocation, Payout)
 - **Account Management** - Add and manage physical savings accounts with balance and as-of date
-- **Account Event History** - Per-account deposit/withdrawal history; as-of date automatically reflects the latest transaction
+- **Account Event History** - Per-account deposit/withdrawal history with correct running balances computed chronologically (not by insertion order); as-of date automatically reflects the latest transaction
 - **Summary Panel** - Year summary with total pool, allocated, unassigned, remaining-to-save, and upcoming deadlines
 - **Transaction Links** - Link a budget transaction to a savings account event or fund event; navigate directly from a savings event back to the linked transaction
 - **Bulk Transaction Links** - From the Monthly Budget view, bulk-link all transactions for a budget item to a savings account or fund; linked state shown in the dialog and reflected on the budget item icon
