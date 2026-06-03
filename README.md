@@ -26,6 +26,7 @@ A personal budget tracking application to manage your finances month by month.
 - **Monthly Plans** - Create detailed plans for individual budget items
 - **Plan Items** - Break down planned amounts into specific line items
 - **Auto-Sync** - Plan totals automatically update budget item planned amounts
+- **Copy From carries Plans** - When copying planned amounts from a previous month, any Plan linked to a source budget item is automatically copied to the target month and linked to the matching target budget item (existing target plans are replaced)
 
 ### Recurring Payments
 - **Recurring Payment Templates** - Define recurring payments once (Netflix, Gym, etc.)

@@ -7,6 +7,7 @@ import com.budget.dto.YearlySummaryDTO;
 import com.budget.model.Budget;
 import com.budget.model.BudgetItem;
 import com.budget.model.Plan;
+import com.budget.model.PlanItem;
 import com.budget.model.Section;
 import com.budget.repository.BudgetRepository;
 import com.budget.repository.PlanRepository;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -380,10 +382,87 @@ public class BudgetService {
         }
 
         target = budgetRepository.save(target);
+        budgetRepository.flush(); // ensure new item IDs are visible before plan copy
+        copyPlans(source, target, sourceYear, sourceMonth, targetYear, targetMonth);
         populateActualAmountsFromTransactions(target, targetYear, targetMonth);
         BudgetDTO dto = BudgetDTO.fromEntity(target);
         populatePlanIds(dto, targetYear, targetMonth);
         return dto;
+    }
+
+    /**
+     * For every source budget item that has a Plan in the source month, creates (or replaces)
+     * a matching Plan in the target month, linked to the corresponding target budget item.
+     * Matching is done by section name + item name (case-insensitive), consistent with the
+     * merge-copy strategy used for budget items themselves.
+     */
+    private void copyPlans(Budget source, Budget target,
+                           Integer sourceYear, Integer sourceMonth,
+                           Integer targetYear, Integer targetMonth) {
+        // Collect all source item IDs and build lookup maps from the in-memory graph
+        Map<Long, String> sourceItemSectionName = new HashMap<>();
+        Map<Long, String> sourceItemName = new HashMap<>();
+        for (Section section : source.getSections()) {
+            for (BudgetItem item : section.getItems()) {
+                sourceItemSectionName.put(item.getId(), section.getName());
+                sourceItemName.put(item.getId(), item.getName());
+            }
+        }
+
+        List<Long> sourceItemIds = new ArrayList<>(sourceItemSectionName.keySet());
+        if (sourceItemIds.isEmpty()) return;
+
+        // Load plans for the source month
+        List<Plan> sourcePlans = planRepository.findByBudgetItemIdsAndYearAndMonth(
+                sourceItemIds, sourceYear, sourceMonth);
+        if (sourcePlans.isEmpty()) return;
+
+        // Build target item lookup: "sectionName|itemName" -> BudgetItem
+        Map<String, BudgetItem> targetItemByKey = new HashMap<>();
+        for (Section section : target.getSections()) {
+            for (BudgetItem item : section.getItems()) {
+                String key = section.getName().toLowerCase() + "|" + item.getName().toLowerCase();
+                targetItemByKey.put(key, item);
+            }
+        }
+
+        for (Plan srcPlan : sourcePlans) {
+            Long srcItemId = srcPlan.getBudgetItem().getId();
+            String sectionName = sourceItemSectionName.get(srcItemId);
+            String itemName = sourceItemName.get(srcItemId);
+            if (sectionName == null || itemName == null) continue;
+
+            String key = sectionName.toLowerCase() + "|" + itemName.toLowerCase();
+            BudgetItem targetItem = targetItemByKey.get(key);
+            if (targetItem == null) continue;
+
+            // Upsert: if a plan already exists for this target item+month, delete it first
+            planRepository.findByBudgetItemIdAndYearAndMonth(targetItem.getId(), targetYear, targetMonth)
+                    .ifPresent(existing -> {
+                        planRepository.delete(existing);
+                        planRepository.flush();
+                    });
+
+            // Create the new plan, copying all items from the source plan
+            Plan newPlan = new Plan();
+            newPlan.setBudgetItem(targetItem);
+            newPlan.setYear(targetYear);
+            newPlan.setMonth(targetMonth);
+            newPlan.setItems(new LinkedHashSet<>());
+
+            for (PlanItem srcPlanItem : srcPlan.getItems()) {
+                PlanItem newPlanItem = new PlanItem();
+                newPlanItem.setPlan(newPlan);
+                newPlanItem.setName(srcPlanItem.getName());
+                newPlanItem.setAmount(srcPlanItem.getAmount());
+                newPlanItem.setDisplayOrder(srcPlanItem.getDisplayOrder());
+                newPlanItem.setFromSubscription(srcPlanItem.getFromSubscription());
+                newPlanItem.setFromSalary(srcPlanItem.getFromSalary());
+                newPlan.getItems().add(newPlanItem);
+            }
+
+            planRepository.save(newPlan);
+        }
     }
 
     @Transactional(readOnly = true)
