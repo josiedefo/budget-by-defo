@@ -17,5 +17,7 @@ public class UpdatePlanRequest {
         private BigDecimal amount;
         private Boolean fromSubscription;
         private Boolean fromSalary;
+        private Long subscriptionId;
+        private Long salaryId;
     }
 }

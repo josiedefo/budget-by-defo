@@ -3,14 +3,21 @@ package com.budget.service;
 import com.budget.dto.CreateSubscriptionRequest;
 import com.budget.dto.SubscriptionDTO;
 import com.budget.dto.UpdateSubscriptionRequest;
+import com.budget.model.BudgetItem;
+import com.budget.model.PlanItem;
 import com.budget.model.Subscription;
+import com.budget.repository.BudgetItemRepository;
+import com.budget.repository.PlanItemRepository;
+import com.budget.repository.PlanRepository;
 import com.budget.repository.SubscriptionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,6 +25,9 @@ import java.util.stream.Collectors;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final PlanItemRepository planItemRepository;
+    private final PlanRepository planRepository;
+    private final BudgetItemRepository budgetItemRepository;
 
     public List<SubscriptionDTO> getAllSubscriptions() {
         return subscriptionRepository.findAllByIsActiveTrueOrderByNameAsc()
@@ -51,6 +61,9 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Subscription not found: " + id));
 
+        // Capture the old name BEFORE updating — used to find name-matched legacy plan items
+        String oldName = subscription.getName();
+
         if (request.getName() != null) {
             subscription.setName(request.getName());
         }
@@ -68,7 +81,49 @@ public class SubscriptionService {
         }
 
         subscription = subscriptionRepository.save(subscription);
+        propagateSubscriptionUpdate(subscription, oldName);
         return SubscriptionDTO.fromEntity(subscription);
+    }
+
+    /**
+     * When a subscription's name or amount changes, update all linked plan items and
+     * recalculate the plan total → budget item planned amount for each affected plan.
+     * Handles both FK-linked items (new) and legacy items matched by flag+oldName (existing plans).
+     * Backfills the FK on legacy items so future updates work via FK alone.
+     */
+    private void propagateSubscriptionUpdate(Subscription subscription, String oldName) {
+        List<PlanItem> linkedItems = planItemRepository.findLinkedToSubscription(subscription.getId(), oldName);
+        if (linkedItems.isEmpty()) return;
+
+        for (PlanItem item : linkedItems) {
+            item.setName(subscription.getName());
+            item.setAmount(subscription.getAmount());
+            // Backfill the FK so future updates flow through the FK path
+            if (item.getSubscription() == null) {
+                item.setSubscription(subscription);
+            }
+        }
+        planItemRepository.saveAll(linkedItems);
+
+        // Recalculate total for each affected plan and sync to budget item
+        Set<Long> planIds = linkedItems.stream()
+                .map(pi -> pi.getPlan().getId())
+                .collect(Collectors.toSet());
+        for (Long planId : planIds) {
+            recalculatePlanTotal(planId);
+        }
+    }
+
+    private void recalculatePlanTotal(Long planId) {
+        List<PlanItem> allItems = planItemRepository.findByPlanIdOrderByDisplayOrderAsc(planId);
+        BigDecimal total = allItems.stream()
+                .map(PlanItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        planRepository.findById(planId).ifPresent(plan -> {
+            BudgetItem budgetItem = plan.getBudgetItem();
+            budgetItem.setPlannedAmount(total);
+            budgetItemRepository.save(budgetItem);
+        });
     }
 
     @Transactional

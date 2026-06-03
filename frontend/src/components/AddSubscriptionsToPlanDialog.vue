@@ -110,7 +110,8 @@ function addSelected() {
   const selectedSubs = subscriptions.value.filter(s => selectedIds.value.includes(s.id))
   const items = selectedSubs.map(s => ({
     name: s.name,
-    amount: s.amount
+    amount: s.amount,
+    subscriptionId: s.id
   }))
   emit('add', items)
   close()

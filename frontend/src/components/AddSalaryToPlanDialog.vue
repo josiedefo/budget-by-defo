@@ -104,7 +104,8 @@ function addSelected() {
   const selectedSalaries = salaries.value.filter(s => selectedIds.value.includes(s.id))
   const items = selectedSalaries.map(s => ({
     name: s.name,
-    amount: s.netPay
+    amount: s.netPay,
+    salaryId: s.id
   }))
   emit('add', items)
   close()

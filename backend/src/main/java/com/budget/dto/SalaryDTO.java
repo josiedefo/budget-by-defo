@@ -44,6 +44,10 @@ public class SalaryDTO {
         return dto;
     }
 
+    public static BigDecimal computeNetPay(Salary salary) {
+        return calculateNetPay(salary);
+    }
+
     private static BigDecimal calculateNetPay(Salary salary) {
         BigDecimal netPay = salary.getRegularAmount();
         netPay = netPay.subtract(salary.getFederalTax());

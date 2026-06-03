@@ -6,9 +6,13 @@ import com.budget.dto.UpdatePlanRequest;
 import com.budget.model.BudgetItem;
 import com.budget.model.Plan;
 import com.budget.model.PlanItem;
+import com.budget.model.Salary;
+import com.budget.model.Subscription;
 import com.budget.repository.BudgetItemRepository;
 import com.budget.repository.PlanItemRepository;
 import com.budget.repository.PlanRepository;
+import com.budget.repository.SalaryRepository;
+import com.budget.repository.SubscriptionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,8 @@ public class PlanService {
     private final PlanRepository planRepository;
     private final PlanItemRepository planItemRepository;
     private final BudgetItemRepository budgetItemRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SalaryRepository salaryRepository;
 
     @Transactional(readOnly = true)
     public List<PlanDTO> getPlansForMonth(Integer year, Integer month) {
@@ -86,6 +92,14 @@ public class PlanService {
             item.setDisplayOrder(order++);
             item.setFromSubscription(input.getFromSubscription() != null && input.getFromSubscription());
             item.setFromSalary(input.getFromSalary() != null && input.getFromSalary());
+            if (input.getSubscriptionId() != null) {
+                subscriptionRepository.findById(input.getSubscriptionId())
+                        .ifPresent(item::setSubscription);
+            }
+            if (input.getSalaryId() != null) {
+                salaryRepository.findById(input.getSalaryId())
+                        .ifPresent(item::setSalary);
+            }
             plan.getItems().add(item);
         }
 

@@ -1,6 +1,8 @@
 package com.budget.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.budget.model.Subscription;
+import com.budget.model.Salary;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -39,6 +41,18 @@ public class PlanItem {
 
     @Column(name = "from_salary", nullable = false)
     private Boolean fromSalary = false;
+
+    /** Live FK to the recurring payment that produced this item. Null for manually added items. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscription_id")
+    @JsonIgnore
+    private Subscription subscription;
+
+    /** Live FK to the salary that produced this item. Null for manually added items. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "salary_id")
+    @JsonIgnore
+    private Salary salary;
 
     @Override
     public boolean equals(Object o) {

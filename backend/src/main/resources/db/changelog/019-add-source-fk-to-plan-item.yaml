@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 19
+      author: budget-app
+      comment: Add nullable FK columns subscription_id and salary_id to plan_item for live source linking
+      changes:
+        - addColumn:
+            tableName: plan_item
+            columns:
+              - column:
+                  name: subscription_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+              - column:
+                  name: salary_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            constraintName: fk_plan_item_subscription
+            baseTableName: plan_item
+            baseColumnNames: subscription_id
+            referencedTableName: subscription
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            constraintName: fk_plan_item_salary
+            baseTableName: plan_item
+            baseColumnNames: salary_id
+            referencedTableName: salary
+            referencedColumnNames: id
+            onDelete: SET NULL

@@ -324,10 +324,15 @@ import { useSalaryStore } from '@/stores/salary'
 import { storeToRefs } from 'pinia'
 
 const props = defineProps({
-  modelValue: Boolean
+  modelValue: Boolean,
+  /** When set, automatically open this salary in edit mode on dialog open */
+  editId: {
+    type: Number,
+    default: null
+  }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'updated'])
 
 const salaryStore = useSalaryStore()
 const { salaries } = storeToRefs(salaryStore)
@@ -454,8 +459,9 @@ async function saveEdit() {
   saving.value = true
   error.value = null
   try {
-    await salaryStore.updateSalary(editingId.value, editForm.value)
+    const updated = await salaryStore.updateSalary(editingId.value, editForm.value)
     editingId.value = null
+    emit('updated', updated)
   } catch (e) {
     error.value = 'Failed to update salary'
   } finally {
@@ -476,9 +482,16 @@ function close() {
   error.value = null
 }
 
-watch(dialog, (v) => {
+watch(dialog, async (v) => {
   if (v) {
-    salaryStore.fetchSalaries()
+    await salaryStore.fetchSalaries()
+    // If a specific salary was requested, auto-open it in edit mode
+    if (props.editId) {
+      const salary = salaries.value.find(s => s.id === props.editId)
+      if (salary) startEdit(salary)
+    }
+  } else {
+    editingId.value = null
   }
 })
 </script>

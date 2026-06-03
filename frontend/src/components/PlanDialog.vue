@@ -20,20 +20,30 @@
             <tr v-for="(item, index) in items" :key="index">
               <td>
                 <div class="d-flex align-center">
-                  <v-icon
+                  <v-btn
                     v-if="item.fromSubscription"
-                    size="small"
+                    icon
+                    size="x-small"
+                    variant="text"
                     color="secondary"
                     class="mr-1"
-                    title="From recurring payment"
-                  >mdi-repeat</v-icon>
-                  <v-icon
+                    title="Edit recurring payment"
+                    @click="openSubscriptionEdit(item)"
+                  >
+                    <v-icon size="small">mdi-repeat</v-icon>
+                  </v-btn>
+                  <v-btn
                     v-if="item.fromSalary"
-                    size="small"
+                    icon
+                    size="x-small"
+                    variant="text"
                     color="success"
                     class="mr-1"
-                    title="From salary"
-                  >mdi-currency-usd</v-icon>
+                    title="Edit salary"
+                    @click="openSalaryEdit(item)"
+                  >
+                    <v-icon size="small">mdi-currency-usd</v-icon>
+                  </v-btn>
                   <v-text-field
                     v-model="item.name"
                     density="compact"
@@ -110,7 +120,11 @@
       @manage-subscriptions="openManageSubscriptions"
     />
 
-    <SubscriptionsDialog v-model="showSubscriptionsDialog" />
+    <SubscriptionsDialog
+      v-model="showSubscriptionsDialog"
+      :edit-id="editingSubscriptionId"
+      @updated="handleSourceUpdated"
+    />
 
     <AddSalaryToPlanDialog
       v-model="showSalaryPicker"
@@ -118,13 +132,19 @@
       @manage-salaries="openManageSalaries"
     />
 
-    <SalariesDialog v-model="showSalariesDialog" />
+    <SalariesDialog
+      v-model="showSalariesDialog"
+      :edit-id="editingSalaryId"
+      @updated="handleSourceUpdated"
+    />
   </v-dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { usePlanStore } from '@/stores/plan'
+import { useSubscriptionStore } from '@/stores/subscription'
+import { useSalaryStore } from '@/stores/salary'
 import AddSubscriptionsToPlanDialog from '@/components/AddSubscriptionsToPlanDialog.vue'
 import SubscriptionsDialog from '@/components/SubscriptionsDialog.vue'
 import AddSalaryToPlanDialog from '@/components/AddSalaryToPlanDialog.vue'
@@ -138,6 +158,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved', 'deleted'])
 
 const planStore = usePlanStore()
+const subscriptionStore = useSubscriptionStore()
+const salaryStore = useSalaryStore()
 
 const dialog = computed({
   get: () => props.modelValue,
@@ -150,6 +172,9 @@ const showSubscriptionPicker = ref(false)
 const showSubscriptionsDialog = ref(false)
 const showSalaryPicker = ref(false)
 const showSalariesDialog = ref(false)
+// Track which subscription/salary to open in edit mode when the manage dialog opens
+const editingSubscriptionId = ref(null)
+const editingSalaryId = ref(null)
 
 const monthName = computed(() => {
   if (!props.plan) return ''
@@ -177,28 +202,91 @@ function removeItem(index) {
 
 function addFromSubscriptions(subscriptionItems) {
   for (const sub of subscriptionItems) {
-    items.value.push({ name: sub.name, amount: sub.amount, fromSubscription: true })
+    items.value.push({
+      name: sub.name,
+      amount: sub.amount,
+      fromSubscription: true,
+      subscriptionId: sub.subscriptionId || null
+    })
   }
 }
 
 function openManageSubscriptions() {
+  editingSubscriptionId.value = null
+  showSubscriptionsDialog.value = true
+}
+
+async function openSubscriptionEdit(item) {
+  // Use the stored FK id if available; otherwise fall back to name-matching in the store
+  if (item.subscriptionId) {
+    editingSubscriptionId.value = item.subscriptionId
+  } else {
+    await subscriptionStore.fetchSubscriptions()
+    const match = subscriptionStore.subscriptions.find(s => s.name === item.name)
+    editingSubscriptionId.value = match ? match.id : null
+  }
   showSubscriptionsDialog.value = true
 }
 
 function addFromSalaries(salaryItems) {
   for (const sal of salaryItems) {
-    items.value.push({ name: sal.name, amount: sal.amount, fromSalary: true })
+    items.value.push({
+      name: sal.name,
+      amount: sal.amount,
+      fromSalary: true,
+      salaryId: sal.salaryId || null
+    })
   }
 }
 
 function openManageSalaries() {
+  editingSalaryId.value = null
   showSalariesDialog.value = true
+}
+
+async function openSalaryEdit(item) {
+  // Use the stored FK id if available; otherwise fall back to name-matching in the store
+  if (item.salaryId) {
+    editingSalaryId.value = item.salaryId
+  } else {
+    await salaryStore.fetchSalaries()
+    const match = salaryStore.salaries.find(s => s.name === item.name)
+    editingSalaryId.value = match ? match.id : null
+  }
+  showSalariesDialog.value = true
+}
+
+/**
+ * Called when a subscription or salary is updated from within PlanDialog.
+ * The backend has already cascaded the change to plan items and budget item.
+ * Reload the plan from the server so the dialog reflects the updated names/amounts.
+ */
+async function handleSourceUpdated() {
+  if (!props.plan) return
+  const refreshed = await planStore.fetchPlan(props.plan.id)
+  if (refreshed) {
+    items.value = refreshed.items.map(i => ({
+      name: i.name,
+      amount: i.amount,
+      fromSubscription: i.fromSubscription || false,
+      fromSalary: i.fromSalary || false,
+      subscriptionId: i.subscriptionId || null,
+      salaryId: i.salaryId || null
+    }))
+  }
 }
 
 async function save() {
   saving.value = true
   try {
-    await planStore.updatePlan(props.plan.id, items.value)
+    await planStore.updatePlan(props.plan.id, items.value.map(i => ({
+      name: i.name,
+      amount: i.amount,
+      fromSubscription: i.fromSubscription || false,
+      fromSalary: i.fromSalary || false,
+      subscriptionId: i.subscriptionId || null,
+      salaryId: i.salaryId || null
+    })))
     emit('saved')
     close()
   } catch (e) {
@@ -226,7 +314,9 @@ watch(() => props.plan, (plan) => {
       name: i.name,
       amount: i.amount,
       fromSubscription: i.fromSubscription || false,
-      fromSalary: i.fromSalary || false
+      fromSalary: i.fromSalary || false,
+      subscriptionId: i.subscriptionId || null,
+      salaryId: i.salaryId || null
     }))
   } else {
     items.value = []

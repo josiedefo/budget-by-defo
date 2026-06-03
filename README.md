@@ -28,19 +28,21 @@ A personal budget tracking application to manage your finances month by month.
 - **Plan Items** - Break down planned amounts into specific line items
 - **Auto-Sync** - Plan totals automatically update budget item planned amounts
 - **Copy From carries Plans** - When copying planned amounts from a previous month, any Plan linked to a source budget item is automatically copied to the target month and linked to the matching target budget item (existing target plans are replaced)
+- **Live Source Links** - Plan items added from a recurring payment or salary stay linked to their source via a database FK; clicking the icon in the plan opens the source directly in edit mode
+- **Cascade Updates** - Editing a recurring payment or salary automatically updates the name and amount on all linked plan items across all months, then recalculates plan totals and budget item planned amounts; existing plans are backfilled on first edit so the live link applies retroactively
 
 ### Recurring Payments
 - **Recurring Payment Templates** - Define recurring payments once (Netflix, Gym, etc.)
 - **Quick Add to Plans** - Easily add recurring payments to any plan
 - **Recurrence Options** - Weekly, Monthly, Quarterly, Semi-Annually, or Yearly
-- **Visual Indicator** - Plan items from recurring payments show a repeat icon
+- **Visual Indicator** - Plan items from recurring payments show a clickable repeat icon that opens the source in edit mode
 
 ### Salaries
 - **Salary Templates** - Define salary entries with gross pay and payroll deductions
 - **Payroll Deductions** - Track Federal Tax, Medicare, Social Security, 401K, HSA, Medical Insurance, FSA, and extra tax withholding
 - **Net Pay Calculation** - Automatically calculates net pay from gross minus all deductions
 - **Quick Add to Plans** - Add salaries to plans as income items using the computed net pay
-- **Visual Indicator** - Plan items from salaries show a dollar icon
+- **Visual Indicator** - Plan items from salaries show a clickable dollar icon that opens the source in edit mode
 
 ### Savings
 - **Savings Pool** - Aggregate multiple physical savings accounts into a single tracked pool

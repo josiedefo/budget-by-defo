@@ -15,6 +15,8 @@ public class PlanItemDTO {
     private Integer displayOrder;
     private Boolean fromSubscription;
     private Boolean fromSalary;
+    private Long subscriptionId;
+    private Long salaryId;
 
     public static PlanItemDTO fromEntity(PlanItem item) {
         PlanItemDTO dto = new PlanItemDTO();
@@ -24,6 +26,8 @@ public class PlanItemDTO {
         dto.setDisplayOrder(item.getDisplayOrder());
         dto.setFromSubscription(item.getFromSubscription());
         dto.setFromSalary(item.getFromSalary());
+        dto.setSubscriptionId(item.getSubscription() != null ? item.getSubscription().getId() : null);
+        dto.setSalaryId(item.getSalary() != null ? item.getSalary().getId() : null);
         return dto;
     }
 }

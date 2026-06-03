@@ -191,10 +191,15 @@ import { useSubscriptionStore } from '@/stores/subscription'
 import { storeToRefs } from 'pinia'
 
 const props = defineProps({
-  modelValue: Boolean
+  modelValue: Boolean,
+  /** When set, automatically open this subscription in edit mode on dialog open */
+  editId: {
+    type: Number,
+    default: null
+  }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'updated'])
 
 const subscriptionStore = useSubscriptionStore()
 const { subscriptions } = storeToRefs(subscriptionStore)
@@ -299,8 +304,9 @@ async function saveEdit() {
   saving.value = true
   error.value = null
   try {
-    await subscriptionStore.updateSubscription(editingId.value, editForm.value)
+    const updated = await subscriptionStore.updateSubscription(editingId.value, editForm.value)
     editingId.value = null
+    emit('updated', updated)
   } catch (e) {
     error.value = 'Failed to update recurring payment'
   } finally {
@@ -321,9 +327,16 @@ function close() {
   error.value = null
 }
 
-watch(dialog, (v) => {
+watch(dialog, async (v) => {
   if (v) {
-    subscriptionStore.fetchSubscriptions()
+    await subscriptionStore.fetchSubscriptions()
+    // If a specific subscription was requested, auto-open it in edit mode
+    if (props.editId) {
+      const sub = subscriptions.value.find(s => s.id === props.editId)
+      if (sub) startEdit(sub)
+    }
+  } else {
+    editingId.value = null
   }
 })
 </script>
