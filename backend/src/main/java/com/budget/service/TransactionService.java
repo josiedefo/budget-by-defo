@@ -11,10 +11,15 @@ import com.budget.model.SavingsEvent;
 import com.budget.model.Section;
 import com.budget.model.Transaction;
 import com.budget.model.TransactionType;
+import com.budget.model.SavingsAccount;
+import com.budget.model.SavingsAccountEventType;
+import com.budget.model.SavingsFund;
 import com.budget.repository.BudgetItemRepository;
 import com.budget.repository.BudgetRepository;
 import com.budget.repository.SavingsAccountEventRepository;
+import com.budget.repository.SavingsAccountRepository;
 import com.budget.repository.SavingsEventRepository;
+import com.budget.repository.SavingsFundRepository;
 import com.budget.repository.SectionRepository;
 import com.budget.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -47,7 +52,9 @@ public class TransactionService {
     private final BudgetItemRepository budgetItemRepository;
     private final BudgetRepository budgetRepository;
     private final SavingsAccountEventRepository savingsAccountEventRepository;
+    private final SavingsAccountRepository savingsAccountRepository;
     private final SavingsEventRepository savingsEventRepository;
+    private final SavingsFundRepository savingsFundRepository;
 
     @Transactional(readOnly = true)
     public Page<TransactionDTO> getTransactions(
@@ -214,7 +221,62 @@ public class TransactionService {
         if (!transactionRepository.existsById(id)) {
             throw new EntityNotFoundException("Transaction not found with id: " + id);
         }
+        deleteSavingsLinksForTransaction(id);
         transactionRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void bulkDeleteTransactions(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        ids.forEach(this::deleteSavingsLinksForTransaction);
+        transactionRepository.deleteAllByIdInBatch(ids);
+    }
+
+    private void deleteSavingsLinksForTransaction(Long transactionId) {
+        // Delete linked savings account event and reverse account balance
+        savingsAccountEventRepository.findByTransactionId(transactionId).ifPresent(accountEvent -> {
+            SavingsAccount account = accountEvent.getAccount();
+            if (accountEvent.getEventType() == SavingsAccountEventType.DEPOSIT) {
+                account.setBalance(account.getBalance().subtract(accountEvent.getAmount()));
+            } else {
+                account.setBalance(account.getBalance().add(accountEvent.getAmount()));
+            }
+            savingsAccountRepository.save(account);
+            savingsAccountEventRepository.delete(accountEvent);
+        });
+
+        // Delete linked savings fund event and reverse fund balance
+        savingsEventRepository.findByTransactionRef(transactionId).ifPresent(fundEvent -> {
+            SavingsFund fund = fundEvent.getFund();
+            if (fundEvent.getEventType() == com.budget.model.SavingsEventType.DEPOSIT_ALLOCATED) {
+                fund.setBalance(fund.getBalance().subtract(fundEvent.getAmount()));
+            } else {
+                fund.setBalance(fund.getBalance().add(fundEvent.getAmount()));
+            }
+            savingsFundRepository.save(fund);
+            savingsEventRepository.delete(fundEvent);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> getMatchingIds(
+            Long transactionId,
+            LocalDate startDate,
+            LocalDate endDate,
+            TransactionType type,
+            Long sectionId,
+            Long budgetItemId,
+            String sectionName,
+            String budgetItemName,
+            String merchant,
+            boolean uncategorized) {
+        String merchantPattern = (merchant != null && !merchant.isBlank())
+            ? "%" + merchant.toLowerCase() + "%" : null;
+        String typeStr = type != null ? type.name() : null;
+        return transactionRepository.findMatchingIds(
+            transactionId, startDate, endDate, typeStr,
+            sectionId, budgetItemId, sectionName, budgetItemName,
+            merchantPattern, uncategorized);
     }
 
     @Transactional(readOnly = true)

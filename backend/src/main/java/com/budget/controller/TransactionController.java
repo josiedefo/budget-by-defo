@@ -1,5 +1,6 @@
 package com.budget.controller;
 
+import com.budget.dto.BulkDeleteRequest;
 import com.budget.dto.CreateTransactionRequest;
 import com.budget.dto.CsvImportRequest;
 import com.budget.dto.TransactionDTO;
@@ -66,6 +67,30 @@ public class TransactionController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/matching-ids")
+    public ResponseEntity<List<Long>> getMatchingIds(
+            @RequestParam(required = false) Long transactionId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long budgetItemId,
+            @RequestParam(required = false) String sectionName,
+            @RequestParam(required = false) String budgetItemName,
+            @RequestParam(required = false) String merchant,
+            @RequestParam(defaultValue = "false") boolean uncategorized) {
+        List<Long> ids = transactionService.getMatchingIds(
+            transactionId, startDate, endDate, type, sectionId, budgetItemId,
+            sectionName, budgetItemName, merchant, uncategorized);
+        return ResponseEntity.ok(ids);
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<Void> bulkDeleteTransactions(@Valid @RequestBody BulkDeleteRequest request) {
+        transactionService.bulkDeleteTransactions(request.getIds());
         return ResponseEntity.noContent().build();
     }
 

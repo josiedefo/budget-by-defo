@@ -69,6 +69,33 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         @Param("uncategorized") boolean uncategorized,
         Pageable pageable);
 
+    @Query(value = "SELECT t.id FROM transaction t " +
+           "LEFT JOIN section s ON s.id = t.section_id " +
+           "LEFT JOIN budget_item bi ON bi.id = t.budget_item_id " +
+           "WHERE (CAST(:transactionId AS BIGINT) IS NULL OR t.id = CAST(:transactionId AS BIGINT)) " +
+           "AND (CAST(:startDate AS DATE) IS NULL OR t.transaction_date >= CAST(:startDate AS DATE)) " +
+           "AND (CAST(:endDate AS DATE) IS NULL OR t.transaction_date <= CAST(:endDate AS DATE)) " +
+           "AND (CAST(:type AS VARCHAR) IS NULL OR t.type = CAST(:type AS VARCHAR)) " +
+           "AND (CAST(:sectionId AS BIGINT) IS NULL OR s.id = CAST(:sectionId AS BIGINT)) " +
+           "AND (CAST(:budgetItemId AS BIGINT) IS NULL OR bi.id = CAST(:budgetItemId AS BIGINT)) " +
+           "AND (CAST(:sectionName AS VARCHAR) IS NULL OR s.name = CAST(:sectionName AS VARCHAR)) " +
+           "AND (CAST(:budgetItemName AS VARCHAR) IS NULL OR bi.name = CAST(:budgetItemName AS VARCHAR)) " +
+           "AND (CAST(:merchant AS VARCHAR) IS NULL OR LOWER(t.merchant) LIKE CAST(:merchant AS VARCHAR)) " +
+           "AND (:uncategorized = false OR t.section_id IS NULL) " +
+           "ORDER BY t.transaction_date DESC",
+           nativeQuery = true)
+    List<Long> findMatchingIds(
+        @Param("transactionId") Long transactionId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        @Param("type") String type,
+        @Param("sectionId") Long sectionId,
+        @Param("budgetItemId") Long budgetItemId,
+        @Param("sectionName") String sectionName,
+        @Param("budgetItemName") String budgetItemName,
+        @Param("merchant") String merchant,
+        @Param("uncategorized") boolean uncategorized);
+
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = :type AND " +
            "t.transactionDate BETWEEN :startDate AND :endDate")
     BigDecimal sumAmountByTypeAndDateRange(

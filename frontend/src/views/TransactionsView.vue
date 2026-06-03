@@ -82,6 +82,31 @@
       Showing transactions for: <strong>{{ activeFilterText }}</strong>
     </v-alert>
 
+    <!-- Select-all-matching banners -->
+    <v-alert
+      v-if="selectionCount > 0 && pagination.totalElements > transactions.length && !selectAllMatchingActive"
+      type="info"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      {{ selectionCount }} transaction(s) selected on this page.
+      <v-btn variant="text" size="small" :loading="selectAllMatchingLoading" @click="selectAllMatching">
+        Select all {{ pagination.totalElements }} matching results
+      </v-btn>
+    </v-alert>
+
+    <v-alert
+      v-if="selectAllMatchingActive"
+      type="warning"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      All {{ selectionCount }} matching transactions selected.
+      <v-btn variant="text" size="small" @click="clearSelection">Clear selection</v-btn>
+    </v-alert>
+
     <!-- Action Buttons -->
     <div class="d-flex justify-end mb-4 ga-2">
       <v-btn variant="tonal" @click="showImportDialog = true">
@@ -121,6 +146,13 @@
         <v-table>
           <thead>
             <tr>
+              <th style="width:48px">
+                <v-checkbox-btn
+                  :model-value="pageCheckboxState"
+                  :indeterminate="pageCheckboxState === 'indeterminate'"
+                  @update:model-value="toggleSelectPage"
+                ></v-checkbox-btn>
+              </th>
               <th>Date</th>
               <th>Type</th>
               <th>Merchant</th>
@@ -138,6 +170,12 @@
               :title="'View in budget for ' + formatDate(transaction.transactionDate)"
               @click="viewBudget(transaction)"
             >
+              <td @click.stop>
+                <v-checkbox-btn
+                  :model-value="isSelected(transaction.id)"
+                  @update:model-value="toggleRow(transaction.id)"
+                ></v-checkbox-btn>
+              </td>
               <td>{{ formatDate(transaction.transactionDate) }}</td>
               <td>
                 <v-chip
@@ -221,11 +259,46 @@
       @linked="handleLinked"
       @unlinked="handleUnlinked"
     />
+
+    <!-- Bulk Delete Confirmation -->
+    <v-dialog v-model="showBulkDeleteDialog" max-width="440">
+      <v-card>
+        <v-card-title>Delete {{ selectionCount }} Transaction(s)</v-card-title>
+        <v-card-text>
+          This will permanently delete <strong>{{ selectionCount }}</strong> transaction(s).
+          Any linked savings events will have their transaction reference cleared automatically.
+          This cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="showBulkDeleteDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" :loading="bulkDeleting" @click="handleBulkDelete">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Sticky Bulk Action Bar -->
+    <v-slide-y-reverse-transition>
+      <div v-if="selectionCount > 0" class="bulk-action-bar">
+        <span class="text-body-2">{{ selectionCount }} selected</span>
+        <v-spacer></v-spacer>
+        <v-btn variant="text" size="small" @click="clearSelection">Deselect all</v-btn>
+        <v-btn
+          color="error"
+          variant="flat"
+          size="small"
+          prepend-icon="mdi-delete"
+          @click="showBulkDeleteDialog = true"
+        >
+          Delete selected ({{ selectionCount }})
+        </v-btn>
+      </div>
+    </v-slide-y-reverse-transition>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTransactionStore } from '@/stores/transaction'
@@ -239,7 +312,7 @@ const router = useRouter()
 const transactionStore = useTransactionStore()
 const budgetStore = useBudgetStore()
 const { updateLinkedSavings } = transactionStore
-const { transactions, loading, error, hasMore, filters } = storeToRefs(transactionStore)
+const { transactions, loading, error, hasMore, filters, pagination } = storeToRefs(transactionStore)
 const { loadMore } = transactionStore
 
 const activeFilterText = computed(() => {
@@ -263,9 +336,64 @@ const showDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showImportDialog = ref(false)
 const showSavingsLinkDialog = ref(false)
+const showBulkDeleteDialog = ref(false)
 const editingTransaction = ref(null)
 const deletingTransaction = ref(null)
 const linkingTransaction = ref(null)
+
+// Bulk selection state
+const selectedIds = ref(new Set())
+const selectAllMatchingActive = ref(false)
+const selectAllMatchingLoading = ref(false)
+const bulkDeleting = ref(false)
+
+const selectionCount = computed(() => selectedIds.value.size)
+const pageIds = computed(() => transactions.value.map(t => t.id))
+const pageCheckboxState = computed(() => {
+  const n = pageIds.value.filter(id => selectedIds.value.has(id)).length
+  if (n === 0) return false
+  return n === pageIds.value.length ? true : 'indeterminate'
+})
+
+function isSelected(id) {
+  return selectedIds.value.has(id)
+}
+
+function toggleRow(id) {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) { next.delete(id) } else { next.add(id) }
+  selectedIds.value = next
+  selectAllMatchingActive.value = false
+}
+
+function toggleSelectPage(val) {
+  const next = new Set(selectedIds.value)
+  if (val === true) {
+    pageIds.value.forEach(id => next.add(id))
+  } else {
+    pageIds.value.forEach(id => next.delete(id))
+    selectAllMatchingActive.value = false
+  }
+  selectedIds.value = next
+}
+
+async function selectAllMatching() {
+  selectAllMatchingLoading.value = true
+  try {
+    const ids = await transactionStore.getMatchingIds()
+    selectedIds.value = new Set(ids)
+    selectAllMatchingActive.value = true
+  } finally {
+    selectAllMatchingLoading.value = false
+  }
+}
+
+function clearSelection() {
+  selectedIds.value = new Set()
+  selectAllMatchingActive.value = false
+}
+
+watch(filters, clearSelection, { deep: true })
 
 const typeOptions = [
   { title: 'Income', value: 'INCOME' },
@@ -280,7 +408,8 @@ const localFilters = reactive({
 })
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString()
+  if (!dateStr) return ''
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString()
 }
 
 function formatCurrency(value) {
@@ -343,6 +472,7 @@ async function handleDelete() {
   if (deletingTransaction.value) {
     try {
       await transactionStore.deleteTransaction(deletingTransaction.value.id)
+      selectedIds.value.delete(deletingTransaction.value.id)
       showDeleteDialog.value = false
       deletingTransaction.value = null
     } catch (e) {
@@ -351,8 +481,22 @@ async function handleDelete() {
   }
 }
 
+async function handleBulkDelete() {
+  bulkDeleting.value = true
+  try {
+    await transactionStore.bulkDeleteTransactions([...selectedIds.value])
+    showBulkDeleteDialog.value = false
+    clearSelection()
+  } catch (e) {
+    console.error('Error bulk deleting transactions:', e)
+  } finally {
+    bulkDeleting.value = false
+  }
+}
+
 function handleImportComplete() {
   showImportDialog.value = false
+  clearSelection()
   transactionStore.fetchTransactions()
 }
 
@@ -441,4 +585,18 @@ onMounted(async () => {
   background-color: rgba(var(--v-theme-primary), 0.06);
 }
 
+.bulk-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgb(var(--v-theme-surface));
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+}
 </style>

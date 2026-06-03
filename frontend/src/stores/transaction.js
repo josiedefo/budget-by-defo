@@ -147,6 +147,26 @@ export const useTransactionStore = defineStore('transaction', () => {
     }
   }
 
+  async function bulkDeleteTransactions(ids) {
+    try {
+      await transactionApi.bulkDelete(ids)
+      await fetchTransactions(true)
+    } catch (e) {
+      error.value = e.response?.data?.error || e.message
+      throw e
+    }
+  }
+
+  async function getMatchingIds() {
+    const params = {}
+    Object.entries(filters.value).forEach(([k, v]) => {
+      if (v !== null && v !== '' && v !== false) params[k] = v
+      else if (k === 'uncategorized') params[k] = v  // always send boolean
+    })
+    const response = await transactionApi.getMatchingIds(params)
+    return response.data
+  }
+
   function updateLinkedSavings(transactionId, linkedData) {
     const tx = transactions.value.find(t => t.id === transactionId)
     if (tx) Object.assign(tx, linkedData)
@@ -167,6 +187,8 @@ export const useTransactionStore = defineStore('transaction', () => {
     createTransaction,
     updateTransaction,
     deleteTransaction,
+    bulkDeleteTransactions,
+    getMatchingIds,
     updateLinkedSavings
   }
 })

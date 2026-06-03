@@ -78,6 +78,14 @@ export const transactionApi = {
     return api.delete(`/transactions/${id}`)
   },
 
+  getMatchingIds(params = {}) {
+    return api.get('/transactions/matching-ids', { params })
+  },
+
+  bulkDelete(ids) {
+    return api.delete('/transactions/bulk', { data: { ids } })
+  },
+
   import(data) {
     return api.post('/transactions/import', data).then(res => res.data)
   }

@@ -18,8 +18,9 @@ A personal budget tracking application to manage your finances month by month.
 - **CSV Import** - Bulk import transactions from CSV files with column mapping; budget items that exist in the CSV but not in the budget month are auto-created in the correct section
 - **Click-to-View** - Click on actual amounts to view related transactions
 - **Uncategorized Filter** - One-click chip to show only transactions not yet assigned to any budget section
-- **Link to Savings** - Link any transaction to a savings account event or savings fund event; bank icon on each row turns teal when linked
+- **Link to Savings** - Link any transaction to a savings account event or savings fund event; bank icon on each row turns teal when linked; deleting a linked transaction also deletes its associated savings events and reverses their balance impact
 - **Bulk Link by Budget Item** - From the Monthly Budget view, bulk-link all transactions for a budget item to a savings account or fund in one action; icon turns teal when all transactions are linked
+- **Bulk Delete** - Select individual transactions via checkboxes or use "Select all N matching results" to select every transaction matching the current filter; delete all selected in one action with a confirmation dialog
 
 ### Planner
 - **Monthly Plans** - Create detailed plans for individual budget items
