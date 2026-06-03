@@ -251,6 +251,21 @@ public class BudgetService {
             monthSummary.setPlannedSavings(budgetDTO.getTotalPlannedIncome().subtract(budgetDTO.getTotalPlannedExpenses()));
             monthSummary.setActualSavings(budgetDTO.getTotalIncome().subtract(budgetDTO.getTotalExpenses()));
 
+            List<YearlySummaryDTO.KeyItemDTO> keyItems = new ArrayList<>();
+            for (Section section : fullBudget.getSections()) {
+                for (BudgetItem item : section.getItems()) {
+                    if (Boolean.TRUE.equals(item.getIsKeyItem())) {
+                        keyItems.add(new YearlySummaryDTO.KeyItemDTO(
+                                item.getName(),
+                                section.getName(),
+                                item.getActualAmount().subtract(item.getPlannedAmount()),
+                                section.getIsIncome()
+                        ));
+                    }
+                }
+            }
+            monthSummary.setKeyItems(keyItems);
+
             months.add(monthSummary);
 
             totalPlannedIncome = totalPlannedIncome.add(budgetDTO.getTotalPlannedIncome());

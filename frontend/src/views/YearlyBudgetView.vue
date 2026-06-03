@@ -93,21 +93,38 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="monthData in monthsData" :key="monthData.month">
-              <td>{{ getMonthName(monthData.month) }}</td>
-              <td class="text-right text-success">{{ formatCurrency(monthData.plannedIncome) }}</td>
-              <td class="text-right text-success">{{ formatCurrency(monthData.actualIncome) }}</td>
-              <td class="text-right text-error">{{ formatCurrency(monthData.plannedExpenses) }}</td>
-              <td class="text-right text-error">{{ formatCurrency(monthData.actualExpenses) }}</td>
-              <td class="text-right" :class="monthData.actualSavings >= 0 ? 'text-success' : 'text-error'">
-                {{ formatCurrency(monthData.actualSavings) }}
-              </td>
-              <td>
-                <v-btn size="small" variant="text" color="primary" @click="viewMonth(monthData.month)">
-                  View
-                </v-btn>
-              </td>
-            </tr>
+            <template v-for="monthData in monthsData" :key="monthData.month">
+              <tr>
+                <td>{{ getMonthName(monthData.month) }}</td>
+                <td class="text-right text-success">{{ formatCurrency(monthData.plannedIncome) }}</td>
+                <td class="text-right text-success">{{ formatCurrency(monthData.actualIncome) }}</td>
+                <td class="text-right text-error">{{ formatCurrency(monthData.plannedExpenses) }}</td>
+                <td class="text-right text-error">{{ formatCurrency(monthData.actualExpenses) }}</td>
+                <td class="text-right" :class="monthData.actualSavings >= 0 ? 'text-success' : 'text-error'">
+                  {{ formatCurrency(monthData.actualSavings) }}
+                </td>
+                <td>
+                  <v-btn size="small" variant="text" color="primary" @click="viewMonth(monthData.month)">
+                    View
+                  </v-btn>
+                </td>
+              </tr>
+              <tr v-if="monthData.keyItems?.length" class="key-items-row">
+                <td colspan="7" class="py-1 px-4">
+                  <span
+                    v-for="(ki, i) in monthData.keyItems"
+                    :key="i"
+                    class="key-item-chip"
+                  >
+                    <v-icon size="x-small" color="amber" class="mr-1">mdi-bookmark</v-icon>
+                    {{ ki.sectionName }}: {{ ki.itemName }}
+                    <span :class="getKeyItemDiff(ki) >= 0 ? 'text-success' : 'text-error'" class="ml-1 font-weight-medium">
+                      {{ formatDiff(getKeyItemDiff(ki)) }}
+                    </span>
+                  </span>
+                </td>
+              </tr>
+            </template>
             <tr v-if="monthsData.length === 0">
               <td colspan="7" class="text-center text-medium-emphasis py-4">
                 No budgets created for {{ selectedYear }} yet.
@@ -158,6 +175,18 @@ function formatCurrency(value) {
   }).format(value || 0)
 }
 
+function getKeyItemDiff(ki) {
+  const diff = ki.difference || 0
+  // Mirror BudgetSection: for income actual-planned, for expenses planned-actual
+  return ki.isIncome ? diff : -diff
+}
+
+function formatDiff(value) {
+  const n = value || 0
+  const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(n))
+  return n >= 0 ? `+${formatted}` : `-${formatted}`
+}
+
 async function loadYearlySummary() {
   await budgetStore.fetchYearlySummary(selectedYear.value)
 }
@@ -185,6 +214,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.key-items-row {
+  background-color: rgba(var(--v-theme-surface-variant), 0.3);
+}
+
+.key-item-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  margin-right: 16px;
+  color: rgba(var(--v-theme-on-surface), 0.8);
+}
+
 .sticky-summary {
   position: sticky;
   top: 48px;

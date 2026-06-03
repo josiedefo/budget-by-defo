@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-add-is-key-item-to-budget-item
+      author: budget-app
+      changes:
+        - addColumn:
+            tableName: budget_item
+            columns:
+              - column:
+                  name: is_key_item
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

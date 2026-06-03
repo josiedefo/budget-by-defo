@@ -91,6 +91,16 @@
             >
               <v-icon size="small">mdi-bank-transfer</v-icon>
             </v-btn>
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              :color="item.isKeyItem ? 'amber' : 'grey-lighten-1'"
+              :title="item.isKeyItem ? 'Remove key tag' : 'Tag as key item for yearly view'"
+              @click.stop="toggleKeyItem(item)"
+            >
+              <v-icon size="small">{{ item.isKeyItem ? 'mdi-bookmark' : 'mdi-bookmark-outline' }}</v-icon>
+            </v-btn>
             <v-btn icon size="x-small" variant="text" color="error" @click="deleteItem(item.id)">
               <v-icon size="small">mdi-delete</v-icon>
             </v-btn>
@@ -268,6 +278,14 @@ function deleteItem(itemId) {
 
 function toggleExclusion(itemId, excluded) {
   emit('toggle-exclusion', { sectionId: props.section.id, itemId, excluded })
+}
+
+function toggleKeyItem(item) {
+  emit('update-item', {
+    sectionId: props.section.id,
+    itemId: item.id,
+    data: { isKeyItem: !item.isKeyItem }
+  })
 }
 
 function confirmDelete() {

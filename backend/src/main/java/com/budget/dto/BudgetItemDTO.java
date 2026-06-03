@@ -16,6 +16,7 @@ public class BudgetItemDTO {
     private Integer displayOrder;
     private BigDecimal difference;
     private Boolean isExcludedFromBudget;
+    private Boolean isKeyItem;
     private Long planId;
 
     public static BudgetItemDTO fromEntity(BudgetItem item) {
@@ -27,6 +28,7 @@ public class BudgetItemDTO {
         dto.setDisplayOrder(item.getDisplayOrder());
         dto.setDifference(item.getPlannedAmount().subtract(item.getActualAmount()));
         dto.setIsExcludedFromBudget(item.getIsExcludedFromBudget());
+        dto.setIsKeyItem(item.getIsKeyItem());
         return dto;
     }
 }

@@ -10,4 +10,5 @@ public class UpdateItemRequest {
     private BigDecimal plannedAmount;
     private BigDecimal actualAmount;
     private Boolean isExcludedFromBudget;
+    private Boolean isKeyItem;
 }

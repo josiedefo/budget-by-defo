@@ -11,6 +11,7 @@ A personal budget tracking application to manage your finances month by month.
 - **Custom Sections** - Add your own budget categories
 - **Default Categories** - Comes with Income, Housing, Transportation, Food, Utilities, Healthcare, Entertainment, and Savings
 - **Exclude Items** - Optionally exclude specific budget items from overall calculations
+- **Key Item Tags** - Tag budget items as "key" from the monthly view (bookmark icon); tagged items and their diff appear beneath the month row on the yearly overview to quickly explain savings variance
 
 ### Transactions
 - **Transaction Tracking** - Record individual transactions with date, amount, description, and type

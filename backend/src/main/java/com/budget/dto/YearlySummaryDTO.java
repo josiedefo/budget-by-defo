@@ -1,5 +1,6 @@
 package com.budget.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -29,5 +30,16 @@ public class YearlySummaryDTO {
         private BigDecimal actualExpenses;
         private BigDecimal plannedSavings;
         private BigDecimal actualSavings;
+        private List<KeyItemDTO> keyItems;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KeyItemDTO {
+        private String itemName;
+        private String sectionName;
+        private BigDecimal difference; // actual - planned
+        private Boolean isIncome;
     }
 }

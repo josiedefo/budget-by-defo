@@ -33,3 +33,5 @@ databaseChangeLog:
       file: db/changelog/016-add-index-to-savings-event-transaction-ref.yaml
   - include:
       file: db/changelog/017-add-paired-event-id-to-savings-event.yaml
+  - include:
+      file: db/changelog/018-add-is-key-item-to-budget-item.yaml

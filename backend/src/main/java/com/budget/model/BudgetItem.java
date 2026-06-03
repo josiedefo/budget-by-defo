@@ -40,6 +40,9 @@ public class BudgetItem {
     @Column(name = "is_excluded_from_budget", nullable = false)
     private Boolean isExcludedFromBudget = false;
 
+    @Column(name = "is_key_item", nullable = false)
+    private Boolean isKeyItem = false;
+
     public BudgetItem(String name, BigDecimal plannedAmount, Integer displayOrder) {
         this.name = name;
         this.plannedAmount = plannedAmount;
