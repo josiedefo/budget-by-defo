@@ -41,6 +41,7 @@ A personal budget tracking application to manage your finances month by month.
 - **Salary Templates** - Define salary entries with gross pay and payroll deductions
 - **Payroll Deductions** - Track Federal Tax, Medicare, Social Security, 401K, HSA, Medical Insurance, FSA, and extra tax withholding
 - **Net Pay Calculation** - Automatically calculates net pay from gross minus all deductions
+- **Dollar / Percentage Toggle** - Enter deduction fields as flat dollar amounts or as a percentage of gross pay; toggle converts all values in-place and shows a live `= $X.XX` hint beneath each field; the net pay preview updates instantly; values are always stored as dollars
 - **Quick Add to Plans** - Add salaries to plans as income items using the computed net pay
 - **Visual Indicator** - Plan items from salaries show a clickable dollar icon that opens the source in edit mode
 

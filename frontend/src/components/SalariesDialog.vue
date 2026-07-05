@@ -39,6 +39,25 @@
                   prefix="$"
                 ></v-text-field>
               </v-col>
+            </v-row>
+
+            <!-- Deduction input mode toggle -->
+            <div class="d-flex align-center mb-3 mt-1">
+              <span class="text-caption text-medium-emphasis mr-3">Deductions as</span>
+              <v-btn-toggle
+                :model-value="inputMode"
+                mandatory
+                density="compact"
+                variant="outlined"
+                color="success"
+                @update:model-value="setInputMode($event, newSalary)"
+              >
+                <v-btn value="amount" size="small">$ Amount</v-btn>
+                <v-btn value="percent" size="small" :disabled="!newSalary.regularAmount">% of Gross</v-btn>
+              </v-btn-toggle>
+            </div>
+
+            <v-row dense>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.federalTax"
@@ -46,11 +65,11 @@
                   label="Federal Tax *"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.federalTax, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
-            </v-row>
-            <v-row dense>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.medicare"
@@ -58,9 +77,13 @@
                   label="Medicare *"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.medicare, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
+            </v-row>
+            <v-row dense>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.socialSecurity"
@@ -68,7 +91,9 @@
                   label="Social Security *"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.socialSecurity, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -82,7 +107,9 @@
                   label="401K"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.fourOhOneK, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="4">
@@ -92,7 +119,9 @@
                   label="Extra Tax Withholding"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.extraTaxWithholding, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="4">
@@ -102,7 +131,9 @@
                   label="HSA"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.healthSavingsAccount, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -114,7 +145,9 @@
                   label="Medical Insurance"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.medicalInsurance, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
@@ -124,7 +157,9 @@
                   label="FSA"
                   density="comfortable"
                   variant="outlined"
-                  prefix="$"
+                  :prefix="deductionPrefix"
+                  :hint="deductionHint(newSalary.flexibleSpendingAccount, newSalary.regularAmount)"
+                  :persistent-hint="inputMode === 'percent'"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -173,6 +208,25 @@
                       prefix="$"
                     ></v-text-field>
                   </v-col>
+                </v-row>
+
+                <!-- Deduction input mode toggle -->
+                <div class="d-flex align-center mb-3 mt-1">
+                  <span class="text-caption text-medium-emphasis mr-3">Deductions as</span>
+                  <v-btn-toggle
+                    :model-value="inputMode"
+                    mandatory
+                    density="compact"
+                    variant="outlined"
+                    color="success"
+                    @update:model-value="setInputMode($event, editForm)"
+                  >
+                    <v-btn value="amount" size="small">$ Amount</v-btn>
+                    <v-btn value="percent" size="small" :disabled="!editForm.regularAmount">% of Gross</v-btn>
+                  </v-btn-toggle>
+                </div>
+
+                <v-row dense>
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.federalTax"
@@ -180,11 +234,11 @@
                       label="Federal Tax *"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.federalTax, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
-                </v-row>
-                <v-row dense>
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.medicare"
@@ -192,9 +246,13 @@
                       label="Medicare *"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.medicare, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
+                </v-row>
+                <v-row dense>
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.socialSecurity"
@@ -202,7 +260,9 @@
                       label="Social Security *"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.socialSecurity, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
                 </v-row>
@@ -216,7 +276,9 @@
                       label="401K"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.fourOhOneK, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
                   <v-col cols="12" md="4">
@@ -226,7 +288,9 @@
                       label="Extra Tax Withholding"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.extraTaxWithholding, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
                   <v-col cols="12" md="4">
@@ -236,7 +300,9 @@
                       label="HSA"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.healthSavingsAccount, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
                 </v-row>
@@ -248,7 +314,9 @@
                       label="Medical Insurance"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.medicalInsurance, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
                   <v-col cols="12" md="6">
@@ -258,7 +326,9 @@
                       label="FSA"
                       density="comfortable"
                       variant="outlined"
-                      prefix="$"
+                      :prefix="deductionPrefix"
+                      :hint="deductionHint(editForm.flexibleSpendingAccount, editForm.regularAmount)"
+                      :persistent-hint="inputMode === 'percent'"
                     ></v-text-field>
                   </v-col>
                 </v-row>
@@ -347,6 +417,71 @@ const saving = ref(false)
 const error = ref(null)
 const editingId = ref(null)
 
+// 'amount' = flat dollar values; 'percent' = percentage of gross pay
+// Shared between add and edit forms (only one is open at a time)
+const inputMode = ref('amount')
+
+const DEDUCTION_FIELDS = [
+  'federalTax', 'medicare', 'socialSecurity',
+  'fourOhOneK', 'extraTaxWithholding', 'healthSavingsAccount',
+  'medicalInsurance', 'flexibleSpendingAccount'
+]
+
+const deductionPrefix = computed(() => inputMode.value === 'percent' ? '%' : '$')
+
+/** Returns "= $X.XX" hint when in percent mode, empty string otherwise. */
+function deductionHint(rawValue, gross) {
+  if (inputMode.value !== 'percent') return ''
+  const pct = rawValue || 0
+  const dollars = (pct / 100) * (gross || 0)
+  return `= ${formatCurrency(dollars)}`
+}
+
+/** Switches mode and converts all deduction field values in-place on the given form object. */
+function setInputMode(newMode, form) {
+  if (newMode === inputMode.value) return
+  const oldMode = inputMode.value
+  const gross = form.regularAmount || 0
+
+  for (const field of DEDUCTION_FIELDS) {
+    const val = form[field]
+    if (val == null) continue
+    if (oldMode === 'amount' && newMode === 'percent') {
+      // $ → %: up to 4 decimal places so e.g. 6.2% stays clean
+      form[field] = gross > 0 ? Math.round((val / gross) * 100 * 10000) / 10000 : 0
+    } else if (oldMode === 'percent' && newMode === 'amount') {
+      // % → $: round to cents
+      form[field] = Math.round((val / 100) * gross * 100) / 100
+    }
+  }
+
+  inputMode.value = newMode
+}
+
+/** Returns a copy of the form with all deduction fields converted to dollar amounts for the API. */
+function toDollarForm(form) {
+  if (inputMode.value === 'amount') return { ...form }
+  const gross = form.regularAmount || 0
+  const result = { ...form }
+  for (const field of DEDUCTION_FIELDS) {
+    if (result[field] != null) {
+      result[field] = Math.round((result[field] / 100) * gross * 100) / 100
+    }
+  }
+  return result
+}
+
+/** Net pay preview — converts percent values to dollars on the fly if in percent mode. */
+function computeNetPay(form) {
+  const gross = form.regularAmount || 0
+  let deductions = 0
+  for (const field of DEDUCTION_FIELDS) {
+    const raw = form[field] || 0
+    deductions += inputMode.value === 'percent' ? (raw / 100) * gross : raw
+  }
+  return gross - deductions
+}
+
 const emptySalary = {
   name: '',
   regularAmount: 0,
@@ -370,26 +505,15 @@ function formatCurrency(value) {
   }).format(value || 0)
 }
 
-function computeNetPay(salary) {
-  let net = salary.regularAmount || 0
-  net -= salary.federalTax || 0
-  net -= salary.medicare || 0
-  net -= salary.socialSecurity || 0
-  net -= salary.fourOhOneK || 0
-  net -= salary.extraTaxWithholding || 0
-  net -= salary.healthSavingsAccount || 0
-  net -= salary.medicalInsurance || 0
-  net -= salary.flexibleSpendingAccount || 0
-  return net
-}
-
 function startAdd() {
+  inputMode.value = 'amount'
   showAddForm.value = true
   newSalary.value = { ...emptySalary }
 }
 
 function cancelAdd() {
   showAddForm.value = false
+  inputMode.value = 'amount'
 }
 
 async function saveNewSalary() {
@@ -417,8 +541,9 @@ async function saveNewSalary() {
   saving.value = true
   error.value = null
   try {
-    await salaryStore.createSalary(newSalary.value)
+    await salaryStore.createSalary(toDollarForm(newSalary.value))
     showAddForm.value = false
+    inputMode.value = 'amount'
   } catch (e) {
     error.value = e.response?.data?.message || 'Failed to create salary'
   } finally {
@@ -427,6 +552,7 @@ async function saveNewSalary() {
 }
 
 function startEdit(salary) {
+  inputMode.value = 'amount'
   editingId.value = salary.id
   editForm.value = {
     name: salary.name,
@@ -444,6 +570,7 @@ function startEdit(salary) {
 
 function cancelEdit() {
   editingId.value = null
+  inputMode.value = 'amount'
 }
 
 async function saveEdit() {
@@ -459,8 +586,9 @@ async function saveEdit() {
   saving.value = true
   error.value = null
   try {
-    const updated = await salaryStore.updateSalary(editingId.value, editForm.value)
+    const updated = await salaryStore.updateSalary(editingId.value, toDollarForm(editForm.value))
     editingId.value = null
+    inputMode.value = 'amount'
     emit('updated', updated)
   } catch (e) {
     error.value = 'Failed to update salary'
@@ -479,6 +607,7 @@ function close() {
   dialog.value = false
   showAddForm.value = false
   editingId.value = null
+  inputMode.value = 'amount'
   error.value = null
 }
 
@@ -492,6 +621,7 @@ watch(dialog, async (v) => {
     }
   } else {
     editingId.value = null
+    inputMode.value = 'amount'
   }
 })
 </script>
