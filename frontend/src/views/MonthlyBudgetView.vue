@@ -17,7 +17,7 @@
 
     <template v-else-if="currentBudget">
       <div class="sticky-summary">
-        <div v-if="showStickyLabel" class="text-subtitle-1 font-weight-bold mb-1 px-1">{{ monthLabel }}</div>
+        <div v-if="showStickyLabel" class="text-body-large font-weight-bold mb-1 px-1">{{ monthLabel }}</div>
         <BudgetSummary />
       </div>
 

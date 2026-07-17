@@ -30,7 +30,7 @@
             </v-list-item-subtitle>
 
             <template #append>
-              <span class="text-caption text-medium-emphasis">{{ sub.recurrence }}</span>
+              <span class="text-body-small text-medium-emphasis">{{ sub.recurrence }}</span>
             </template>
           </v-list-item>
         </v-list>
@@ -45,7 +45,7 @@
       </v-card-text>
 
       <v-card-actions>
-        <div class="text-caption text-medium-emphasis">
+        <div class="text-body-small text-medium-emphasis">
           {{ selectedIds.length }} selected - Total: {{ formatCurrency(selectedTotal) }}
         </div>
         <v-spacer></v-spacer>

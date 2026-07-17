@@ -1,7 +1,7 @@
 <template>
   <v-dialog :model-value="modelValue" max-width="500" persistent @update:model-value="$emit('update:modelValue', $event)">
     <v-card>
-      <v-card-title class="text-h6 pt-4 px-4">
+      <v-card-title class="text-title-large pt-4 px-4">
         <v-icon start color="teal">mdi-bank-transfer</v-icon>
         Bulk Link to Savings
       </v-card-title>
@@ -10,19 +10,19 @@
         <!-- Budget item summary -->
         <v-sheet rounded="lg" color="surface-variant" class="pa-3 mb-4">
           <div class="d-flex justify-space-between align-center">
-            <span class="text-body-2 text-medium-emphasis">Budget Item</span>
+            <span class="text-body-medium text-medium-emphasis">Budget Item</span>
             <span class="font-weight-medium">{{ budgetItem?.name }}</span>
           </div>
           <div class="d-flex justify-space-between align-center mt-1">
-            <span class="text-body-2 text-medium-emphasis">Period</span>
+            <span class="text-body-medium text-medium-emphasis">Period</span>
             <span>{{ monthLabel }}</span>
           </div>
           <div class="d-flex justify-space-between align-center mt-1">
-            <span class="text-body-2 text-medium-emphasis">Transactions</span>
+            <span class="text-body-medium text-medium-emphasis">Transactions</span>
             <span>{{ linkStatus ? linkStatus.totalTransactions : '—' }}</span>
           </div>
           <div class="d-flex justify-space-between align-center mt-1">
-            <span class="text-body-2 text-medium-emphasis">Total Actual</span>
+            <span class="text-body-medium text-medium-emphasis">Total Actual</span>
             <span class="font-weight-medium">{{ formatCurrency(budgetItem?.actualAmount) }}</span>
           </div>
         </v-sheet>
@@ -33,7 +33,7 @@
 
         <template v-else>
           <!-- ── Savings Account Section ── -->
-          <div class="text-subtitle-2 text-medium-emphasis mb-2">
+          <div class="text-title-small text-medium-emphasis mb-2">
             <v-icon size="small" class="mr-1">mdi-bank-outline</v-icon>
             Savings Account
           </div>
@@ -89,7 +89,7 @@
           <v-divider class="my-4" />
 
           <!-- ── Savings Fund Section ── -->
-          <div class="text-subtitle-2 text-medium-emphasis mb-2">
+          <div class="text-title-small text-medium-emphasis mb-2">
             <v-icon size="small" class="mr-1">mdi-piggy-bank-outline</v-icon>
             Savings Fund
           </div>

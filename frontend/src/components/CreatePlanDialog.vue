@@ -21,8 +21,8 @@
           <template #item="{ item, props }">
             <v-list-item v-bind="props">
               <template #prepend>
-                <v-chip size="x-small" :color="item.raw.isIncome ? 'success' : 'default'" class="mr-2">
-                  {{ item.raw.sectionName }}
+                <v-chip size="x-small" :color="item.isIncome ? 'success' : 'default'" class="mr-2">
+                  {{ item.sectionName }}
                 </v-chip>
               </template>
             </v-list-item>

@@ -16,7 +16,7 @@
     </v-card-title>
 
     <v-card-text class="pt-0">
-      <div class="text-h5 font-weight-bold mb-2">${{ formatAmount(fund.balance) }}</div>
+      <div class="text-headline-small font-weight-bold mb-2">${{ formatAmount(fund.balance) }}</div>
 
       <!-- TARGET / TARGET_WITH_DEADLINE / SPEND_DOWN progress -->
       <template v-if="fund.goalType === 'TARGET' || fund.goalType === 'TARGET_WITH_DEADLINE' || fund.goalType === 'SPEND_DOWN'">
@@ -25,15 +25,15 @@
           :color="fund.status === 'COMPLETE' ? 'success' : 'primary'"
           rounded height="8" class="mb-1"
         />
-        <div class="d-flex justify-space-between text-caption text-medium-emphasis">
+        <div class="d-flex justify-space-between text-body-small text-medium-emphasis">
           <span>{{ fund.progressPercent || 0 }}% of ${{ formatAmount(fund.targetAmount) }}</span>
           <span v-if="fund.remaining > 0">${{ formatAmount(fund.remaining) }} left</span>
         </div>
-        <div v-if="fund.deadline" class="text-caption mt-1">
+        <div v-if="fund.deadline" class="text-body-small mt-1">
           <v-icon size="x-small">mdi-calendar</v-icon>
           Deadline: {{ formatDate(fund.deadline) }}
         </div>
-        <div v-if="fund.payoutDate" class="text-caption mt-1">
+        <div v-if="fund.payoutDate" class="text-body-small mt-1">
           <v-icon size="x-small">mdi-calendar-export</v-icon>
           Payout: {{ formatDate(fund.payoutDate) }}
           <span v-if="fund.payoutAmount"> (${{ formatAmount(fund.payoutAmount) }})</span>
@@ -45,10 +45,10 @@
 
       <!-- SPEND_AS_YOU_GO -->
       <template v-else-if="fund.goalType === 'SPEND_AS_YOU_GO'">
-        <div class="text-caption text-medium-emphasis">
+        <div class="text-body-small text-medium-emphasis">
           Ceiling: ${{ formatAmount(fund.ceiling) }}
         </div>
-        <div v-if="fund.ytdSpent != null" class="text-caption text-medium-emphasis">
+        <div v-if="fund.ytdSpent != null" class="text-body-small text-medium-emphasis">
           Spent YTD: ${{ formatAmount(fund.ytdSpent) }}
         </div>
         <v-chip size="x-small" class="mt-2"

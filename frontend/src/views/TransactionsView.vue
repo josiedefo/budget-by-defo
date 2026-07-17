@@ -138,7 +138,7 @@
     <template v-else>
       <v-card v-if="transactions.length === 0" class="text-center pa-8">
         <v-icon size="64" color="grey">mdi-swap-horizontal</v-icon>
-        <p class="text-h6 mt-4">No transactions found</p>
+        <p class="text-title-large mt-4">No transactions found</p>
         <p class="text-grey">Add your first transaction or adjust your filters</p>
       </v-card>
 
@@ -280,7 +280,7 @@
     <!-- Sticky Bulk Action Bar -->
     <v-slide-y-reverse-transition>
       <div v-if="selectionCount > 0" class="bulk-action-bar">
-        <span class="text-body-2">{{ selectionCount }} selected</span>
+        <span class="text-body-medium">{{ selectionCount }} selected</span>
         <v-spacer></v-spacer>
         <v-btn variant="text" size="small" @click="clearSelection">Deselect all</v-btn>
         <v-btn
@@ -588,7 +588,7 @@ onMounted(async () => {
 }
 
 .transaction-row:hover {
-  background-color: rgba(var(--v-theme-primary), 0.06);
+  background-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 6%, transparent);
 }
 
 .bulk-action-bar {

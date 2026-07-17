@@ -333,7 +333,7 @@ function viewPlan(item) {
 }
 
 .total-row {
-  background-color: rgba(var(--v-theme-surface-variant), 0.4);
+  background-color: color-mix(in srgb, rgb(var(--v-theme-surface-variant)) 40%, transparent);
   border-top: 2px solid rgba(var(--v-border-color), 0.4);
 }
 
@@ -375,8 +375,8 @@ function viewPlan(item) {
 
 @keyframes highlight-pulse {
   0%   { background-color: transparent; }
-  20%  { background-color: rgba(var(--v-theme-primary), 0.22); }
-  60%  { background-color: rgba(var(--v-theme-primary), 0.22); }
+  20%  { background-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 22%, transparent); }
+  60%  { background-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 22%, transparent); }
   100% { background-color: transparent; }
 }
 

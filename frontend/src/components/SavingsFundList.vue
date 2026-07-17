@@ -2,7 +2,7 @@
   <div>
     <!-- Unassigned Fund (system fund) -->
     <div v-if="unassignedFund" class="mb-4">
-      <div class="text-subtitle-2 text-medium-emphasis mb-2">Unassigned</div>
+      <div class="text-title-small text-medium-emphasis mb-2">Unassigned</div>
       <v-row>
         <v-col cols="12" sm="6" md="4" lg="3">
           <SavingsFundCard
@@ -17,9 +17,9 @@
 
     <!-- User Funds (draggable) -->
     <div v-if="orderedFunds.length > 0">
-      <div class="text-subtitle-2 text-medium-emphasis mb-2">
+      <div class="text-title-small text-medium-emphasis mb-2">
         Funds
-        <span class="text-caption text-disabled ml-1">(drag to reorder)</span>
+        <span class="text-body-small text-disabled ml-1">(drag to reorder)</span>
       </div>
       <draggable
         v-model="orderedFunds"

@@ -33,8 +33,8 @@ budget-by-defo/
 
 ## Tech Stack
 
-- **Backend**: Java 25, Spring Boot 3.5, Spring Data JPA, Liquibase, PostgreSQL 17
-- **Frontend**: Vue 3, Vuetify 3, Pinia, Vue Router, Axios, Vite
+- **Backend**: Java 25, Spring Boot 4.1, Spring Data JPA, Liquibase 5, PostgreSQL 17
+- **Frontend**: Vue 3, Vuetify 4, Pinia 4, Vue Router 5, Axios, Vite 8
 
 ---
 

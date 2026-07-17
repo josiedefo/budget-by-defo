@@ -10,8 +10,8 @@
         <!-- Log form -->
         <v-expand-transition>
           <div v-if="showForm" class="mb-4">
-            <div class="text-subtitle-2 mb-2">{{ logForm.type === 'DEPOSIT' ? 'Log Deposit' : 'Log Withdrawal' }}</div>
-            <v-row dense>
+            <div class="text-title-small mb-2">{{ logForm.type === 'DEPOSIT' ? 'Log Deposit' : 'Log Withdrawal' }}</div>
+            <v-row density="compact">
               <v-col cols="12" sm="4">
                 <v-text-field
                   v-model="logForm.amount"

@@ -1,14 +1,14 @@
 <template>
   <v-dialog :model-value="modelValue" max-width="480" persistent @update:model-value="$emit('update:modelValue', $event)">
     <v-card>
-      <v-card-title class="text-h6 pt-4 px-4">Copy Budget From...</v-card-title>
+      <v-card-title class="text-title-large pt-4 px-4">Copy Budget From...</v-card-title>
 
       <v-card-text class="px-4">
-        <p class="text-body-2 text-medium-emphasis mb-4">
+        <p class="text-body-medium text-medium-emphasis mb-4">
           Planned amounts will be copied to matching items. Existing items and their transactions are preserved.
         </p>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="8">
             <v-select
               v-model="sourceMonth"
@@ -31,7 +31,7 @@
           </v-col>
         </v-row>
 
-        <p v-if="isSameMonth" class="text-body-2 text-error mt-1 mb-2">
+        <p v-if="isSameMonth" class="text-body-medium text-error mt-1 mb-2">
           Source cannot be the same month as the target.
         </p>
 

@@ -37,40 +37,40 @@
 
     <template v-else-if="yearlySummary">
       <div class="sticky-summary">
-        <div v-if="showStickyLabel" class="text-subtitle-1 font-weight-bold mb-1 px-1">{{ selectedYear }}</div>
+        <div v-if="showStickyLabel" class="text-body-large font-weight-bold mb-1 px-1">{{ selectedYear }}</div>
       </div>
       <v-card class="mb-4">
         <v-card-title>{{ selectedYear }} Summary</v-card-title>
         <v-card-text>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Total Planned Income</div>
-              <div class="text-body-1 text-sm-h5 font-weight-bold text-success">{{ formatCurrency(yearlySummary.totalPlannedIncome) }}</div>
+              <div class="text-body-small text-medium-emphasis">Total Planned Income</div>
+              <div class="text-body-large text-sm-headline-small font-weight-bold text-success">{{ formatCurrency(yearlySummary.totalPlannedIncome) }}</div>
             </v-col>
             <v-col cols="6" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Total Actual Income</div>
-              <div class="text-body-1 text-sm-h5 font-weight-bold text-success">{{ formatCurrency(yearlySummary.totalActualIncome) }}</div>
+              <div class="text-body-small text-medium-emphasis">Total Actual Income</div>
+              <div class="text-body-large text-sm-headline-small font-weight-bold text-success">{{ formatCurrency(yearlySummary.totalActualIncome) }}</div>
             </v-col>
             <v-col cols="6" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Total Planned Expenses</div>
-              <div class="text-body-1 text-sm-h5 font-weight-bold text-error">{{ formatCurrency(yearlySummary.totalPlannedExpenses) }}</div>
+              <div class="text-body-small text-medium-emphasis">Total Planned Expenses</div>
+              <div class="text-body-large text-sm-headline-small font-weight-bold text-error">{{ formatCurrency(yearlySummary.totalPlannedExpenses) }}</div>
             </v-col>
             <v-col cols="6" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Total Actual Expenses</div>
-              <div class="text-body-1 text-sm-h5 font-weight-bold text-error">{{ formatCurrency(yearlySummary.totalActualExpenses) }}</div>
+              <div class="text-body-small text-medium-emphasis">Total Actual Expenses</div>
+              <div class="text-body-large text-sm-headline-small font-weight-bold text-error">{{ formatCurrency(yearlySummary.totalActualExpenses) }}</div>
             </v-col>
           </v-row>
           <v-divider class="my-2"></v-divider>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6" sm="6">
-              <div class="text-caption text-medium-emphasis">Total Planned Savings</div>
-              <div class="text-body-1 text-sm-h5 font-weight-bold" :class="yearlySummary.totalPlannedSavings >= 0 ? 'text-success' : 'text-error'">
+              <div class="text-body-small text-medium-emphasis">Total Planned Savings</div>
+              <div class="text-body-large text-sm-headline-small font-weight-bold" :class="yearlySummary.totalPlannedSavings >= 0 ? 'text-success' : 'text-error'">
                 {{ formatCurrency(yearlySummary.totalPlannedSavings) }}
               </div>
             </v-col>
             <v-col cols="6" sm="6">
-              <div class="text-caption text-medium-emphasis">Total Actual Savings</div>
-              <div class="text-body-1 text-sm-h5 font-weight-bold" :class="yearlySummary.totalActualSavings >= 0 ? 'text-success' : 'text-error'">
+              <div class="text-body-small text-medium-emphasis">Total Actual Savings</div>
+              <div class="text-body-large text-sm-headline-small font-weight-bold" :class="yearlySummary.totalActualSavings >= 0 ? 'text-success' : 'text-error'">
                 {{ formatCurrency(yearlySummary.totalActualSavings) }}
               </div>
             </v-col>
@@ -215,7 +215,7 @@ onMounted(() => {
 
 <style scoped>
 .key-items-row {
-  background-color: rgba(var(--v-theme-surface-variant), 0.3);
+  background-color: color-mix(in srgb, rgb(var(--v-theme-surface-variant)) 30%, transparent);
 }
 
 .key-item-chip {
@@ -223,7 +223,7 @@ onMounted(() => {
   align-items: center;
   font-size: 0.8rem;
   margin-right: 16px;
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 80%, transparent);
 }
 
 .sticky-summary {

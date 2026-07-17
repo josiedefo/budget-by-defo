@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-app-bar color="primary" density="compact">
-      <v-app-bar-title class="text-body-1 text-sm-h6">Budget App</v-app-bar-title>
+      <v-app-bar-title class="text-body-large text-sm-title-large">Budget App</v-app-bar-title>
       <v-spacer></v-spacer>
       <v-btn-toggle v-model="viewMode" mandatory density="compact">
         <v-btn value="monthly" variant="text">

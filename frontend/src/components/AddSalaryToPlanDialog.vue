@@ -24,7 +24,7 @@
             <v-list-item-title>{{ salary.name }}</v-list-item-title>
             <v-list-item-subtitle>
               Net Pay: {{ formatCurrency(salary.netPay) }}
-              <span class="text-caption ml-2">(Gross: {{ formatCurrency(salary.regularAmount) }})</span>
+              <span class="text-body-small ml-2">(Gross: {{ formatCurrency(salary.regularAmount) }})</span>
             </v-list-item-subtitle>
           </v-list-item>
         </v-list>
@@ -39,7 +39,7 @@
       </v-card-text>
 
       <v-card-actions>
-        <div class="text-caption text-medium-emphasis">
+        <div class="text-body-small text-medium-emphasis">
           {{ selectedIds.length }} selected - Total: {{ formatCurrency(selectedTotal) }}
         </div>
         <v-spacer></v-spacer>

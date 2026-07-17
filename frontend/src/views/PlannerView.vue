@@ -12,12 +12,12 @@
 
     <template v-else>
       <div class="sticky-summary">
-        <div v-if="showStickyLabel" class="text-subtitle-1 font-weight-bold px-1">{{ monthName }} {{ year }}</div>
+        <div v-if="showStickyLabel" class="text-body-large font-weight-bold px-1">{{ monthName }} {{ year }}</div>
       </div>
       <v-row class="mt-4">
         <v-col cols="12">
           <div class="d-flex justify-space-between align-center mb-4 flex-wrap ga-2">
-            <h2 class="text-h6 text-sm-h5">Plans for {{ monthName }} {{ year }}</h2>
+            <h2 class="text-title-large text-sm-headline-small">Plans for {{ monthName }} {{ year }}</h2>
             <div class="d-flex ga-2 flex-wrap">
               <v-btn variant="outlined" @click="showSubscriptionsDialog = true">
                 <v-icon start>mdi-repeat</v-icon>
@@ -43,8 +43,8 @@
         <v-col cols="12">
           <v-card variant="outlined" class="text-center pa-8">
             <v-icon size="64" color="grey">mdi-calendar-blank</v-icon>
-            <p class="text-h6 mt-4 text-medium-emphasis">No plans for this month</p>
-            <p class="text-body-2 text-medium-emphasis">Create a plan to set planned amounts for budget items</p>
+            <p class="text-title-large mt-4 text-medium-emphasis">No plans for this month</p>
+            <p class="text-body-medium text-medium-emphasis">Create a plan to set planned amounts for budget items</p>
           </v-card>
         </v-col>
       </v-row>
@@ -60,7 +60,7 @@
             <v-card-text>
               <div class="d-flex justify-space-between align-center">
                 <span class="text-medium-emphasis">{{ plan.items.length }} items</span>
-                <span class="text-h6 font-weight-bold">{{ formatCurrency(plan.total) }}</span>
+                <span class="text-title-large font-weight-bold">{{ formatCurrency(plan.total) }}</span>
               </div>
             </v-card-text>
             <v-card-actions>

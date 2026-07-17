@@ -8,25 +8,25 @@
       <v-row class="mb-4">
         <v-col cols="12" sm="6" md="3">
           <v-card variant="outlined" class="text-center pa-4">
-            <div class="text-caption text-medium-emphasis">Total Pool</div>
-            <div class="text-h5 font-weight-bold">${{ formatAmount(summary.totalPool) }}</div>
+            <div class="text-body-small text-medium-emphasis">Total Pool</div>
+            <div class="text-headline-small font-weight-bold">${{ formatAmount(summary.totalPool) }}</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card variant="outlined" class="text-center pa-4">
-            <div class="text-caption text-medium-emphasis">Allocated</div>
-            <div class="text-h5">${{ formatAmount(summary.totalAllocated) }}</div>
+            <div class="text-body-small text-medium-emphasis">Allocated</div>
+            <div class="text-headline-small">${{ formatAmount(summary.totalAllocated) }}</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card variant="outlined" class="text-center pa-4">
-            <div class="text-caption text-medium-emphasis">Unassigned</div>
-            <div class="text-h5">${{ formatAmount(summary.totalUnallocated) }}</div>
+            <div class="text-body-small text-medium-emphasis">Unassigned</div>
+            <div class="text-headline-small">${{ formatAmount(summary.totalUnallocated) }}</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card variant="outlined" class="text-center pa-4">
-            <div class="text-caption text-medium-emphasis d-inline-flex align-center gap-1">
+            <div class="text-body-small text-medium-emphasis d-inline-flex align-center gap-1">
               Remaining to Save
               <v-tooltip text="How far are you from your goals? This is the total still needed across all Target and Spend-Down funds that haven't reached their target yet." location="bottom" max-width="260">
                 <template #activator="{ props: tip }">
@@ -34,13 +34,13 @@
                 </template>
               </v-tooltip>
             </div>
-            <div class="text-h5 text-warning">${{ formatAmount(summary.totalRemainingToSave) }}</div>
+            <div class="text-headline-small text-warning">${{ formatAmount(summary.totalRemainingToSave) }}</div>
           </v-card>
         </v-col>
       </v-row>
 
       <div v-if="summary.upcomingDeadlines && summary.upcomingDeadlines.length > 0">
-        <div class="text-subtitle-1 font-weight-medium mb-2">Upcoming Deadlines & Payouts</div>
+        <div class="text-body-large font-weight-medium mb-2">Upcoming Deadlines & Payouts</div>
         <v-list>
           <v-list-item
             v-for="fund in summary.upcomingDeadlines"

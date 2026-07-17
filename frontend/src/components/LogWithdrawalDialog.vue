@@ -15,7 +15,7 @@
           label="Fund"
           class="mb-3"
         />
-        <div v-if="selectedFund" class="text-caption text-medium-emphasis mb-3">
+        <div v-if="selectedFund" class="text-body-small text-medium-emphasis mb-3">
           Available balance: ${{ formatAmount(selectedFund.balance) }}
         </div>
         <v-text-field v-model="form.amount" label="Amount" type="number" prefix="$" class="mb-3" />

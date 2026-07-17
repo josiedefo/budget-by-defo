@@ -15,8 +15,8 @@
         <!-- Add new salary form -->
         <v-expand-transition>
           <v-card v-if="showAddForm" variant="outlined" class="mb-4 pa-4 add-form">
-            <div class="text-subtitle-1 font-weight-medium mb-3">Add New Salary</div>
-            <v-row dense>
+            <div class="text-body-large font-weight-medium mb-3">Add New Salary</div>
+            <v-row density="compact">
               <v-col cols="12">
                 <v-text-field
                   v-model="newSalary.name"
@@ -28,7 +28,7 @@
                 ></v-text-field>
               </v-col>
             </v-row>
-            <v-row dense>
+            <v-row density="compact">
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.regularAmount"
@@ -43,7 +43,7 @@
 
             <!-- Deduction input mode toggle -->
             <div class="d-flex align-center mb-3 mt-1">
-              <span class="text-caption text-medium-emphasis mr-3">Deductions as</span>
+              <span class="text-body-small text-medium-emphasis mr-3">Deductions as</span>
               <v-btn-toggle
                 :model-value="inputMode"
                 mandatory
@@ -57,7 +57,7 @@
               </v-btn-toggle>
             </div>
 
-            <v-row dense>
+            <v-row density="compact">
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.federalTax"
@@ -83,7 +83,7 @@
                 ></v-text-field>
               </v-col>
             </v-row>
-            <v-row dense>
+            <v-row density="compact">
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.socialSecurity"
@@ -98,8 +98,8 @@
               </v-col>
             </v-row>
             <v-divider class="my-3"></v-divider>
-            <div class="text-caption text-medium-emphasis mb-2">Optional Deductions</div>
-            <v-row dense>
+            <div class="text-body-small text-medium-emphasis mb-2">Optional Deductions</div>
+            <v-row density="compact">
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model.number="newSalary.fourOhOneK"
@@ -137,7 +137,7 @@
                 ></v-text-field>
               </v-col>
             </v-row>
-            <v-row dense>
+            <v-row density="compact">
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="newSalary.medicalInsurance"
@@ -165,7 +165,7 @@
             </v-row>
             <v-divider class="my-3"></v-divider>
             <div class="d-flex justify-space-between align-center">
-              <div class="text-h6 text-success">
+              <div class="text-title-large text-success">
                 Net Pay: {{ formatCurrency(computeNetPay(newSalary)) }}
               </div>
               <div>
@@ -187,7 +187,7 @@
             <template v-if="editingId === salary.id">
               <!-- Edit form -->
               <v-card-text>
-                <v-row dense>
+                <v-row density="compact">
                   <v-col cols="12">
                     <v-text-field
                       v-model="editForm.name"
@@ -197,7 +197,7 @@
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-row dense>
+                <v-row density="compact">
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.regularAmount"
@@ -212,7 +212,7 @@
 
                 <!-- Deduction input mode toggle -->
                 <div class="d-flex align-center mb-3 mt-1">
-                  <span class="text-caption text-medium-emphasis mr-3">Deductions as</span>
+                  <span class="text-body-small text-medium-emphasis mr-3">Deductions as</span>
                   <v-btn-toggle
                     :model-value="inputMode"
                     mandatory
@@ -226,7 +226,7 @@
                   </v-btn-toggle>
                 </div>
 
-                <v-row dense>
+                <v-row density="compact">
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.federalTax"
@@ -252,7 +252,7 @@
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-row dense>
+                <v-row density="compact">
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.socialSecurity"
@@ -267,8 +267,8 @@
                   </v-col>
                 </v-row>
                 <v-divider class="my-3"></v-divider>
-                <div class="text-caption text-medium-emphasis mb-2">Optional Deductions</div>
-                <v-row dense>
+                <div class="text-body-small text-medium-emphasis mb-2">Optional Deductions</div>
+                <v-row density="compact">
                   <v-col cols="12" md="4">
                     <v-text-field
                       v-model.number="editForm.fourOhOneK"
@@ -306,7 +306,7 @@
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-row dense>
+                <v-row density="compact">
                   <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="editForm.medicalInsurance"
@@ -334,7 +334,7 @@
                 </v-row>
                 <v-divider class="my-3"></v-divider>
                 <div class="d-flex justify-space-between align-center">
-                  <div class="text-h6 text-success">
+                  <div class="text-title-large text-success">
                     Net Pay: {{ formatCurrency(computeNetPay(editForm)) }}
                   </div>
                   <div>
@@ -348,15 +348,15 @@
               <!-- Display mode -->
               <v-card-text class="d-flex justify-space-between align-center py-3">
                 <div>
-                  <div class="text-subtitle-1 font-weight-medium">{{ salary.name }}</div>
-                  <div class="text-caption text-medium-emphasis">
+                  <div class="text-body-large font-weight-medium">{{ salary.name }}</div>
+                  <div class="text-body-small text-medium-emphasis">
                     Gross: {{ formatCurrency(salary.regularAmount) }}
                   </div>
                 </div>
                 <div class="d-flex align-center">
                   <div class="text-right mr-4">
-                    <div class="text-h6 text-success">{{ formatCurrency(salary.netPay) }}</div>
-                    <div class="text-caption text-medium-emphasis">Net Pay</div>
+                    <div class="text-title-large text-success">{{ formatCurrency(salary.netPay) }}</div>
+                    <div class="text-body-small text-medium-emphasis">Net Pay</div>
                   </div>
                   <v-btn icon size="small" variant="text" @click="startEdit(salary)">
                     <v-icon size="small">mdi-pencil</v-icon>
@@ -628,6 +628,6 @@ watch(dialog, async (v) => {
 
 <style scoped>
 .add-form {
-  background-color: rgba(var(--v-theme-success), 0.05);
+  background-color: color-mix(in srgb, rgb(var(--v-theme-success)) 5%, transparent);
 }
 </style>

@@ -326,7 +326,7 @@ watch(() => props.plan, (plan) => {
 
 <style scoped>
 .total-row {
-  background-color: rgba(var(--v-theme-surface-variant), 0.4);
+  background-color: color-mix(in srgb, rgb(var(--v-theme-surface-variant)) 40%, transparent);
   border-top: 2px solid rgba(var(--v-border-color), 0.4);
 }
 

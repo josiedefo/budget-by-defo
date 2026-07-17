@@ -1,21 +1,21 @@
 <template>
   <v-card class="mb-4" color="primary" variant="tonal">
     <v-card-text>
-      <v-row align="center" dense>
+      <v-row class="align-center" density="compact">
         <v-col cols="6" sm="3" class="text-center">
-          <div class="text-caption text-medium-emphasis">Total Pool</div>
-          <div class="text-body-1 text-sm-h5 font-weight-bold">${{ formatAmount(totalPoolBalance) }}</div>
+          <div class="text-body-small text-medium-emphasis">Total Pool</div>
+          <div class="text-body-large text-sm-headline-small font-weight-bold">${{ formatAmount(totalPoolBalance) }}</div>
         </v-col>
         <v-col cols="6" sm="3" class="text-center">
-          <div class="text-caption text-medium-emphasis">Allocated</div>
-          <div class="text-body-1 text-sm-h6 font-weight-medium">${{ formatAmount(allocatedTotal) }}</div>
+          <div class="text-body-small text-medium-emphasis">Allocated</div>
+          <div class="text-body-large text-sm-title-large font-weight-medium">${{ formatAmount(allocatedTotal) }}</div>
         </v-col>
         <v-col cols="6" sm="3" class="text-center">
-          <div class="text-caption text-medium-emphasis">Unassigned</div>
-          <div class="text-body-1 text-sm-h6 font-weight-medium">${{ formatAmount(unassignedBalance) }}</div>
+          <div class="text-body-small text-medium-emphasis">Unassigned</div>
+          <div class="text-body-large text-sm-title-large font-weight-medium">${{ formatAmount(unassignedBalance) }}</div>
         </v-col>
         <v-col cols="6" sm="3" class="text-center">
-          <div class="text-caption text-medium-emphasis d-inline-flex align-center gap-1">
+          <div class="text-body-small text-medium-emphasis d-inline-flex align-center gap-1">
             Untracked
             <v-tooltip text="How much account money have you not categorized yet? This is money sitting in your accounts that hasn't been deposited into any fund." location="bottom" max-width="260">
               <template #activator="{ props: tip }">
@@ -23,7 +23,7 @@
               </template>
             </v-tooltip>
           </div>
-          <div class="text-body-1 text-sm-h6 font-weight-medium" :class="untracked < 0 ? 'text-error' : ''">
+          <div class="text-body-large text-sm-title-large font-weight-medium" :class="untracked < 0 ? 'text-error' : ''">
             ${{ formatAmount(untracked) }}
           </div>
         </v-col>

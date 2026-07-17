@@ -15,7 +15,7 @@
           label="From fund"
           class="mb-1"
         />
-        <div v-if="sourceFund" class="text-caption text-medium-emphasis mb-3">
+        <div v-if="sourceFund" class="text-body-small text-medium-emphasis mb-3">
           Available: ${{ formatAmount(sourceFund.balance) }}
         </div>
 

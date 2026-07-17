@@ -343,7 +343,7 @@ watch(dialog, async (v) => {
 
 <style scoped>
 .add-row {
-  background-color: rgba(var(--v-theme-primary), 0.05);
+  background-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 5%, transparent);
 }
 
 .text-right :deep(input) {

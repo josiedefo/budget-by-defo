@@ -14,7 +14,7 @@
           <v-list-item v-for="account in accounts" :key="account.id">
             <template #title>
               <template v-if="editingId === account.id">
-                <v-row dense>
+                <v-row density="compact">
                   <v-col cols="5">
                     <v-text-field v-model="editForm.name" label="Name" density="compact" hide-details />
                   </v-col>
@@ -33,7 +33,7 @@
             <template #subtitle>
               <template v-if="editingId !== account.id">
                 ${{ formatAmount(account.balance) }}
-                <span v-if="account.asOfDate" class="ml-2 text-caption">as of {{ formatDate(account.asOfDate) }}</span>
+                <span v-if="account.asOfDate" class="ml-2 text-body-small">as of {{ formatDate(account.asOfDate) }}</span>
               </template>
             </template>
             <template #append>
@@ -63,8 +63,8 @@
         <v-divider v-if="accounts.length > 0" class="mb-4" />
 
         <!-- Add new account -->
-        <div class="text-subtitle-2 mb-2">Add Account</div>
-        <v-row dense>
+        <div class="text-title-small mb-2">Add Account</div>
+        <v-row density="compact">
           <v-col cols="12" sm="5">
             <v-text-field v-model="newForm.name" label="Account name" density="compact" hide-details />
           </v-col>
