@@ -29,16 +29,21 @@ public class SectionDTO {
                 .map(BudgetItemDTO::fromEntity)
                 .collect(Collectors.toList()));
 
-        dto.setTotalPlanned(dto.getItems().stream()
+        dto.recomputeTotals();
+
+        return dto;
+    }
+
+    /** Recomputes totalPlanned/totalActual from the item DTOs (excluded items are skipped). */
+    public void recomputeTotals() {
+        setTotalPlanned(getItems().stream()
                 .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
                 .map(BudgetItemDTO::getPlannedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 
-        dto.setTotalActual(dto.getItems().stream()
+        setTotalActual(getItems().stream()
                 .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
                 .map(BudgetItemDTO::getActualAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-        return dto;
     }
 }

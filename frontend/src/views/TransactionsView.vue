@@ -571,6 +571,12 @@ onMounted(async () => {
     if (endDate) { newFilters.endDate = endDate; localFilters.endDate = endDate }
     transactionStore.replaceFilters(newFilters)
   } else {
+    // Plain navigation (no URL params): the store may still hold filters from earlier
+    // in the session. Sync the visible inputs so the active filters aren't invisible.
+    localFilters.startDate = filters.value.startDate
+    localFilters.endDate = filters.value.endDate
+    localFilters.type = filters.value.type
+    localFilters.merchant = filters.value.merchant || ''
     transactionStore.fetchTransactions()
   }
 })

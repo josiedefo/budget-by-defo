@@ -213,8 +213,12 @@ public class SavingsAccountService {
         account = savingsAccountRepository.save(account);
         event.setAmount(newAmount);
         event.setBalanceAfter(account.getBalance());
-        event.setEventDate(request.getEventDate());
-        event.setNote(request.getNote());
+        if (request.getEventDate() != null) {
+            event.setEventDate(request.getEventDate());
+        }
+        if (request.getNote() != null) {
+            event.setNote(request.getNote());
+        }
         event = savingsAccountEventRepository.save(event);
         return SavingsAccountEventDTO.fromEntity(event);
     }

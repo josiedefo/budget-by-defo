@@ -52,21 +52,18 @@ public class Section {
         this.isIncome = isIncome;
     }
 
-    // Section.java
-@Override
-public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Section section = (Section) o;
-    return Objects.equals(id, section.id) &&
-           Objects.equals(name, section.name) &&
-           Objects.equals(displayOrder, section.displayOrder);
-    // DON'T include budget or items!
-}
+    // Identity-based equality: id only when both persisted, otherwise reference identity.
+    // Never include mutable fields — these entities live in HashSets and are mutated in place.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Section other = (Section) o;
+        return id != null && Objects.equals(id, other.id);
+    }
 
-@Override
-public int hashCode() {
-    return Objects.hash(id, name, displayOrder);
-    // DON'T include budget or items!
-}
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

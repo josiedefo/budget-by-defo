@@ -260,10 +260,14 @@ function getDiffClass(item) {
   return diff >= 0 ? 'text-success' : 'text-error'
 }
 
-let updateTimeout = null
+// One debounce timer per item+field — a single shared timer would cancel item A's
+// pending save when item B is edited within the debounce window, silently losing the edit.
+const updateTimeouts = {}
 function updateItem(itemId, field, value) {
-  clearTimeout(updateTimeout)
-  updateTimeout = setTimeout(() => {
+  const key = `${itemId}:${field}`
+  clearTimeout(updateTimeouts[key])
+  updateTimeouts[key] = setTimeout(() => {
+    delete updateTimeouts[key]
     emit('update-item', {
       sectionId: props.section.id,
       itemId,

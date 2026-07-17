@@ -50,21 +50,18 @@ public class BudgetItem {
         this.displayOrder = displayOrder;
     }
 
-    // BudgetItem.java
-@Override
-public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    BudgetItem item = (BudgetItem) o;
-    return Objects.equals(id, item.id) &&
-           Objects.equals(name, item.name) &&
-           Objects.equals(displayOrder, item.displayOrder);
-    // DON'T include section!
-}
+    // Identity-based equality: id only when both persisted, otherwise reference identity.
+    // Never include mutable fields — these entities live in HashSets and are mutated in place.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BudgetItem other = (BudgetItem) o;
+        return id != null && Objects.equals(id, other.id);
+    }
 
-@Override
-public int hashCode() {
-    return Objects.hash(id, name, displayOrder);
-    // DON'T include section!
-}
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

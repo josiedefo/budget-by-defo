@@ -82,7 +82,7 @@ Or type `/deploy` in Claude Code. The script handles ECR auth, Docker build/push
 
 Changelogs live in `backend/src/main/resources/db/changelog/`. Always add new YAML files and include them in `db.changelog-master.yaml`. Never reuse a changeSet `id`.
 
-Current migrations: 001–016 (tables through savings_event index).
+Current migrations: 001–020 (tables through unique savings link constraints).
 
 ---
 

@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20
+      author: budget-app
+      comment: >-
+        Enforce at the DB level that a transaction can be linked to at most one savings
+        account event and one savings fund event. The app already enforces this in code,
+        but duplicates would break Optional lookups and the transactions page.
+      changes:
+        - addUniqueConstraint:
+            tableName: savings_account_event
+            columnNames: transaction_id
+            constraintName: uk_sae_transaction_id
+        - addUniqueConstraint:
+            tableName: savings_event
+            columnNames: transaction_ref
+            constraintName: uk_se_transaction_ref

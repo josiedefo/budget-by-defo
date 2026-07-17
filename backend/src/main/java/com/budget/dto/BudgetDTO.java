@@ -32,34 +32,41 @@ public class BudgetDTO {
                 .map(SectionDTO::fromEntity)
                 .collect(Collectors.toList()));
 
-        dto.setTotalPlannedIncome(dto.getSections().stream()
-                .filter(SectionDTO::getIsIncome)
-                .flatMap(s -> s.getItems().stream())
-                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
-                .map(BudgetItemDTO::getPlannedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-        dto.setTotalIncome(dto.getSections().stream()
-                .filter(SectionDTO::getIsIncome)
-                .flatMap(s -> s.getItems().stream())
-                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
-                .map(BudgetItemDTO::getActualAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-        dto.setTotalPlannedExpenses(dto.getSections().stream()
-                .filter(s -> !s.getIsIncome())
-                .flatMap(s -> s.getItems().stream())
-                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
-                .map(BudgetItemDTO::getPlannedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-        dto.setTotalExpenses(dto.getSections().stream()
-                .filter(s -> !s.getIsIncome())
-                .flatMap(s -> s.getItems().stream())
-                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
-                .map(BudgetItemDTO::getActualAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        dto.recomputeTotals();
 
         return dto;
+    }
+
+    /** Recomputes section totals and the four budget totals from the item DTOs. */
+    public void recomputeTotals() {
+        getSections().forEach(SectionDTO::recomputeTotals);
+
+        setTotalPlannedIncome(getSections().stream()
+                .filter(SectionDTO::getIsIncome)
+                .flatMap(s -> s.getItems().stream())
+                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
+                .map(BudgetItemDTO::getPlannedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        setTotalIncome(getSections().stream()
+                .filter(SectionDTO::getIsIncome)
+                .flatMap(s -> s.getItems().stream())
+                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
+                .map(BudgetItemDTO::getActualAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        setTotalPlannedExpenses(getSections().stream()
+                .filter(s -> !s.getIsIncome())
+                .flatMap(s -> s.getItems().stream())
+                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
+                .map(BudgetItemDTO::getPlannedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        setTotalExpenses(getSections().stream()
+                .filter(s -> !s.getIsIncome())
+                .flatMap(s -> s.getItems().stream())
+                .filter(item -> !Boolean.TRUE.equals(item.getIsExcludedFromBudget()))
+                .map(BudgetItemDTO::getActualAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 }

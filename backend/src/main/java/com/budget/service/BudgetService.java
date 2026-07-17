@@ -89,6 +89,7 @@ public class BudgetService {
 
     @Transactional(readOnly = true)
     public BudgetDTO getBudget(Integer year, Integer month) {
+        validateYearMonth(year, month);
         Budget budget = budgetRepository.findByYearAndMonthWithSectionsAndItems(year, month)
                 .orElse(null);
 
@@ -96,25 +97,32 @@ public class BudgetService {
             return null;
         }
 
-        // Populate actual amounts from transactions
-        populateActualAmountsFromTransactions(budget, year, month);
-
         BudgetDTO dto = BudgetDTO.fromEntity(budget);
+        populateActualAmounts(dto, year, month);
         populatePlanIds(dto, year, month);
         return dto;
     }
 
     @Transactional
     public BudgetDTO getOrCreateBudget(Integer year, Integer month) {
+        validateYearMonth(year, month);
         Budget budget = budgetRepository.findByYearAndMonthWithSectionsAndItems(year, month)
                 .orElseGet(() -> createBudgetWithDefaults(year, month));
 
-        // Populate actual amounts from transactions
-        populateActualAmountsFromTransactions(budget, year, month);
-
         BudgetDTO dto = BudgetDTO.fromEntity(budget);
+        populateActualAmounts(dto, year, month);
         populatePlanIds(dto, year, month);
         return dto;
+    }
+
+    /** Rejects impossible year/month values with a 400 instead of a 500 from YearMonth.of. */
+    private static void validateYearMonth(Integer year, Integer month) {
+        if (year == null || year < 1900 || year > 2200) {
+            throw new IllegalArgumentException("Invalid year: " + year);
+        }
+        if (month == null || month < 1 || month > 12) {
+            throw new IllegalArgumentException("Invalid month: " + month);
+        }
     }
 
     private void populatePlanIds(BudgetDTO budgetDTO, Integer year, Integer month) {
@@ -145,7 +153,12 @@ public class BudgetService {
         }
     }
 
-    private void populateActualAmountsFromTransactions(Budget budget, Integer year, Integer month) {
+    /**
+     * Computes actual amounts from transactions onto the DTO (never onto managed entities —
+     * mutating entities inside a writable transaction would flush the computed values into
+     * budget_item.actual_amount as a side effect of viewing the month).
+     */
+    private void populateActualAmounts(BudgetDTO budgetDTO, Integer year, Integer month) {
         // Get date range for the month
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -162,21 +175,25 @@ public class BudgetService {
             actualAmounts.put(itemId, sum);
         }
 
-        // Update each budget item's actual amount by matching ID
-        for (Section section : budget.getSections()) {
-            for (BudgetItem item : section.getItems()) {
+        // Update each item DTO's actual amount by matching ID
+        for (SectionDTO section : budgetDTO.getSections()) {
+            for (BudgetItemDTO item : section.getItems()) {
                 BigDecimal actualAmount = actualAmounts.getOrDefault(item.getId(), BigDecimal.ZERO);
                 // For expense sections, negate so spending shows as positive
-                if (!section.getIsIncome()) {
+                if (!Boolean.TRUE.equals(section.getIsIncome())) {
                     actualAmount = actualAmount.negate();
                 }
                 item.setActualAmount(actualAmount);
+                item.setDifference(item.getPlannedAmount().subtract(actualAmount));
             }
         }
+
+        budgetDTO.recomputeTotals();
     }
 
     @Transactional
     public BudgetDTO createBudget(Integer year, Integer month) {
+        validateYearMonth(year, month);
         if (budgetRepository.existsByYearAndMonth(year, month)) {
             throw new IllegalArgumentException("Budget already exists for " + year + "/" + month);
         }
@@ -236,10 +253,8 @@ public class BudgetService {
             Budget fullBudget = budgetRepository.findByIdWithSectionsAndItems(budget.getId())
                     .orElse(budget);
 
-            // Populate actual amounts from transactions
-            populateActualAmountsFromTransactions(fullBudget, year, budget.getMonth());
-
             BudgetDTO budgetDTO = BudgetDTO.fromEntity(fullBudget);
+            populateActualAmounts(budgetDTO, year, budget.getMonth());
 
             YearlySummaryDTO.MonthSummaryDTO monthSummary = new YearlySummaryDTO.MonthSummaryDTO();
             monthSummary.setMonth(budget.getMonth());
@@ -252,8 +267,8 @@ public class BudgetService {
             monthSummary.setActualSavings(budgetDTO.getTotalIncome().subtract(budgetDTO.getTotalExpenses()));
 
             List<YearlySummaryDTO.KeyItemDTO> keyItems = new ArrayList<>();
-            for (Section section : fullBudget.getSections()) {
-                for (BudgetItem item : section.getItems()) {
+            for (SectionDTO section : budgetDTO.getSections()) {
+                for (BudgetItemDTO item : section.getItems()) {
                     if (Boolean.TRUE.equals(item.getIsKeyItem())) {
                         keyItems.add(new YearlySummaryDTO.KeyItemDTO(
                                 item.getName(),
@@ -288,6 +303,8 @@ public class BudgetService {
     @Transactional
     public BudgetDTO copyBudget(Integer sourceYear, Integer sourceMonth,
                                 Integer targetYear, Integer targetMonth) {
+        validateYearMonth(sourceYear, sourceMonth);
+        validateYearMonth(targetYear, targetMonth);
         // Guard: source and target cannot be the same month
         if (sourceYear.equals(targetYear) && sourceMonth.equals(targetMonth)) {
             throw new IllegalArgumentException("Source and target month cannot be the same");
@@ -399,8 +416,8 @@ public class BudgetService {
         target = budgetRepository.save(target);
         budgetRepository.flush(); // ensure new item IDs are visible before plan copy
         copyPlans(source, target, sourceYear, sourceMonth, targetYear, targetMonth);
-        populateActualAmountsFromTransactions(target, targetYear, targetMonth);
         BudgetDTO dto = BudgetDTO.fromEntity(target);
+        populateActualAmounts(dto, targetYear, targetMonth);
         populatePlanIds(dto, targetYear, targetMonth);
         return dto;
     }
@@ -488,6 +505,7 @@ public class BudgetService {
 
     @Transactional
     public Budget getOrCreateBudgetEntity(Integer year, Integer month) {
+        validateYearMonth(year, month);
         return budgetRepository.findByYearAndMonth(year, month)
                 .orElseGet(() -> createBudgetWithDefaults(year, month));
     }

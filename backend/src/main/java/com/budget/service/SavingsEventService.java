@@ -187,6 +187,10 @@ public class SavingsEventService {
 
         if (type == SavingsEventType.DEPOSIT_ALLOCATED) {
             BigDecimal updatedBalance = fund.getBalance().subtract(oldAmount).add(newAmount);
+            if (updatedBalance.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalStateException(
+                        "Updated amount would result in negative fund balance. Fund balance: " + fund.getBalance());
+            }
             // Pool enforcement
             BigDecimal otherFundsTotal = savingsFundRepository.sumAllActiveFundBalances().subtract(fund.getBalance());
             BigDecimal poolBalance = savingsAccountRepository.sumActiveBalances();
@@ -208,8 +212,12 @@ public class SavingsEventService {
         savingsFundRepository.save(fund);
 
         event.setAmount(newAmount);
-        event.setEventDate(request.getEventDate());
-        event.setNote(request.getNote());
+        if (request.getEventDate() != null) {
+            event.setEventDate(request.getEventDate());
+        }
+        if (request.getNote() != null) {
+            event.setNote(request.getNote());
+        }
         event = savingsEventRepository.save(event);
         return SavingsEventDTO.fromEntity(event);
     }
@@ -238,17 +246,27 @@ public class SavingsEventService {
                     source.getName(), source.getBalance().add(oldAmount), newAmount));
         }
         source.setBalance(newSourceBalance);
-        destination.setBalance(destination.getBalance().subtract(oldAmount).add(newAmount));
+        BigDecimal newDestinationBalance = destination.getBalance().subtract(oldAmount).add(newAmount);
+        if (newDestinationBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException(String.format(
+                    "Insufficient balance in destination fund \"%s\": lowering this reallocation to $%.2f would make its balance negative",
+                    destination.getName(), newAmount));
+        }
+        destination.setBalance(newDestinationBalance);
 
         savingsFundRepository.save(source);
         savingsFundRepository.save(destination);
 
         outEvent.setAmount(newAmount);
-        outEvent.setEventDate(request.getEventDate());
-        outEvent.setNote(request.getNote());
         inEvent.setAmount(newAmount);
-        inEvent.setEventDate(request.getEventDate());
-        inEvent.setNote(request.getNote());
+        if (request.getEventDate() != null) {
+            outEvent.setEventDate(request.getEventDate());
+            inEvent.setEventDate(request.getEventDate());
+        }
+        if (request.getNote() != null) {
+            outEvent.setNote(request.getNote());
+            inEvent.setNote(request.getNote());
+        }
         savingsEventRepository.save(outEvent);
         savingsEventRepository.save(inEvent);
 
@@ -339,6 +357,18 @@ public class SavingsEventService {
                 "Insufficient balance in fund \"%s\": available $%.2f, required $%.2f. " +
                 "Consider logging a deposit to the fund first.",
                 fund.getName(), fund.getBalance(), amount));
+        }
+
+        // Pool enforcement: same rule as logDeposit and bulkLinkBudgetItem
+        if (eventType == SavingsEventType.DEPOSIT_ALLOCATED) {
+            BigDecimal currentFundTotal = savingsFundRepository.sumAllActiveFundBalances();
+            BigDecimal poolBalance = savingsAccountRepository.sumActiveBalances();
+            if (currentFundTotal.add(amount).compareTo(poolBalance) > 0) {
+                throw new IllegalStateException(
+                        "Deposit would exceed savings pool. Pool balance: " + poolBalance +
+                        ", current fund total: " + currentFundTotal +
+                        ", deposit amount: " + amount);
+            }
         }
 
         BigDecimal newBalance = eventType == SavingsEventType.DEPOSIT_ALLOCATED

@@ -184,6 +184,9 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + id));
 
+        BigDecimal oldAmount = transaction.getAmount();
+        LocalDate oldDate = transaction.getTransactionDate();
+
         if (request.getType() != null) {
             transaction.setType(request.getType());
         }
@@ -213,7 +216,75 @@ public class TransactionService {
         }
 
         transaction = transactionRepository.save(transaction);
+        syncLinkedSavingsEvents(transaction, oldAmount, oldDate);
         return TransactionDTO.fromEntity(transaction);
+    }
+
+    /**
+     * Keeps linked savings account/fund events (and their balances) in sync when a
+     * transaction's amount or date changes. Without this, editing a linked transaction
+     * leaves the savings side reflecting the old amount.
+     */
+    private void syncLinkedSavingsEvents(Transaction transaction, BigDecimal oldAmount, LocalDate oldDate) {
+        boolean amountChanged = transaction.getAmount().compareTo(oldAmount) != 0;
+        boolean dateChanged = !transaction.getTransactionDate().equals(oldDate);
+        if (!amountChanged && !dateChanged) {
+            return;
+        }
+
+        BigDecimal delta = transaction.getAmount().subtract(oldAmount);
+
+        savingsAccountEventRepository.findByTransactionId(transaction.getId()).ifPresent(event -> {
+            SavingsAccount account = event.getAccount();
+            if (amountChanged) {
+                BigDecimal newBalance = event.getEventType() == SavingsAccountEventType.DEPOSIT
+                        ? account.getBalance().add(delta)
+                        : account.getBalance().subtract(delta);
+                if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalStateException(
+                            "Updating this transaction would make savings account \"" + account.getName() +
+                            "\" balance negative");
+                }
+                account.setBalance(newBalance);
+                savingsAccountRepository.save(account);
+                event.setAmount(transaction.getAmount());
+                event.setBalanceAfter(newBalance);
+            }
+            if (dateChanged) {
+                event.setEventDate(transaction.getTransactionDate());
+            }
+            savingsAccountEventRepository.save(event);
+        });
+
+        savingsEventRepository.findByTransactionRef(transaction.getId()).ifPresent(event -> {
+            SavingsFund fund = event.getFund();
+            if (amountChanged) {
+                BigDecimal newBalance = event.getEventType() == com.budget.model.SavingsEventType.DEPOSIT_ALLOCATED
+                        ? fund.getBalance().add(delta)
+                        : fund.getBalance().subtract(delta);
+                if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalStateException(
+                            "Updating this transaction would make savings fund \"" + fund.getName() +
+                            "\" balance negative");
+                }
+                if (event.getEventType() == com.budget.model.SavingsEventType.DEPOSIT_ALLOCATED
+                        && delta.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal currentFundTotal = savingsFundRepository.sumAllActiveFundBalances();
+                    BigDecimal poolBalance = savingsAccountRepository.sumActiveBalances();
+                    if (currentFundTotal.add(delta).compareTo(poolBalance) > 0) {
+                        throw new IllegalStateException(
+                                "Updating this transaction would exceed the savings pool. Pool balance: " + poolBalance);
+                    }
+                }
+                fund.setBalance(newBalance);
+                savingsFundRepository.save(fund);
+                event.setAmount(transaction.getAmount());
+            }
+            if (dateChanged) {
+                event.setEventDate(transaction.getTransactionDate());
+            }
+            savingsEventRepository.save(event);
+        });
     }
 
     @Transactional
@@ -237,7 +308,13 @@ public class TransactionService {
         savingsAccountEventRepository.findByTransactionId(transactionId).ifPresent(accountEvent -> {
             SavingsAccount account = accountEvent.getAccount();
             if (accountEvent.getEventType() == SavingsAccountEventType.DEPOSIT) {
-                account.setBalance(account.getBalance().subtract(accountEvent.getAmount()));
+                BigDecimal newBalance = account.getBalance().subtract(accountEvent.getAmount());
+                if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalStateException(
+                            "Cannot delete transaction: reversing its linked deposit would make savings account \"" +
+                            account.getName() + "\" balance negative. Unlink or adjust the savings event first.");
+                }
+                account.setBalance(newBalance);
             } else {
                 account.setBalance(account.getBalance().add(accountEvent.getAmount()));
             }
@@ -249,7 +326,13 @@ public class TransactionService {
         savingsEventRepository.findByTransactionRef(transactionId).ifPresent(fundEvent -> {
             SavingsFund fund = fundEvent.getFund();
             if (fundEvent.getEventType() == com.budget.model.SavingsEventType.DEPOSIT_ALLOCATED) {
-                fund.setBalance(fund.getBalance().subtract(fundEvent.getAmount()));
+                BigDecimal newBalance = fund.getBalance().subtract(fundEvent.getAmount());
+                if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalStateException(
+                            "Cannot delete transaction: reversing its linked deposit would make savings fund \"" +
+                            fund.getName() + "\" balance negative. Unlink or adjust the savings event first.");
+                }
+                fund.setBalance(newBalance);
             } else {
                 fund.setBalance(fund.getBalance().add(fundEvent.getAmount()));
             }
@@ -326,8 +409,11 @@ public class TransactionService {
                         .replace("(", "-")
                         .replace(")", "");
                     BigDecimal rawAmount = new BigDecimal(amountStr);
+                    if (rawAmount.signum() == 0) {
+                        continue; // Skip zero-amount rows — neither income nor expense
+                    }
                     transaction.setAmount(rawAmount.abs());
-                    transaction.setType(rawAmount.signum() >= 0 ? TransactionType.INCOME : TransactionType.EXPENSE);
+                    transaction.setType(rawAmount.signum() > 0 ? TransactionType.INCOME : TransactionType.EXPENSE);
                 } else {
                     continue; // Skip rows without amount
                 }

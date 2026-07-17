@@ -196,7 +196,11 @@ export const savingsApi = {
   linkTransactionToFund(data) { return api.post('/savings/events/link-transaction', data) },
   bulkLinkBudgetItemToFund(data) { return api.post('/savings/events/bulk-link-budget-item', data) },
   getBudgetItemLinkStatuses(ids, startDate, endDate) {
-    return api.get('/savings/link-status/budget-items', { params: { ids, startDate, endDate } })
+    // Send ids as an explicit comma-separated string instead of relying on axios's
+    // "ids[]=1&ids[]=2" array form, which only binds thanks to a Spring 6.1+ fallback.
+    return api.get('/savings/link-status/budget-items', {
+      params: { ids: ids.join(','), startDate, endDate }
+    })
   }
 }
 
