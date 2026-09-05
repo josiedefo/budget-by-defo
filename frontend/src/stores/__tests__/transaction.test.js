@@ -65,6 +65,21 @@ describe('transaction store filters', () => {
     expect(params).not.toHaveProperty('transactionId')
   })
 
+  it('setFilters supports searching by exact amount', async () => {
+    store.setFilters({ amount: 45.5 })
+    await vi.waitFor(() => expect(transactionApi.getTransactions).toHaveBeenCalled())
+
+    const params = transactionApi.getTransactions.mock.calls.at(-1)[0]
+    expect(params.amount).toBe(45.5)
+  })
+
+  it('clearFilters resets amount back to null', async () => {
+    store.setFilters({ amount: 45.5 })
+    store.clearFilters()
+
+    expect(store.filters.amount).toBeNull()
+  })
+
   it('getMatchingIds sends only active filters plus the uncategorized flag', async () => {
     store.filters.merchant = 'costco'
     store.filters.type = 'EXPENSE'
@@ -74,6 +89,15 @@ describe('transaction store filters', () => {
     expect(ids).toEqual([1, 2])
     const params = transactionApi.getMatchingIds.mock.calls[0][0]
     expect(params).toEqual({ merchant: 'costco', type: 'EXPENSE', uncategorized: false })
+  })
+
+  it('getMatchingIds includes amount when searching by amount', async () => {
+    store.filters.amount = 45.5
+
+    await store.getMatchingIds()
+
+    const params = transactionApi.getMatchingIds.mock.calls[0][0]
+    expect(params).toEqual({ amount: 45.5, uncategorized: false })
   })
 
   it('updateLinkedSavings mutates the transaction in place so open dialogs stay live', () => {

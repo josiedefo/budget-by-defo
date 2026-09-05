@@ -30,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *  - lowering a fund deposit below spent funds is rejected
  *  - the batch link-status endpoint binds comma-separated ids (the axios default
  *    "ids[]" form does NOT bind, which is why the frontend joins with commas)
+ *  - bulk-linking an explicit list of transaction ids (Transactions page multi-select)
+ *    skips ones already linked and enforces the same balance/pool checks as a single link
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -274,5 +276,57 @@ class SavingsLinkIntegrationTest {
                         .param("endDate", "2033-06-30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$." + itemId + ".allLinkedToAccount").value(true));
+    }
+
+    @Test
+    void bulkLinkTransactions_toAccount_linksOnlySelectedAndSkipsAlreadyLinked() throws Exception {
+        long accountId = createAccount("Bulk Tx Account", "1000.00");
+        long tx1 = createTransaction("2033-07-01", "Store A", "50.00");
+        long tx2 = createTransaction("2033-07-02", "Store B", "30.00");
+        long tx3 = createTransaction("2033-07-03", "Store C", "20.00"); // deliberately not selected
+
+        // Pre-link tx1 individually so the bulk call must skip it
+        mockMvc.perform(post("/api/savings/accounts/" + accountId + "/link-transaction")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionId\":" + tx1 + ",\"eventType\":\"WITHDRAWAL\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/savings/accounts/" + accountId + "/bulk-link-transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionIds\":[" + tx1 + "," + tx2 + "],\"eventType\":\"WITHDRAWAL\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linked").value(1))
+                .andExpect(jsonPath("$.skipped").value(1))
+                .andExpect(jsonPath("$.total").value(2))
+                .andExpect(jsonPath("$.totalLinkedAmount").value(30.00));
+
+        // 1000 - 50 (individual link) - 30 (bulk link) = 920; tx3 was never touched
+        assertThat(accountBalance(accountId)).isEqualByComparingTo("920.00");
+    }
+
+    @Test
+    void bulkLinkTransactions_toFund_enforcesPoolCeilingAndLinksNothingOnFailure() throws Exception {
+        createAccount("Bulk Fund Pool Account", "100.00");
+        long fundId = createFund("Bulk Fund");
+        long tx1 = createTransaction("2033-08-01", "Big One", "80.00");
+        long tx2 = createTransaction("2033-08-02", "Big Two", "80.00");
+
+        // 80 + 80 = 160 > 100 pool → rejected
+        mockMvc.perform(post("/api/savings/events/bulk-link-transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionIds\":[" + tx1 + "," + tx2 + "],\"fundId\":" + fundId +
+                                 ",\"eventType\":\"DEPOSIT_ALLOCATED\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("exceed savings pool")));
+    }
+
+    @Test
+    void bulkLinkTransactions_requiresNonEmptyTransactionIdList() throws Exception {
+        long accountId = createAccount("Empty List Account", "100.00");
+
+        mockMvc.perform(post("/api/savings/accounts/" + accountId + "/bulk-link-transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionIds\":[],\"eventType\":\"DEPOSIT\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -4,6 +4,7 @@ import com.budget.dto.AccountDepositRequest;
 import com.budget.dto.AccountWithdrawalRequest;
 import com.budget.dto.BulkLinkBudgetItemRequest;
 import com.budget.dto.BulkLinkResult;
+import com.budget.dto.BulkLinkTransactionsRequest;
 import com.budget.dto.CreateSavingsAccountRequest;
 import com.budget.dto.LinkTransactionToAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
@@ -325,6 +326,30 @@ public class SavingsAccountService {
                         request.getBudgetItemId(), request.getStartDate(), request.getEndDate())
                 : transactionRepository.findByBudgetItemIdOrderByTransactionDateDesc(request.getBudgetItemId());
 
+        return performBulkLink(account, transactions, request.getEventType(), request.getNote());
+    }
+
+    /**
+     * Links an arbitrary, explicitly-chosen set of transactions (e.g. a multi-select on the
+     * Transactions page) rather than everything under one budget item.
+     */
+    @Transactional
+    public BulkLinkResult bulkLinkTransactions(Long accountId, BulkLinkTransactionsRequest request) {
+        SavingsAccount account = savingsAccountRepository.findById(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Savings account not found: " + accountId));
+
+        List<Transaction> transactions = transactionRepository.findAllById(request.getTransactionIds());
+        return performBulkLink(account, transactions, request.getEventType(), request.getNote());
+    }
+
+    /**
+     * Shared bulk-link core: skips transactions already linked to any savings account event,
+     * pre-flight-checks withdrawals against the account balance, then creates one event per
+     * remaining transaction. Used by both the budget-item-scoped and explicit-transaction-list
+     * bulk-link entry points.
+     */
+    private BulkLinkResult performBulkLink(SavingsAccount account, List<Transaction> transactions,
+                                            SavingsAccountEventType eventType, String note) {
         if (transactions.isEmpty()) {
             return new BulkLinkResult(0, 0, 0, BigDecimal.ZERO);
         }
@@ -347,7 +372,7 @@ public class SavingsAccountService {
         }
 
         // Pre-flight balance check for withdrawals
-        if (request.getEventType() == SavingsAccountEventType.WITHDRAWAL) {
+        if (eventType == SavingsAccountEventType.WITHDRAWAL) {
             BigDecimal total = toLink.stream().map(Transaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             if (account.getBalance().compareTo(total) < 0) {
@@ -358,11 +383,10 @@ public class SavingsAccountService {
         }
 
         BigDecimal totalLinked = BigDecimal.ZERO;
-        String noteTemplate = (request.getNote() != null && !request.getNote().isBlank())
-                ? request.getNote() : null;
+        String noteTemplate = (note != null && !note.isBlank()) ? note : null;
 
         for (Transaction tx : toLink) {
-            BigDecimal newBalance = request.getEventType() == SavingsAccountEventType.DEPOSIT
+            BigDecimal newBalance = eventType == SavingsAccountEventType.DEPOSIT
                     ? account.getBalance().add(tx.getAmount())
                     : account.getBalance().subtract(tx.getAmount());
             account.setBalance(newBalance);
@@ -370,7 +394,7 @@ public class SavingsAccountService {
 
             SavingsAccountEvent event = new SavingsAccountEvent();
             event.setAccount(account);
-            event.setEventType(request.getEventType());
+            event.setEventType(eventType);
             event.setAmount(tx.getAmount());
             event.setBalanceAfter(newBalance);
             event.setEventDate(tx.getTransactionDate());

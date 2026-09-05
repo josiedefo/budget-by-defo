@@ -34,7 +34,7 @@
               clearable
             ></v-select>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="2">
             <v-text-field
               v-model="localFilters.merchant"
               label="Merchant"
@@ -43,7 +43,20 @@
               clearable
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" class="d-flex align-center ga-2">
+          <v-col cols="12" sm="6" md="2">
+            <v-text-field
+              v-model.number="localFilters.amount"
+              label="Amount"
+              type="number"
+              step="0.01"
+              min="0"
+              prefix="$"
+              variant="outlined"
+              density="compact"
+              clearable
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="2" class="d-flex align-center ga-2">
             <v-btn color="primary" variant="tonal" @click="applyFilters">
               <v-icon start>mdi-magnify</v-icon>
               Search
@@ -260,6 +273,13 @@
       @unlinked="handleUnlinked"
     />
 
+    <!-- Bulk Link to Savings Dialog -->
+    <BulkLinkTransactionsDialog
+      v-model="showBulkLinkDialog"
+      :transaction-ids="[...selectedIds]"
+      @linked="handleBulkLinked"
+    />
+
     <!-- Bulk Delete Confirmation -->
     <v-dialog v-model="showBulkDeleteDialog" max-width="440">
       <v-card>
@@ -284,6 +304,15 @@
         <v-spacer></v-spacer>
         <v-btn variant="text" size="small" @click="clearSelection">Deselect all</v-btn>
         <v-btn
+          color="teal"
+          variant="tonal"
+          size="small"
+          prepend-icon="mdi-bank-transfer"
+          @click="showBulkLinkDialog = true"
+        >
+          Link to Savings
+        </v-btn>
+        <v-btn
           color="error"
           variant="flat"
           size="small"
@@ -306,6 +335,7 @@ import { useBudgetStore } from '@/stores/budget'
 import TransactionDialog from '@/components/TransactionDialog.vue'
 import CsvImportDialog from '@/components/CsvImportDialog.vue'
 import SavingsLinkDialog from '@/components/SavingsLinkDialog.vue'
+import BulkLinkTransactionsDialog from '@/components/BulkLinkTransactionsDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -329,6 +359,7 @@ function clearCategoryFilter() {
   localFilters.endDate = null
   localFilters.type = null
   localFilters.merchant = ''
+  localFilters.amount = null
   transactionStore.clearFilters()
 }
 
@@ -337,6 +368,7 @@ const showDeleteDialog = ref(false)
 const showImportDialog = ref(false)
 const showSavingsLinkDialog = ref(false)
 const showBulkDeleteDialog = ref(false)
+const showBulkLinkDialog = ref(false)
 const editingTransaction = ref(null)
 const deletingTransaction = ref(null)
 const linkingTransaction = ref(null)
@@ -404,7 +436,8 @@ const localFilters = reactive({
   startDate: null,
   endDate: null,
   type: null,
-  merchant: ''
+  merchant: '',
+  amount: null
 })
 
 function formatDate(dateStr) {
@@ -428,6 +461,7 @@ function handleClearFilters() {
   localFilters.endDate = null
   localFilters.type = null
   localFilters.merchant = ''
+  localFilters.amount = null
   transactionStore.clearFilters()
 }
 
@@ -500,6 +534,18 @@ function handleImportComplete() {
   transactionStore.fetchTransactions()
 }
 
+// Refetch so linked rows show their updated bank icon. Selection is intentionally kept —
+// the dialog lets the same batch be linked to an account and a fund in two separate steps,
+// so clearing it here would empty the dialog's transactionIds prop mid-flow. It's cleared
+// once the dialog actually closes (see the watch below).
+function handleBulkLinked() {
+  transactionStore.fetchTransactions()
+}
+
+watch(showBulkLinkDialog, (open) => {
+  if (!open) clearSelection()
+})
+
 function openSavingsLinkDialog(transaction) {
   linkingTransaction.value = transaction
   showSavingsLinkDialog.value = true
@@ -562,6 +608,7 @@ onMounted(async () => {
     localFilters.endDate = null
     localFilters.type = null
     localFilters.merchant = ''
+    localFilters.amount = null
     transactionStore.replaceFilters({ transactionId: Number(transactionId) })
   } else if (sectionName || budgetItemName || startDate || endDate) {
     const newFilters = {}
@@ -577,6 +624,7 @@ onMounted(async () => {
     localFilters.endDate = filters.value.endDate
     localFilters.type = filters.value.type
     localFilters.merchant = filters.value.merchant || ''
+    localFilters.amount = filters.value.amount
     transactionStore.fetchTransactions()
   }
 })

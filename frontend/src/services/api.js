@@ -176,6 +176,7 @@ export const savingsApi = {
   deleteAccountEvent(eventId) { return api.delete(`/savings/accounts/events/${eventId}`) },
   linkTransaction(accountId, data) { return api.post(`/savings/accounts/${accountId}/link-transaction`, data) },
   bulkLinkBudgetItem(accountId, data) { return api.post(`/savings/accounts/${accountId}/bulk-link-budget-item`, data) },
+  bulkLinkTransactions(accountId, data) { return api.post(`/savings/accounts/${accountId}/bulk-link-transactions`, data) },
 
   // Funds
   getFunds() { return api.get('/savings/funds') },
@@ -195,6 +196,7 @@ export const savingsApi = {
   deleteEvent(id) { return api.delete(`/savings/events/${id}`) },
   linkTransactionToFund(data) { return api.post('/savings/events/link-transaction', data) },
   bulkLinkBudgetItemToFund(data) { return api.post('/savings/events/bulk-link-budget-item', data) },
+  bulkLinkTransactionsToFund(data) { return api.post('/savings/events/bulk-link-transactions', data) },
   getBudgetItemLinkStatuses(ids, startDate, endDate) {
     // Send ids as an explicit comma-separated string instead of relying on axios's
     // "ids[]=1&ids[]=2" array form, which only binds thanks to a Spring 6.1+ fallback.

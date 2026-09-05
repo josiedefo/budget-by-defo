@@ -134,6 +134,11 @@ Both are populated in `TransactionService.getTransactions()` via bulk queries (`
 - Pre-flight balance check for the total before creating any events
 - Returns `BulkLinkResult { linked, skipped, total, totalLinkedAmount }`
 
+### Bulk Link — Explicit Transaction List (Transactions page multi-select)
+`POST /api/savings/accounts/{id}/bulk-link-transactions` and `POST /api/savings/events/bulk-link-transactions`:
+- Takes `transactionIds: Long[]` directly (no date range/budget item scoping) — used by the Transactions page's checkbox multi-select, including "select all matching"
+- Same skip-already-linked / pre-flight-balance / `BulkLinkResult` behavior as the budget-item variant — both share a private `performBulkLink` core in `SavingsAccountService`/`SavingsEventService`
+
 ### Budget Item Link Status
 `GET /api/savings/link-status/budget-items?ids=1,2,3&startDate=&endDate=`
 - Returns `Map<Long, BudgetItemLinkStatus>` per budget item
@@ -168,6 +173,11 @@ A boolean filter `uncategorized: false` in the store and `AND (:uncategorized = 
 - After a successful Link All, re-fetches status → transitions to locked state immediately
 - Emits `status-changed(itemId, status)` so `BudgetSection` can update the icon color
 
+### BulkLinkTransactionsDialog (Transactions page multi-select)
+- Takes a plain `transactionIds` array prop — no link-status pre-check (there's no such endpoint for an arbitrary id list), so the account/fund sections always show the link form, never a locked state
+- Emits `linked({ type: 'account'|'fund', result })` per section on success; `TransactionsView.handleBulkLinked` just refetches the page so linked rows show their updated bank icon
+- Selection is deliberately **not** cleared on `linked` — the same batch can be linked to an account and a fund in two separate steps while the dialog stays open. It's cleared by a `watch(showBulkLinkDialog, …)` only once the dialog actually closes
+
 ### Navigation: Savings → Transactions
 Clicking the `mdi-open-in-new` icon on a savings event row navigates to `/transactions?transactionId=N`. The TransactionsView `onMounted` handler uses `replaceFilters({ transactionId: N })` — equivalent to the budget item link pattern (`?sectionName=X&budgetItemName=Y`).
 
@@ -186,12 +196,14 @@ Clicking the `mdi-open-in-new` icon on a savings event row navigates to `/transa
 |--------|----------|-------|
 | POST | `/api/savings/accounts/{id}/link-transaction` | Links one transaction |
 | POST | `/api/savings/accounts/{id}/bulk-link-budget-item` | Bulk links budget item's transactions |
+| POST | `/api/savings/accounts/{id}/bulk-link-transactions` | Bulk links an explicit `transactionIds` list |
 
 ### Savings — Fund Links
 | Method | Endpoint | Notes |
 |--------|----------|-------|
 | POST | `/api/savings/events/link-transaction` | Links one transaction |
 | POST | `/api/savings/events/bulk-link-budget-item` | Bulk links budget item's transactions |
+| POST | `/api/savings/events/bulk-link-transactions` | Bulk links an explicit `transactionIds` list |
 
 ### Savings — Link Status
 | Method | Endpoint | Notes |

@@ -120,6 +120,42 @@ class BudgetApiIntegrationTest {
         assertThat(persisted).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
+    @Test
+    void updatingItemMetadata_doesNotResetActualAmountToZero() throws Exception {
+        JsonNode budget = getBudget(2031, 7);
+        JsonNode expenseSection = firstExpenseSection(budget);
+        long sectionId = expenseSection.get("id").asLong();
+        long itemId = expenseSection.get("items").get(0).get("id").asLong();
+
+        mockMvc.perform(post("/api/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"EXPENSE\",\"transactionDate\":\"2031-07-10\"," +
+                                 "\"merchant\":\"Grocer\",\"amount\":75.00," +
+                                 "\"sectionId\":" + sectionId + ",\"budgetItemId\":" + itemId + "}"))
+                .andExpect(status().isOk());
+
+        // Sanity check: the item now shows a non-zero actual before we touch its flags
+        JsonNode beforeToggle = findItemById(getBudget(2031, 7), itemId);
+        assertThat(beforeToggle.get("actualAmount").decimalValue())
+                .isEqualByComparingTo(new BigDecimal("75.00"));
+
+        // Tagging as a key item is metadata-only — it must not clobber the computed actual
+        mockMvc.perform(put("/api/items/" + itemId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"isKeyItem\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.actualAmount").value(75.00))
+                .andExpect(jsonPath("$.isKeyItem").value(true));
+
+        // Same for excluding it from budget totals
+        mockMvc.perform(put("/api/items/" + itemId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"isExcludedFromBudget\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.actualAmount").value(75.00))
+                .andExpect(jsonPath("$.isExcludedFromBudget").value(true));
+    }
+
     // ── helpers ──
 
     private JsonNode getBudget(int year, int month) throws Exception {
