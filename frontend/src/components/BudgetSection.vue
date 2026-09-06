@@ -1,141 +1,127 @@
 <template>
-  <v-card :class="section.isIncome ? 'border-success' : ''" variant="outlined">
+  <v-card :class="section.isIncome ? 'border-success' : ''">
     <v-card-title class="d-flex align-center">
-      <v-icon :color="section.isIncome ? 'success' : 'error'" class="mr-2">
-        {{ section.isIncome ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
-      </v-icon>
-      {{ section.name }}
-      <v-chip size="small" class="ml-2" :color="section.isIncome ? 'success' : 'error'">
+      <v-avatar
+        :color="section.isIncome ? 'success' : 'error'"
+        variant="tonal"
+        size="36"
+        class="mr-3"
+      >
+        <v-icon>{{ section.isIncome ? 'mdi-arrow-down' : 'mdi-arrow-up' }}</v-icon>
+      </v-avatar>
+      <span class="text-truncate">{{ section.name }}</span>
+      <v-chip size="small" class="ml-2" :color="section.isIncome ? 'success' : 'error'" variant="tonal">
         {{ formatCurrency(section.totalActual) }} / {{ formatCurrency(section.totalPlanned) }}
       </v-chip>
       <v-spacer></v-spacer>
-      <v-btn icon size="small" variant="text" @click="emit('add-item')">
+      <v-btn icon size="small" variant="text" title="Add item" @click="emit('add-item')">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
-      <v-btn icon size="small" variant="text" color="error" @click="confirmDelete">
+      <v-btn icon size="small" variant="text" color="error" title="Delete section" @click="confirmDelete">
         <v-icon>mdi-delete</v-icon>
       </v-btn>
     </v-card-title>
 
     <v-divider></v-divider>
 
-    <v-table density="compact">
-      <thead>
-        <tr>
-          <th style="width: 40px" title="Include in budget totals">
-            <v-icon size="small">mdi-calculator</v-icon>
-          </th>
-          <th>Item</th>
-          <th class="text-right">Planned</th>
-          <th class="text-right">Actual</th>
-          <th class="text-right">Diff</th>
-          <th style="width: 80px"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="item in section.items"
-          :key="item.id"
+    <v-list density="comfortable" class="py-0">
+      <template v-for="item in section.items" :key="item.id">
+        <v-list-item
           :ref="el => setItemRef(el, item.id)"
           :class="{
             'excluded-item': item.isExcludedFromBudget,
             'highlight-pulse': item.id === highlightItemId
           }"
+          @click="openEdit(item)"
         >
-          <td>
-            <v-checkbox
-              :model-value="!item.isExcludedFromBudget"
-              density="compact"
-              hide-details
-              @update:model-value="val => toggleExclusion(item.id, !val)"
-            ></v-checkbox>
-          </td>
-          <td>{{ item.name }}</td>
-          <td class="text-right">
-            <span v-if="item.planId" class="plan-link" @click="viewPlan(item)" :title="'View plan for ' + item.name">
-              {{ formatCurrency(item.plannedAmount) }}
-              <v-icon size="x-small" class="ml-1">mdi-link</v-icon>
-            </span>
-            <v-text-field
-              v-else
-              :model-value="item.plannedAmount"
-              type="number"
-              density="compact"
-              hide-details
-              variant="plain"
-              class="text-right amount-input"
-              @update:model-value="val => updateItem(item.id, 'plannedAmount', val)"
-            ></v-text-field>
-          </td>
-          <td class="text-right">
-            <span
-              class="actual-link"
-              @click="viewTransactions(item)"
-              :title="'View transactions for ' + item.name"
-            >
-              {{ formatCurrency(item.actualAmount) }}
-            </span>
-          </td>
-          <td class="text-right" :class="getDiffClass(item)">
-            {{ formatCurrency(getItemDiff(item)) }}
-          </td>
-          <td class="text-no-wrap">
-            <v-btn
-              v-if="item.actualAmount > 0"
-              icon
-              size="x-small"
-              variant="text"
-              :color="isFullyLinked(item) ? 'teal' : 'grey'"
-              :title="isFullyLinked(item) ? 'All transactions linked to savings' : 'Bulk link transactions to savings'"
-              @click.stop="openBulkSavingsLink(item)"
-            >
-              <v-icon size="small">mdi-bank-transfer</v-icon>
-            </v-btn>
-            <v-btn
-              icon
-              size="x-small"
-              variant="text"
-              :color="item.isKeyItem ? 'amber' : 'grey-lighten-1'"
-              :title="item.isKeyItem ? 'Remove key tag' : 'Tag as key item for yearly view'"
-              @click.stop="toggleKeyItem(item)"
-            >
-              <v-icon size="small">{{ item.isKeyItem ? 'mdi-bookmark' : 'mdi-bookmark-outline' }}</v-icon>
-            </v-btn>
-            <v-btn icon size="x-small" variant="text" color="error" @click="deleteItem(item.id)">
-              <v-icon size="small">mdi-delete</v-icon>
-            </v-btn>
-          </td>
-        </tr>
-        <tr v-if="section.items.length === 0">
-          <td colspan="6" class="text-center text-medium-emphasis py-4">
-            No items yet. Click + to add one.
-          </td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr class="total-row">
-          <td></td>
-          <td class="font-weight-bold">Total</td>
-          <td class="text-right font-weight-bold">
-            {{ formatCurrency(section.totalPlanned) }}
-            <span v-if="plannedPercentOfIncome" class="text-medium-emphasis percent-badge">
-              ({{ plannedPercentOfIncome }}%)
-            </span>
-          </td>
-          <td class="text-right font-weight-bold">
-            {{ formatCurrency(section.totalActual) }}
-            <span v-if="actualPercentOfIncome" class="text-medium-emphasis percent-badge">
-              ({{ actualPercentOfIncome }}%)
-            </span>
-          </td>
-          <td class="text-right font-weight-bold" :class="getTotalDiffClass">
-            {{ formatCurrency(totalDifference) }}
-          </td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </v-table>
+          <template #prepend>
+            <v-icon
+              v-if="item.isKeyItem"
+              color="amber"
+              size="small"
+              class="mr-2"
+              title="Key item"
+            >mdi-bookmark</v-icon>
+          </template>
+
+          <v-list-item-title class="d-flex align-center">
+            {{ item.name }}
+            <v-icon v-if="item.planId" size="x-small" class="ml-1 text-medium-emphasis">mdi-link</v-icon>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            {{ formatCurrency(item.actualAmount) }}
+            <span class="text-disabled"> of {{ formatCurrency(item.plannedAmount) }}</span>
+          </v-list-item-subtitle>
+
+          <v-progress-linear
+            :model-value="meterValue(item)"
+            :color="meterColor(item)"
+            height="4"
+            rounded
+            class="mt-1"
+            bg-opacity="0.15"
+          ></v-progress-linear>
+
+          <template #append>
+            <div class="d-flex align-center ga-1">
+              <v-chip
+                size="small"
+                variant="tonal"
+                :color="getItemDiff(item) >= 0 ? 'success' : 'error'"
+              >
+                {{ formatCurrency(getItemDiff(item)) }}
+              </v-chip>
+              <v-icon
+                v-if="item.actualAmount > 0"
+                size="small"
+                :color="isFullyLinked(item) ? 'teal' : 'grey-lighten-1'"
+                :title="isFullyLinked(item) ? 'All transactions linked to savings' : 'Not fully linked to savings'"
+              >mdi-bank-transfer</v-icon>
+              <v-icon size="small" class="text-medium-emphasis">mdi-chevron-right</v-icon>
+            </div>
+          </template>
+        </v-list-item>
+        <v-divider></v-divider>
+      </template>
+
+      <v-list-item v-if="section.items.length === 0">
+        <v-list-item-title class="text-center text-medium-emphasis py-2">
+          No items yet. Click + to add one.
+        </v-list-item-title>
+      </v-list-item>
+
+      <v-list-item class="total-row">
+        <v-list-item-title class="font-weight-bold">Total</v-list-item-title>
+        <template #append>
+          <div class="text-right">
+            <div class="font-weight-bold">
+              {{ formatCurrency(section.totalActual) }}
+              <span class="text-medium-emphasis percent-badge"> / {{ formatCurrency(section.totalPlanned) }}</span>
+            </div>
+            <div class="text-caption">
+              <span class="font-weight-bold" :class="getTotalDiffClass">{{ formatCurrency(totalDifference) }}</span>
+              <span v-if="actualPercentOfIncome" class="text-medium-emphasis percent-badge">
+                · {{ actualPercentOfIncome }}% of income
+              </span>
+            </div>
+          </div>
+        </template>
+      </v-list-item>
+    </v-list>
   </v-card>
+
+  <EditBudgetItemDialog
+    v-model="showEditDialog"
+    :item="editItem"
+    :fully-linked="editItem ? isFullyLinked(editItem) : false"
+    @save="handleEditSave"
+    @delete="handleEditDelete"
+    @toggle-exclusion="handleEditToggleExclusion"
+    @toggle-key="handleEditToggleKey"
+    @view-transactions="editItem && viewTransactions(editItem)"
+    @view-plan="editItem && viewPlan(editItem)"
+    @link-savings="handleEditLinkSavings"
+  />
 
   <BulkSavingsLinkDialog
     v-model="showBulkSavingsLink"
@@ -150,6 +136,7 @@
 import { computed, watch, nextTick, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BulkSavingsLinkDialog from '@/components/BulkSavingsLinkDialog.vue'
+import EditBudgetItemDialog from '@/components/EditBudgetItemDialog.vue'
 import { savingsApi } from '@/services/api'
 
 const router = useRouter()
@@ -168,6 +155,14 @@ const bulkLinkItem = ref(null)
 // Map of budgetItemId → BudgetItemLinkStatus (fetched from API)
 const linkStatusMap = ref({})
 
+const showEditDialog = ref(false)
+const editItem = ref(null)
+
+function openEdit(item) {
+  editItem.value = item
+  showEditDialog.value = true
+}
+
 function openBulkSavingsLink(item) {
   bulkLinkItem.value = item
   showBulkSavingsLink.value = true
@@ -180,6 +175,37 @@ function handleStatusChanged(itemId, status) {
 function isFullyLinked(item) {
   const status = linkStatusMap.value[item.id]
   return status?.allLinkedToAccount || status?.allLinkedToFund
+}
+
+// --- Edit dialog handlers: translate dialog events into the section's existing emits ---
+function handleEditSave({ name, plannedAmount }) {
+  const item = editItem.value
+  if (!item) return
+  const data = { name }
+  // Plan-linked items don't accept a directly-edited planned amount.
+  if (!item.planId) data.plannedAmount = plannedAmount
+  emit('update-item', { sectionId: props.section.id, itemId: item.id, data })
+}
+
+function handleEditDelete() {
+  if (!editItem.value) return
+  deleteItem(editItem.value.id)
+  showEditDialog.value = false
+}
+
+function handleEditToggleExclusion(excluded) {
+  if (!editItem.value) return
+  toggleExclusion(editItem.value.id, excluded)
+}
+
+function handleEditToggleKey() {
+  if (editItem.value) toggleKeyItem(editItem.value)
+}
+
+function handleEditLinkSavings() {
+  if (!editItem.value) return
+  openBulkSavingsLink(editItem.value)
+  showEditDialog.value = false
 }
 
 async function fetchLinkStatuses() {
@@ -213,7 +239,8 @@ watch(() => props.highlightItemId, async (id) => {
   if (!itemInSection) return
   await nextTick()
   const el = itemRefs.value[id]
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const node = el?.$el || el
+  if (node?.scrollIntoView) node.scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 const emit = defineEmits(['add-item', 'update-item', 'delete-item', 'delete-section', 'toggle-exclusion'])
@@ -231,11 +258,6 @@ const getTotalDiffClass = computed(() => {
   return totalDifference.value >= 0 ? 'text-success' : 'text-error'
 })
 
-const plannedPercentOfIncome = computed(() => {
-  if (props.section.isIncome || !props.totalPlannedIncome) return null
-  return ((props.section.totalPlanned || 0) / props.totalPlannedIncome * 100).toFixed(1)
-})
-
 const actualPercentOfIncome = computed(() => {
   if (props.section.isIncome || !props.totalActualIncome) return null
   return ((props.section.totalActual || 0) / props.totalActualIncome * 100).toFixed(1)
@@ -248,32 +270,30 @@ function formatCurrency(value) {
   }).format(value || 0)
 }
 
+// Progress meter: how much of planned has been used/earned (0–100).
+function meterValue(item) {
+  const planned = parseFloat(item.plannedAmount) || 0
+  const actual = parseFloat(item.actualAmount) || 0
+  if (planned <= 0) return actual > 0 ? 100 : 0
+  return Math.min((actual / planned) * 100, 100)
+}
+
+// Green when on track, warning/error when off. For expenses, over-spend is bad;
+// for income, under-earning is the warning state.
+function meterColor(item) {
+  const planned = parseFloat(item.plannedAmount) || 0
+  const actual = parseFloat(item.actualAmount) || 0
+  if (props.section.isIncome) {
+    return actual >= planned ? 'success' : 'warning'
+  }
+  if (planned > 0 && actual > planned) return 'error'
+  return 'success'
+}
+
 function getItemDiff(item) {
   const diff = parseFloat(item.difference) || 0
   // For income: invert the diff (backend gives planned - actual, we want actual - planned)
   return props.section.isIncome ? -diff : diff
-}
-
-function getDiffClass(item) {
-  const diff = getItemDiff(item)
-  // Positive diff is always good (earned more or spent less), negative is bad
-  return diff >= 0 ? 'text-success' : 'text-error'
-}
-
-// One debounce timer per item+field — a single shared timer would cancel item A's
-// pending save when item B is edited within the debounce window, silently losing the edit.
-const updateTimeouts = {}
-function updateItem(itemId, field, value) {
-  const key = `${itemId}:${field}`
-  clearTimeout(updateTimeouts[key])
-  updateTimeouts[key] = setTimeout(() => {
-    delete updateTimeouts[key]
-    emit('update-item', {
-      sectionId: props.section.id,
-      itemId,
-      data: { [field]: parseFloat(value) || 0 }
-    })
-  }, 500)
 }
 
 function deleteItem(itemId) {
@@ -328,10 +348,6 @@ function viewPlan(item) {
 </script>
 
 <style scoped>
-.amount-input :deep(input) {
-  text-align: right;
-}
-
 .total-row {
   background-color: color-mix(in srgb, rgb(var(--v-theme-surface-variant)) 40%, transparent);
   border-top: 2px solid rgba(var(--v-border-color), 0.4);
@@ -342,35 +358,10 @@ function viewPlan(item) {
   font-weight: normal;
 }
 
-.actual-link {
-  cursor: pointer;
-  color: rgb(var(--v-theme-primary));
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
-
-.actual-link:hover {
-  text-decoration-style: solid;
-}
-
-.plan-link {
-  cursor: pointer;
-  color: rgb(var(--v-theme-primary));
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
-
-.plan-link:hover {
-  text-decoration-style: solid;
-}
-
-.excluded-item {
+.excluded-item :deep(.v-list-item-title),
+.excluded-item :deep(.v-list-item-subtitle) {
   opacity: 0.5;
   text-decoration: line-through;
-}
-
-.excluded-item td:first-child {
-  text-decoration: none;
 }
 
 @keyframes highlight-pulse {

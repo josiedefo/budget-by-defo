@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import BudgetSection from '@/components/BudgetSection.vue'
+import EditBudgetItemDialog from '@/components/EditBudgetItemDialog.vue'
 
 vi.mock('@/services/api', () => ({
   savingsApi: {
@@ -27,7 +28,8 @@ function makeSection() {
     items: [
       { id: 101, name: 'Groceries', plannedAmount: 0, actualAmount: 0, planId: null,
         isExcludedFromBudget: false, isKeyItem: false },
-      { id: 102, name: 'Restaurants', plannedAmount: 0, actualAmount: 0, planId: null,
+      // Plan-linked: its planned amount comes from a plan and must not be edited directly.
+      { id: 102, name: 'Restaurants', plannedAmount: 0, actualAmount: 0, planId: 99,
         isExcludedFromBudget: false, isKeyItem: false }
     ]
   }
@@ -49,69 +51,72 @@ function mountSection() {
   })
 }
 
-describe('BudgetSection planned-amount editing', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('debounces rapid edits to the SAME item into one update with the last value', async () => {
+// Editing moved out of the row (Direction B): tapping a row opens EditBudgetItemDialog,
+// which emits granular events that BudgetSection translates into its own emits.
+describe('BudgetSection edit-dialog wiring', () => {
+  it('opens the edit dialog for the clicked item', async () => {
     const wrapper = mountSection()
-    const input = wrapper.findAll('input[type="number"]')[0]
+    const rows = wrapper.findAll('.v-list-item')
+    await rows[0].trigger('click')
 
-    await input.setValue('50')
-    vi.advanceTimersByTime(200)
-    await input.setValue('75')
-    vi.advanceTimersByTime(500)
+    const dialog = wrapper.findComponent(EditBudgetItemDialog)
+    expect(dialog.props('item').id).toBe(101)
+  })
+
+  it('propagates a dialog save as update-item with name + plannedAmount', async () => {
+    const wrapper = mountSection()
+    await wrapper.findAll('.v-list-item')[0].trigger('click')
+
+    wrapper.findComponent(EditBudgetItemDialog).vm.$emit('save', { name: 'Groceries', plannedAmount: 75 })
 
     const emitted = wrapper.emitted('update-item') ?? []
     expect(emitted).toHaveLength(1)
     expect(emitted[0][0]).toEqual({
       sectionId: 1,
       itemId: 101,
-      data: { plannedAmount: 75 }
+      data: { name: 'Groceries', plannedAmount: 75 }
     })
   })
 
-  it('does NOT drop item A\'s edit when item B is edited within the debounce window', async () => {
-    // Regression test: a single shared timer used to cancel the first item's
-    // pending save, silently losing the edit.
+  it('omits plannedAmount when saving a plan-linked item', async () => {
     const wrapper = mountSection()
-    const inputs = wrapper.findAll('input[type="number"]')
+    await wrapper.findAll('.v-list-item')[1].trigger('click')  // item 102 (planId 99)
 
-    await inputs[0].setValue('100')   // item 101
-    vi.advanceTimersByTime(200)       // still inside item 101's 500ms window
-    await inputs[1].setValue('200')   // item 102
-    vi.advanceTimersByTime(500)       // both windows elapse
+    wrapper.findComponent(EditBudgetItemDialog).vm.$emit('save', { name: 'Restaurants', plannedAmount: 999 })
 
     const emitted = wrapper.emitted('update-item') ?? []
-    expect(emitted).toHaveLength(2)
-
-    const byItem = Object.fromEntries(emitted.map(([payload]) => [payload.itemId, payload]))
-    expect(byItem[101].data).toEqual({ plannedAmount: 100 })
-    expect(byItem[102].data).toEqual({ plannedAmount: 200 })
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0][0]).toEqual({
+      sectionId: 1,
+      itemId: 102,
+      data: { name: 'Restaurants' }
+    })
   })
 
-  it('edits to different fields of the same item are debounced independently', async () => {
+  it('toggles the key-item flag from the dialog', async () => {
     const wrapper = mountSection()
-    const input = wrapper.findAll('input[type="number"]')[0]
+    await wrapper.findAll('.v-list-item')[0].trigger('click')
 
-    await input.setValue('100')
-    vi.advanceTimersByTime(200)
+    wrapper.findComponent(EditBudgetItemDialog).vm.$emit('toggle-key')
 
-    // Simulate a second field on the same item via the exclusion toggle path — the
-    // key-item toggle emits immediately and must not be affected by pending timers.
-    const keyItemButton = wrapper.findAll('button').find(b =>
-      b.attributes('title')?.includes('Tag as key item'))
-    await keyItemButton.trigger('click')
-    vi.advanceTimersByTime(500)
+    const emitted = wrapper.emitted('update-item') ?? []
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0][0]).toEqual({
+      sectionId: 1,
+      itemId: 101,
+      data: { isKeyItem: true }
+    })
+  })
 
-    const updates = wrapper.emitted('update-item') ?? []
-    expect(updates).toHaveLength(2)
-    expect(updates.some(([p]) => p.data.isKeyItem === true)).toBe(true)
-    expect(updates.some(([p]) => p.data.plannedAmount === 100)).toBe(true)
+  it('propagates delete and exclusion events from the dialog', async () => {
+    const wrapper = mountSection()
+    await wrapper.findAll('.v-list-item')[0].trigger('click')
+    const dialog = wrapper.findComponent(EditBudgetItemDialog)
+
+    dialog.vm.$emit('toggle-exclusion', true)
+    dialog.vm.$emit('delete')
+
+    expect(wrapper.emitted('toggle-exclusion')[0][0]).toEqual({ sectionId: 1, itemId: 101, excluded: true })
+    expect(wrapper.emitted('delete-item')[0][0]).toEqual({ sectionId: 1, itemId: 101 })
   })
 })

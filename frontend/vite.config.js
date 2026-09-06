@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
@@ -14,6 +15,7 @@ const API_PROXY = {
 export default defineConfig({
   plugins: [
     vue(),
+    tailwindcss(),
     vuetify({ autoImport: true }),
     VitePWA({
       // 'prompt', not 'autoUpdate': never swap the running app out from under a

@@ -16,44 +16,80 @@
     </v-alert>
 
     <template v-else-if="currentBudget">
-      <div class="sticky-summary">
-        <div v-if="showStickyLabel" class="text-body-large font-weight-bold mb-1 px-1">{{ monthLabel }}</div>
-        <BudgetSummary />
+      <BudgetDashboard :year="year" :month="month" class="mb-4" />
+
+      <div class="d-flex justify-end mb-3 ga-2">
+        <v-btn variant="tonal" size="small" @click="showCopyDialog = true">
+          <v-icon start>mdi-content-copy</v-icon>
+          <span class="d-none d-sm-inline">Copy from...</span>
+        </v-btn>
+        <v-btn color="primary" variant="tonal" size="small" @click="showAddSection = true">
+          <v-icon start>mdi-plus</v-icon>
+          <span class="d-none d-sm-inline">Add Section</span>
+        </v-btn>
       </div>
 
-      <v-row>
-        <v-col cols="12">
-          <div class="d-flex justify-end mb-2 ga-2">
-            <v-btn variant="tonal" size="small" @click="showCopyDialog = true">
-              <v-icon start>mdi-content-copy</v-icon>
-              <span class="d-none d-sm-inline">Copy from...</span>
-            </v-btn>
-            <v-btn color="primary" variant="tonal" size="small" @click="showAddSection = true">
-              <v-icon start>mdi-plus</v-icon>
-              <span class="d-none d-sm-inline">Add Section</span>
-            </v-btn>
+      <!-- Income sections: quick-access cards (income isn't a "spend vs budget" ring) -->
+      <div v-if="incomeSections.length" class="income-strip mb-4">
+        <button
+          v-for="s in incomeSections"
+          :key="s.id"
+          type="button"
+          class="income-card"
+          @click="openSectionDrawer(s.id)"
+        >
+          <div class="flex items-center gap-2">
+            <v-avatar color="success" variant="tonal" size="32">
+              <v-icon size="18">mdi-arrow-down</v-icon>
+            </v-avatar>
+            <div class="text-left">
+              <div class="text-sm font-medium">{{ s.name }}</div>
+              <div class="text-xs text-[color:var(--color-ink-soft)]">
+                {{ formatCurrency(s.totalActual) }} of {{ formatCurrency(s.totalPlanned) }}
+              </div>
+            </div>
           </div>
-        </v-col>
-      </v-row>
+          <v-icon size="20" class="text-[color:var(--color-ink-soft)]">mdi-chevron-right</v-icon>
+        </button>
+      </div>
 
-      <v-row>
-        <v-col v-for="section in sections" :key="section.id" cols="12" md="6">
-          <BudgetSection
-            :section="section"
-            :total-planned-income="totalPlannedIncome"
-            :total-actual-income="totalActualIncome"
-            :year="year"
-            :month="month"
-            :highlight-item-id="highlightItemId"
-            @add-item="openAddItemDialog(section.id)"
-            @update-item="handleUpdateItem"
-            @delete-item="handleDeleteItem"
-            @delete-section="handleDeleteSection"
-            @toggle-exclusion="handleToggleExclusion"
-          />
-        </v-col>
-      </v-row>
+      <MoneyFlow
+        :sections="sections"
+        @open="openSectionDrawer($event.id)"
+        @add-section="showAddSection = true"
+      />
     </template>
+
+    <!-- Section detail drawer: reuses BudgetSection for the full item list + editing -->
+    <v-navigation-drawer
+      v-model="showDrawer"
+      location="right"
+      temporary
+      width="480"
+      class="section-drawer"
+    >
+      <div class="pa-2">
+        <div class="d-flex justify-end">
+          <v-btn icon variant="text" size="small" @click="showDrawer = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+        <BudgetSection
+          v-if="selectedSection"
+          :section="selectedSection"
+          :total-planned-income="totalPlannedIncome"
+          :total-actual-income="totalActualIncome"
+          :year="year"
+          :month="month"
+          :highlight-item-id="highlightItemId"
+          @add-item="openAddItemDialog(selectedSection.id)"
+          @update-item="handleUpdateItem"
+          @delete-item="handleDeleteItem"
+          @delete-section="handleDeleteSection"
+          @toggle-exclusion="handleToggleExclusion"
+        />
+      </div>
+    </v-navigation-drawer>
 
     <AddSectionDialog
       v-model="showAddSection"
@@ -81,7 +117,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBudgetStore } from '@/stores/budget'
 import MonthSelector from '@/components/MonthSelector.vue'
-import BudgetSummary from '@/components/BudgetSummary.vue'
+import BudgetDashboard from '@/components/BudgetDashboard.vue'
+import MoneyFlow from '@/components/MoneyFlow.vue'
 import BudgetSection from '@/components/BudgetSection.vue'
 import AddSectionDialog from '@/components/AddSectionDialog.vue'
 import AddItemDialog from '@/components/AddItemDialog.vue'
@@ -97,12 +134,9 @@ const route = useRoute()
 const budgetStore = useBudgetStore()
 const { currentBudget, sections, loading, error, totalPlannedIncome, totalActualIncome } = storeToRefs(budgetStore)
 
-const monthLabel = computed(() =>
-  new Date(props.year, props.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-)
+const incomeSections = computed(() => sections.value.filter(s => s.isIncome))
 
 const selectorRef = ref(null)
-const showStickyLabel = ref(false)
 
 const showAddSection = ref(false)
 const showAddItem = ref(false)
@@ -110,17 +144,33 @@ const showCopyDialog = ref(false)
 const selectedSectionId = ref(null)
 const highlightItemId = ref(null)
 
+const showDrawer = ref(false)
+// Look the section up from the store each render so the drawer stays live as
+// the store replaces item arrays on edit/add/delete.
+const selectedSection = computed(() => sections.value.find(s => s.id === selectedSectionId.value) || null)
+
 const targetHasData = computed(() => (currentBudget.value?.sections?.length ?? 0) > 0)
+
+function openSectionDrawer(sectionId) {
+  selectedSectionId.value = sectionId
+  showDrawer.value = true
+}
 
 async function loadBudget() {
   await budgetStore.fetchBudget(props.year, props.month)
 
-  // Handle incoming highlight — set it after data loads, then clear after 1.5s
+  // Handle incoming highlight — open the containing section's drawer, set the
+  // highlight, then clear after 1.5s (BudgetSection scrolls to + pulses the row).
   const id = route.query.highlightItemId ? Number(route.query.highlightItemId) : null
   if (id) {
-    highlightItemId.value = id
-    router.replace({ query: {} })
-    setTimeout(() => { highlightItemId.value = null }, 1500)
+    const containing = sections.value.find(s => s.items?.some(i => i.id === id))
+    if (containing) {
+      selectedSectionId.value = containing.id
+      showDrawer.value = true
+      highlightItemId.value = id
+      router.replace({ query: {} })
+      setTimeout(() => { highlightItemId.value = null }, 1500)
+    }
   }
 }
 
@@ -153,6 +203,7 @@ async function handleDeleteItem({ sectionId, itemId }) {
 
 async function handleDeleteSection(sectionId) {
   await budgetStore.deleteSection(sectionId)
+  showDrawer.value = false
 }
 
 async function handleToggleExclusion({ sectionId, itemId, excluded }) {
@@ -165,30 +216,41 @@ async function handleCopyBudget({ sourceYear, sourceMonth }) {
   // On failure: dialog stays open; budgetStore.error is shown inside the dialog
 }
 
-let observer = null
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  }).format(value || 0)
+}
 
-onMounted(() => {
-  loadBudget()
-  observer = new IntersectionObserver(([entry]) => {
-    showStickyLabel.value = !entry.isIntersecting
-  })
-  if (selectorRef.value?.$el) observer.observe(selectorRef.value.$el)
-})
+onMounted(loadBudget)
 
 watch(() => [props.year, props.month], loadBudget)
 </script>
 
 <style scoped>
-.sticky-summary {
-  position: sticky;
-  top: 48px;
-  z-index: 10;
+.income-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.income-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgb(var(--v-theme-surface));
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.income-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.section-drawer :deep(.v-navigation-drawer__content) {
   background-color: rgb(var(--v-theme-background));
-  padding-top: 8px;
-  padding-bottom: 16px;
-  margin-left: -16px;
-  margin-right: -16px;
-  padding-left: 16px;
-  padding-right: 16px;
 }
 </style>

@@ -1,0 +1,20 @@
+/* Tailwind v4, imported WITHOUT preflight so its base reset does not fight
+   Vuetify's own base styles (buttons, inputs, headings). We only want the
+   utility classes and the theme tokens. */
+@layer theme, base, vuetify, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Finance palette — mirrors frontend/src/plugins/vuetify.js so Tailwind utilities
+   (bg-teal-700, text-rose-600, etc. via these tokens) share one source of truth. */
+@theme {
+  --color-brand: #0F766E;
+  --color-brand-soft: #E1F5EE;
+  --color-income: #15803D;
+  --color-expense: #E11D48;
+  --color-warn: #D97706;
+  --color-canvas: #F5F5F0;
+  --color-ink: #1F2937;
+  --color-ink-soft: #64748B;
+}

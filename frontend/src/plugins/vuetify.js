@@ -11,18 +11,33 @@ export default createVuetify({
     defaultTheme: 'light',
     themes: {
       light: {
+        dark: false,
         colors: {
-          primary: '#1976D2',
-          secondary: '#424242',
-          accent: '#82B1FF',
-          error: '#FF5252',
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FFC107',
-          income: '#4CAF50',
-          expense: '#F44336'
+          // Warmer finance palette: deep teal primary on a soft off-white canvas.
+          primary: '#0F766E',
+          secondary: '#475569',
+          accent: '#14B8A6',
+          error: '#E11D48',
+          info: '#0EA5E9',
+          success: '#15803D',
+          warning: '#D97706',
+          background: '#F5F5F0',
+          surface: '#FFFFFF',
+          'surface-variant': '#E7E5DE',
+          'on-surface-variant': '#4B5563',
+          // Kept so existing color="income|expense" usages still resolve.
+          income: '#15803D',
+          expense: '#E11D48'
         }
       }
     }
+  },
+  defaults: {
+    VCard: { rounded: 'lg', border: false, elevation: 1 },
+    VBtn: { rounded: 'lg' },
+    VChip: { rounded: 'lg' },
+    VTextField: { variant: 'outlined', density: 'comfortable' },
+    VSelect: { variant: 'outlined', density: 'comfortable' },
+    VDialog: { rounded: 'lg' }
   }
 })
