@@ -28,14 +28,40 @@
     </v-app-bar>
 
     <v-main>
+      <v-alert
+        v-if="!isOnline"
+        type="warning"
+        variant="tonal"
+        density="compact"
+        rounded="0"
+        icon="mdi-wifi-off"
+        text="You're offline. The app still opens, but budget data can't be loaded or saved until you reconnect."
+      ></v-alert>
       <router-view></router-view>
     </v-main>
+
+    <v-snackbar v-model="needRefresh" :timeout="-1" color="primary">
+      A new version of Budget App is available.
+      <template #actions>
+        <v-btn variant="text" @click="applyUpdate">Reload</v-btn>
+        <v-btn variant="text" @click="needRefresh = false">Later</v-btn>
+      </template>
+    </v-snackbar>
+
+    <v-snackbar v-model="offlineReady" :timeout="4000">
+      Budget App is installed and ready.
+    </v-snackbar>
   </v-app>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { usePwaUpdate } from './composables/usePwaUpdate'
+import { useOnline } from './composables/useOnline'
+
+const { needRefresh, offlineReady, applyUpdate } = usePwaUpdate()
+const { isOnline } = useOnline()
 
 const router = useRouter()
 const route = useRoute()

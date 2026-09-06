@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Exercises the transaction endpoints end-to-end, including the native filter query
- * (transactionId / date range / type / merchant substring / section+item name / uncategorized).
+ * (transactionId / date range / type / merchant substring / amount / section+item name / uncategorized).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -102,6 +102,16 @@ class TransactionApiIntegrationTest {
         mockMvc.perform(get("/api/transactions?transactionId=" + categorized))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
+
+        // Amount filter is an exact match
+        mockMvc.perform(get("/api/transactions?" + range + "&amount=45.00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(categorized));
+
+        mockMvc.perform(get("/api/transactions?" + range + "&amount=999.99"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

@@ -67,6 +67,7 @@ public class TransactionService {
             String sectionName,
             String budgetItemName,
             String merchant,
+            BigDecimal amount,
             boolean uncategorized,
             int page,
             int size) {
@@ -91,6 +92,7 @@ public class TransactionService {
             sectionName,
             budgetItemName,
             merchantPattern,
+            amount,
             uncategorized,
             pageable
         );
@@ -352,6 +354,7 @@ public class TransactionService {
             String sectionName,
             String budgetItemName,
             String merchant,
+            BigDecimal amount,
             boolean uncategorized) {
         String merchantPattern = (merchant != null && !merchant.isBlank())
             ? "%" + merchant.toLowerCase() + "%" : null;
@@ -359,7 +362,7 @@ public class TransactionService {
         return transactionRepository.findMatchingIds(
             transactionId, startDate, endDate, typeStr,
             sectionId, budgetItemId, sectionName, budgetItemName,
-            merchantPattern, uncategorized);
+            merchantPattern, amount, uncategorized);
     }
 
     @Transactional(readOnly = true)

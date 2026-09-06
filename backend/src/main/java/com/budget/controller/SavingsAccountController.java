@@ -4,6 +4,7 @@ import com.budget.dto.AccountDepositRequest;
 import com.budget.dto.AccountWithdrawalRequest;
 import com.budget.dto.BulkLinkBudgetItemRequest;
 import com.budget.dto.BulkLinkResult;
+import com.budget.dto.BulkLinkTransactionsRequest;
 import com.budget.dto.CreateSavingsAccountRequest;
 import com.budget.dto.LinkTransactionToAccountRequest;
 import com.budget.dto.SavingsAccountDTO;
@@ -91,6 +92,13 @@ public class SavingsAccountController {
             @PathVariable Long id,
             @Valid @RequestBody BulkLinkBudgetItemRequest request) {
         return savingsAccountService.bulkLinkBudgetItem(id, request);
+    }
+
+    @PostMapping("/{id}/bulk-link-transactions")
+    public BulkLinkResult bulkLinkTransactions(
+            @PathVariable Long id,
+            @Valid @RequestBody BulkLinkTransactionsRequest request) {
+        return savingsAccountService.bulkLinkTransactions(id, request);
     }
 
     @PutMapping("/events/{eventId}")

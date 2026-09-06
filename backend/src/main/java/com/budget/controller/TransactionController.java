@@ -14,6 +14,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -35,12 +36,13 @@ public class TransactionController {
             @RequestParam(required = false) String sectionName,
             @RequestParam(required = false) String budgetItemName,
             @RequestParam(required = false) String merchant,
+            @RequestParam(required = false) BigDecimal amount,
             @RequestParam(defaultValue = "false") boolean uncategorized,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Page<TransactionDTO> transactions = transactionService.getTransactions(
-            transactionId, startDate, endDate, type, sectionId, budgetItemId, sectionName, budgetItemName, merchant, uncategorized, page, size);
+            transactionId, startDate, endDate, type, sectionId, budgetItemId, sectionName, budgetItemName, merchant, amount, uncategorized, page, size);
         return ResponseEntity.ok(transactions);
     }
 
@@ -81,10 +83,11 @@ public class TransactionController {
             @RequestParam(required = false) String sectionName,
             @RequestParam(required = false) String budgetItemName,
             @RequestParam(required = false) String merchant,
+            @RequestParam(required = false) BigDecimal amount,
             @RequestParam(defaultValue = "false") boolean uncategorized) {
         List<Long> ids = transactionService.getMatchingIds(
             transactionId, startDate, endDate, type, sectionId, budgetItemId,
-            sectionName, budgetItemName, merchant, uncategorized);
+            sectionName, budgetItemName, merchant, amount, uncategorized);
         return ResponseEntity.ok(ids);
     }
 

@@ -24,7 +24,7 @@
       <draggable
         v-model="orderedFunds"
         item-key="id"
-        class="v-row"
+        class="v-row v-row--density-default"
         handle=".drag-handle"
         :animation="200"
         ghost-class="drag-ghost"
