@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Budget App">
+  <!--
+    Source mark for all PWA icons. Regenerate the PNG set with:
+      node scripts/generate-icons.mjs (see the script header for the sharp install line)
+    All artwork is kept inside a radius-170 circle centred on (256,256) so the
+    maskable variant survives Android's adaptive-icon crop (safe zone = inner 80%).
+  -->
+  <rect id="bg" x="0" y="0" width="512" height="512" rx="96" ry="96" fill="#1976D2"/>
+  <g fill="#FFFFFF">
+    <!-- legs (behind the body) -->
+    <rect x="170" y="332" width="46" height="60" rx="20"/>
+    <rect x="288" y="332" width="46" height="60" rx="20"/>
+    <!-- ear, poking above the head -->
+    <path d="M295 212c3-31 13-49 23-50 10-1 21 18 25 45z"/>
+    <!-- tail curl -->
+    <path d="M146 262c-16-10-32-2-31 11 1 12 17 15 22 5 5-11-9-19-19-11"
+          fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+    <!-- body -->
+    <ellipse cx="252" cy="280" rx="114" ry="86"/>
+    <!-- snout -->
+    <ellipse cx="350" cy="276" rx="36" ry="30"/>
+  </g>
+  <g fill="#1976D2">
+    <!-- nostrils -->
+    <circle cx="341" cy="276" r="7"/>
+    <circle cx="363" cy="276" r="7"/>
+    <!-- eye -->
+    <circle cx="303" cy="246" r="12"/>
+    <!-- coin slot -->
+    <rect x="196" y="212" width="88" height="17" rx="8.5" transform="rotate(-11 240 220.5)"/>
+  </g>
+  <!-- coin dropping into the slot -->
+  <g transform="translate(222 142)">
+    <circle r="33" fill="#FFFFFF"/>
+    <circle r="33" fill="none" stroke="#1976D2" stroke-width="9"/>
+    <path d="M0-19V19M11-9c-3-5-19-6-21 2-2 8 7 9 11 11 5 2 12 4 10 11-2 8-19 7-22 1"
+          fill="none" stroke="#1976D2" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

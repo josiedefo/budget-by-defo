@@ -78,6 +78,50 @@ Or type `/deploy` in Claude Code. The script handles ECR auth, Docker build/push
 
 ---
 
+## Progressive Web App
+
+The deployed app is installable on Android (and desktop Chrome) via `vite-plugin-pwa`, configured
+in `frontend/vite.config.js`. Spring Boot serves the SPA and `/api` from one origin and App Runner
+terminates HTTPS, so no extra infrastructure is involved.
+
+**Scope**: installable + precached app shell. Data is still fetched live from `/api` — there is no
+API response cache and no offline write queue. Offline, the shell loads from the service worker and
+`App.vue` shows a warning banner (driven by `useOnline`) instead of the browser's error page.
+
+**Update model**: `registerType: 'prompt'`, not `autoUpdate` — a new build must never swap itself in
+under a half-finished budget edit. `usePwaUpdate` exposes `needRefresh`, and `App.vue` shows a
+"Reload" snackbar.
+
+**Icons**: `frontend/icon-source.svg` is the single source of truth; everything in `frontend/public/`
+is generated from it. To change the mark, edit the SVG and regenerate:
+
+```bash
+cd frontend && npm i -D --no-save sharp && node scripts/generate-icons.mjs
+```
+
+`sharp` is deliberately not a project dependency — it ships a native binary that would be installed
+on every `npm ci` in the Docker build for no runtime benefit. Commit the regenerated PNGs.
+
+**Gotchas worth remembering**
+
+- `SpaController`'s forward list is an allowlist. A new Vue route must be added there *and* stays
+  covered by the service worker's `navigateFallback: '/index.html'`.
+- `workbox.globPatterns` precaches `woff2` only. `@mdi/font` emits the same icon font four times
+  (`.eot`/`.ttf`/`.woff`/`.woff2`); precaching all of them would cost users ~3 MB for nothing.
+- `workbox.ignoreURLParametersMatching` includes `/^v$/` because `@mdi/font`'s CSS requests
+  `...woff2?v=7.4.47`. Without it the query string defeats the precache match and every icon
+  renders as an empty box when offline.
+- `WebManifestMimeConfig` registers `.webmanifest` → `application/manifest+json`; embedded Tomcat
+  has no mapping for that extension and would otherwise serve the manifest as octet-stream.
+- `spring.web.resources.cache.cachecontrol.no-cache=true` keeps browsers from heuristically caching
+  `index.html` and `sw.js`, which is the classic way to strand users on a service worker that never
+  picks up a deploy.
+
+To exercise the service worker locally you need a production build — the dev server does not
+register one. Run the backend, then `npm run preview` (port 4173, proxies `/api` to :8080).
+
+---
+
 ## Database Migrations (Liquibase)
 
 Changelogs live in `backend/src/main/resources/db/changelog/`. Always add new YAML files and include them in `db.changelog-master.yaml`. Never reuse a changeSet `id`.
