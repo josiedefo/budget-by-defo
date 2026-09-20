@@ -2,6 +2,7 @@ package com.budget.service;
 
 import com.budget.dto.BudgetDTO;
 import com.budget.dto.BudgetItemDTO;
+import com.budget.dto.ItemInsightDTO;
 import com.budget.dto.SectionDTO;
 import com.budget.dto.YearlySummaryDTO;
 import com.budget.model.Budget;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -235,9 +237,30 @@ public class BudgetService {
         return budgetRepository.save(budget);
     }
 
+    /**
+     * Loads every Budget row for a year with sections/items eagerly fetched and actual amounts
+     * populated onto each DTO (never persisted — see populateActualAmounts). Shared by
+     * getYearlySummary and getItemInsight so both report identical numbers. N+1 by design (one
+     * findByIdWithSectionsAndItems + one actuals query per month) — acceptable for a 12-row scan.
+     */
+    private List<BudgetDTO> loadYearBudgetsWithActuals(Integer year) {
+        List<Budget> budgets = budgetRepository.findByYearOrderByMonthAsc(year);
+
+        List<BudgetDTO> budgetDTOs = new ArrayList<>();
+        for (Budget budget : budgets) {
+            Budget fullBudget = budgetRepository.findByIdWithSectionsAndItems(budget.getId())
+                    .orElse(budget);
+
+            BudgetDTO budgetDTO = BudgetDTO.fromEntity(fullBudget);
+            populateActualAmounts(budgetDTO, year, budget.getMonth());
+            budgetDTOs.add(budgetDTO);
+        }
+        return budgetDTOs;
+    }
+
     @Transactional(readOnly = true)
     public YearlySummaryDTO getYearlySummary(Integer year) {
-        List<Budget> budgets = budgetRepository.findByYearOrderByMonthAsc(year);
+        List<BudgetDTO> budgetDTOs = loadYearBudgetsWithActuals(year);
 
         YearlySummaryDTO summary = new YearlySummaryDTO();
         summary.setYear(year);
@@ -249,16 +272,10 @@ public class BudgetService {
         BigDecimal totalPlannedExpenses = BigDecimal.ZERO;
         BigDecimal totalActualExpenses = BigDecimal.ZERO;
 
-        for (Budget budget : budgets) {
-            Budget fullBudget = budgetRepository.findByIdWithSectionsAndItems(budget.getId())
-                    .orElse(budget);
-
-            BudgetDTO budgetDTO = BudgetDTO.fromEntity(fullBudget);
-            populateActualAmounts(budgetDTO, year, budget.getMonth());
-
+        for (BudgetDTO budgetDTO : budgetDTOs) {
             YearlySummaryDTO.MonthSummaryDTO monthSummary = new YearlySummaryDTO.MonthSummaryDTO();
-            monthSummary.setMonth(budget.getMonth());
-            monthSummary.setBudgetId(budget.getId());
+            monthSummary.setMonth(budgetDTO.getMonth());
+            monthSummary.setBudgetId(budgetDTO.getId());
             monthSummary.setPlannedIncome(budgetDTO.getTotalPlannedIncome());
             monthSummary.setActualIncome(budgetDTO.getTotalIncome());
             monthSummary.setPlannedExpenses(budgetDTO.getTotalPlannedExpenses());
@@ -298,6 +315,120 @@ public class BudgetService {
         summary.setTotalActualSavings(totalActualIncome.subtract(totalActualExpenses));
 
         return summary;
+    }
+
+    /**
+     * Year-long insight for a single budget item, matched across months by
+     * (sectionName, itemName) case-insensitively (the same rule copyBudget uses to carry an
+     * item's identity from month to month, since each month has its own BudgetItem rows).
+     * Duplicate-named items within a matched section are summed together.
+     */
+    @Transactional(readOnly = true)
+    public ItemInsightDTO getItemInsight(Integer year, String sectionName, String itemName) {
+        List<BudgetDTO> budgetDTOs = loadYearBudgetsWithActuals(year);
+
+        ItemInsightDTO insight = new ItemInsightDTO();
+        insight.setYear(year);
+        insight.setSectionName(sectionName);
+        insight.setItemName(itemName);
+
+        List<ItemInsightDTO.MonthInsightPoint> points = new ArrayList<>();
+        BigDecimal annualPlanned = BigDecimal.ZERO;
+        BigDecimal annualActual = BigDecimal.ZERO;
+        Boolean isIncome = null;
+
+        for (BudgetDTO budgetDTO : budgetDTOs) {
+            SectionDTO matchedSection = null;
+            BigDecimal itemPlanned = BigDecimal.ZERO;
+            BigDecimal itemActual = BigDecimal.ZERO;
+            boolean matchedThisMonth = false;
+
+            for (SectionDTO section : budgetDTO.getSections()) {
+                if (!section.getName().equalsIgnoreCase(sectionName)) {
+                    continue;
+                }
+                for (BudgetItemDTO item : section.getItems()) {
+                    if (item.getName().equalsIgnoreCase(itemName)) {
+                        itemPlanned = itemPlanned.add(item.getPlannedAmount());
+                        itemActual = itemActual.add(item.getActualAmount());
+                        matchedThisMonth = true;
+                        matchedSection = section;
+                    }
+                }
+            }
+
+            if (!matchedThisMonth) {
+                continue;
+            }
+
+            if (isIncome == null) {
+                isIncome = matchedSection.getIsIncome();
+            }
+
+            BigDecimal monthTotal = Boolean.TRUE.equals(matchedSection.getIsIncome())
+                    ? budgetDTO.getTotalIncome()
+                    : budgetDTO.getTotalExpenses();
+
+            ItemInsightDTO.MonthInsightPoint point = new ItemInsightDTO.MonthInsightPoint();
+            point.setMonth(budgetDTO.getMonth());
+            point.setPlanned(itemPlanned);
+            point.setActual(itemActual);
+            point.setMonthTotal(monthTotal);
+            points.add(point);
+
+            annualPlanned = annualPlanned.add(itemPlanned);
+            annualActual = annualActual.add(itemActual);
+        }
+
+        insight.setMonths(points);
+        insight.setIsIncome(isIncome);
+        insight.setAnnualPlanned(annualPlanned);
+        insight.setAnnualActual(annualActual);
+
+        if (points.isEmpty()) {
+            insight.setYtdActual(BigDecimal.ZERO);
+            insight.setMonthlyAverageActual(BigDecimal.ZERO);
+            insight.setCurrentMonth(null);
+            insight.setCurrentMonthActual(BigDecimal.ZERO);
+            insight.setCurrentMonthShare(BigDecimal.ZERO);
+            return insight;
+        }
+
+        LocalDate today = LocalDate.now();
+        boolean isCurrentYear = year.equals(today.getYear());
+        int monthsElapsed = isCurrentYear ? today.getMonthValue() : 12;
+
+        BigDecimal ytdActual = points.stream()
+                .filter(p -> p.getMonth() <= monthsElapsed)
+                .map(ItemInsightDTO.MonthInsightPoint::getActual)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        insight.setYtdActual(ytdActual);
+
+        int divisor = isCurrentYear ? Math.max(today.getMonthValue(), 1) : 12;
+        insight.setMonthlyAverageActual(
+                annualActual.divide(BigDecimal.valueOf(divisor), 2, RoundingMode.HALF_UP));
+
+        // "Current" month: today's month for the current year (even if it has no data yet),
+        // otherwise the most recent month that has data — mirrors what a Yearly-view reader
+        // would call "the latest month" when looking at a past year.
+        Integer currentMonth = isCurrentYear ? today.getMonthValue() : points.get(points.size() - 1).getMonth();
+        insight.setCurrentMonth(currentMonth);
+
+        ItemInsightDTO.MonthInsightPoint currentPoint = points.stream()
+                .filter(p -> p.getMonth().equals(currentMonth))
+                .findFirst()
+                .orElse(null);
+
+        BigDecimal currentMonthActual = currentPoint != null ? currentPoint.getActual() : BigDecimal.ZERO;
+        insight.setCurrentMonthActual(currentMonthActual);
+
+        BigDecimal monthTotalForShare = currentPoint != null ? currentPoint.getMonthTotal() : BigDecimal.ZERO;
+        BigDecimal share = (monthTotalForShare == null || monthTotalForShare.compareTo(BigDecimal.ZERO) == 0)
+                ? BigDecimal.ZERO
+                : currentMonthActual.divide(monthTotalForShare, 4, RoundingMode.HALF_UP);
+        insight.setCurrentMonthShare(share);
+
+        return insight;
     }
 
     @Transactional

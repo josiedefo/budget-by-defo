@@ -156,6 +156,68 @@ class BudgetApiIntegrationTest {
                 .andExpect(jsonPath("$.isExcludedFromBudget").value(true));
     }
 
+    @Test
+    void getItemInsight_matchesYearlySummaryTotalsAndAggregatesAcrossMonths() throws Exception {
+        JsonNode augustBudget = getBudget(2034, 8);
+        JsonNode expenseSection = firstExpenseSection(augustBudget);
+        String sectionName = expenseSection.get("name").asText();
+        String itemName = expenseSection.get("items").get(0).get("name").asText();
+        long augustItemId = expenseSection.get("items").get(0).get("id").asLong();
+
+        // September's default budget carries the same section/item names (by design — every
+        // month is seeded from the same DEFAULT_SECTIONS), so it is the cross-month match.
+        getBudget(2034, 9);
+
+        mockMvc.perform(post("/api/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"EXPENSE\",\"transactionDate\":\"2034-08-15\"," +
+                                 "\"merchant\":\"Grocer\",\"amount\":60.00," +
+                                 "\"sectionId\":" + expenseSection.get("id").asLong() +
+                                 ",\"budgetItemId\":" + augustItemId + "}"))
+                .andExpect(status().isOk());
+
+        // Section/item names sent upper/lower-cased on purpose to exercise case-insensitive matching.
+        String insightBody = mockMvc.perform(get("/api/budgets/2034/item-insight")
+                        .param("section", sectionName.toUpperCase())
+                        .param("item", itemName.toLowerCase()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.year").value(2034))
+                .andExpect(jsonPath("$.isIncome").value(false))
+                .andExpect(jsonPath("$.months.length()").value(2))
+                .andExpect(jsonPath("$.months[0].month").value(8))
+                .andExpect(jsonPath("$.months[0].actual").value(60.00))
+                .andExpect(jsonPath("$.months[1].month").value(9))
+                .andExpect(jsonPath("$.months[1].actual").value(0))
+                .andExpect(jsonPath("$.annualActual").value(60.00))
+                .andExpect(jsonPath("$.ytdActual").value(60.00))
+                .andExpect(jsonPath("$.monthlyAverageActual").value(5.00))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode insight = objectMapper.readTree(insightBody);
+
+        // The item-insight's per-month total must equal the Yearly summary's actualExpenses for
+        // that same month — both derive from the same populateActualAmounts path.
+        BigDecimal insightAugustMonthTotal = insight.get("months").get(0).get("monthTotal").decimalValue();
+        mockMvc.perform(get("/api/budgets/2034"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.months[?(@.month == 8)].actualExpenses").value(
+                        insightAugustMonthTotal.doubleValue()));
+    }
+
+    @Test
+    void getItemInsight_unknownItem_returnsEmptySeriesNotAnError() throws Exception {
+        getBudget(2035, 1);
+
+        // "Daily Living" is a real default section (it seeds "Groceries"/"Restaurants"/etc.),
+        // but this item name does not exist in it — the item, not the section, is the miss.
+        mockMvc.perform(get("/api/budgets/2035/item-insight")
+                        .param("section", "Daily Living")
+                        .param("item", "Definitely Not A Real Item"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.months.length()").value(0))
+                .andExpect(jsonPath("$.annualActual").value(0))
+                .andExpect(jsonPath("$.currentMonth").isEmpty());
+    }
+
     // ── helpers ──
 
     private JsonNode getBudget(int year, int month) throws Exception {

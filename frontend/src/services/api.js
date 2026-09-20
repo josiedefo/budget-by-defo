@@ -18,6 +18,12 @@ export const budgetApi = {
     return api.get(`/budgets/${year}`)
   },
 
+  getItemInsight(year, section, item) {
+    return api.get(`/budgets/${year}/item-insight`, {
+      params: { section, item }
+    })
+  },
+
   createBudget(year, month) {
     return api.post('/budgets', null, {
       params: { year, month }

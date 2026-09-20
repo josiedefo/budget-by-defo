@@ -50,7 +50,11 @@
               @update:model-value="val => toggleExclusion(item.id, !val)"
             ></v-checkbox>
           </td>
-          <td>{{ item.name }}</td>
+          <td>
+            <span class="item-link" @click="viewInsights(item)" :title="'View insights for ' + item.name">
+              {{ item.name }}
+            </span>
+          </td>
           <td class="text-right">
             <span v-if="item.planId" class="plan-link" @click="viewPlan(item)" :title="'View plan for ' + item.name">
               {{ formatCurrency(item.plannedAmount) }}
@@ -325,6 +329,17 @@ function viewPlan(item) {
     }
   })
 }
+
+function viewInsights(item) {
+  router.push({
+    name: 'insights',
+    params: { year: props.year },
+    query: {
+      section: props.section.name,
+      item: item.name
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -362,6 +377,17 @@ function viewPlan(item) {
 
 .plan-link:hover {
   text-decoration-style: solid;
+}
+
+.item-link {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.item-link:hover {
+  text-decoration-style: solid;
+  color: rgb(var(--v-theme-primary));
 }
 
 .excluded-item {

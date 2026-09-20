@@ -20,8 +20,8 @@ budget-by-defo/
 │
 └── frontend/                   # Vue 3 + Vuetify 3
     ├── src/
-    │   ├── views/              # MonthlyBudgetView, TransactionsView, SavingsView, …
-    │   ├── components/         # BudgetSection, SavingsLinkDialog, BulkSavingsLinkDialog, …
+    │   ├── views/              # MonthlyBudgetView, YearlyBudgetView, SpendingInsightsView, …
+    │   ├── components/         # BudgetSection, SavingsLinkDialog, BulkSavingsLinkDialog, charts/, …
     │   ├── services/           # api.js (axios)
     │   ├── stores/             # Pinia: budget, transaction, savings
     │   ├── router/             # index.js
@@ -190,6 +190,25 @@ Both are populated in `TransactionService.getTransactions()` via bulk queries (`
 - Same logic for `allLinkedToFund`
 - Used by `BudgetSection` on mount (batch fetch) and by `BulkSavingsLinkDialog` on open
 
+### Spending Insights (per-item, `GET /api/budgets/{year}/item-insight`)
+- Reached by clicking a budget item's name in the Monthly view, or a key-item chip in the Yearly
+  view — it is not a top-level tab.
+- Matches the item across months by `(sectionName, itemName)` case-insensitively — the same rule
+  `copyBudget`'s merge uses, since each month has its own `BudgetItem` rows with distinct IDs and
+  there is no shared "item" identity to join on.
+- `BudgetService.loadYearBudgetsWithActuals(year)` is a private helper extracted from
+  `getYearlySummary` and reused by `getItemInsight`, so both endpoints run the same
+  `populateActualAmounts` path per month and can never disagree on a given month's numbers.
+- `ItemInsightDTO` carries a 12-point month series (missing months are `null`, not zero, so the
+  chart can distinguish "no budget yet" from "spent nothing") plus annual total, year-to-date,
+  monthly average, and the item's share of its "current month" (today's month for the current
+  year, else the latest month with data).
+- Frontend: `SpendingInsightsView.vue` + `charts/ItemTrendChart.vue`, a hand-rolled inline-SVG
+  bar+line chart — no chart library was added, consistent with the PWA's minimal-dependency
+  stance (see `sharp` note above). Bars are colored favorable/unfavorable vs. planned (mirroring
+  `BudgetSection.getItemDiff`'s sign convention: expenses = planned − actual, income = actual −
+  planned), not by category.
+
 ---
 
 ## Frontend Patterns
@@ -225,9 +244,17 @@ A boolean filter `uncategorized: false` in the store and `AND (:uncategorized = 
 ### Navigation: Savings → Transactions
 Clicking the `mdi-open-in-new` icon on a savings event row navigates to `/transactions?transactionId=N`. The TransactionsView `onMounted` handler uses `replaceFilters({ transactionId: N })` — equivalent to the budget item link pattern (`?sectionName=X&budgetItemName=Y`).
 
+### Insights Route Is Not a Tab (App.vue)
+`/insights/:year` is reachable only by clicking an item, never from the top nav `v-btn-toggle`. Its route name still has to be handled explicitly in App.vue's route→`viewMode` sync (both in `onMounted` and the `watch`), by setting `viewMode.value = 'insights'` — a sentinel not bound to any tab button. Skipping this breaks navigation two different ways: letting `'insights'` fall into the `else` branch sets `viewMode = 'monthly'`, which the `watch(viewMode, …)` below reacts to as "the user switched to Monthly" and immediately routes back to the last-viewed month, hijacking the click that was supposed to open Insights; leaving `viewMode` *unchanged* on entry avoids that hijack but silently breaks whichever tab already matched the stale value — clicking that same-looking tab is a v-model no-op (no value change, so the sync watcher never fires), and navigation looks dead until a *different* tab is clicked first.
+
 ---
 
 ## API Quick Reference
+
+### Budgets
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| GET | `/api/budgets/{year}/item-insight` | Per-item year insight; params `section`, `item` (matched case-insensitively) |
 
 ### Transactions
 | Method | Endpoint | Notes |

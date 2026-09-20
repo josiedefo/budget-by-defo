@@ -115,6 +115,11 @@
                     v-for="(ki, i) in monthData.keyItems"
                     :key="i"
                     class="key-item-chip"
+                    role="button"
+                    tabindex="0"
+                    :title="'View insights for ' + ki.itemName"
+                    @click="viewInsights(ki)"
+                    @keyup.enter="viewInsights(ki)"
                   >
                     <v-icon size="x-small" color="amber" class="mr-1">mdi-bookmark</v-icon>
                     {{ ki.sectionName }}: {{ ki.itemName }}
@@ -195,6 +200,14 @@ function viewMonth(month) {
   router.push({ name: 'monthly', params: { year: selectedYear.value, month } })
 }
 
+function viewInsights(keyItem) {
+  router.push({
+    name: 'insights',
+    params: { year: selectedYear.value },
+    query: { section: keyItem.sectionName, item: keyItem.itemName }
+  })
+}
+
 watch(selectedYear, (newYear) => {
   router.push({ name: 'yearly', params: { year: newYear } })
 })
@@ -224,6 +237,11 @@ onMounted(() => {
   font-size: 0.8rem;
   margin-right: 16px;
   color: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 80%, transparent);
+  cursor: pointer;
+}
+
+.key-item-chip:hover {
+  text-decoration: underline;
 }
 
 .sticky-summary {

@@ -12,6 +12,7 @@ A personal budget tracking application to manage your finances month by month.
 - **Default Categories** - Comes with Income, Housing, Transportation, Food, Utilities, Healthcare, Entertainment, and Savings
 - **Exclude Items** - Optionally exclude specific budget items from overall calculations
 - **Key Item Tags** - Tag budget items as "key" from the monthly view (bookmark icon); tagged items and their diff appear beneath the month row on the yearly overview to quickly explain savings variance
+- **Spending Insights** - Click any budget item's name (Monthly view) or a key-item chip (Yearly view) to open a year-long insight for that item: its share of the month's spending, annual/year-to-date/monthly-average totals, and a month-by-month actual-vs-planned chart
 
 ### Transactions
 - **Transaction Tracking** - Record individual transactions with date, amount, description, and type
@@ -212,6 +213,7 @@ budget-by-defo/
 |----------|-------------|
 | `GET /api/budgets/{year}/{month}` | Get or create monthly budget |
 | `GET /api/budgets/{year}` | Get yearly summary |
+| `GET /api/budgets/{year}/item-insight` | Get a year-long insight for one budget item (params: `section`, `item`) |
 | `POST /api/sections` | Add a new section |
 | `POST /api/items` | Add a new budget item |
 | `PUT /api/items/{id}` | Update a budget item |

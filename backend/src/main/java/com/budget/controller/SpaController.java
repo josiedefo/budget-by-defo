@@ -19,7 +19,8 @@ public class SpaController {
         "/budget/**",
         "/transactions",
         "/planner",
-        "/savings"
+        "/savings",
+        "/insights/**"
     })
     public String forward() {
         return "forward:/index.html";

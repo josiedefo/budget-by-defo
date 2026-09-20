@@ -86,6 +86,12 @@ onMounted(() => {
     viewMode.value = 'planner'
   } else if (route.name === 'savings') {
     viewMode.value = 'savings'
+  } else if (route.name === 'insights') {
+    // Insights is not one of the top-level tabs. Use a sentinel so no tab shows
+    // falsely active AND so clicking any real tab is a genuine value change —
+    // leaving viewMode at its old value would make clicking that same-looking
+    // tab a no-op (v-model sees no change, so the toggle-sync watcher never fires).
+    viewMode.value = 'insights'
   } else {
     viewMode.value = 'monthly'
   }
@@ -106,6 +112,9 @@ watch(() => ({ name: route.name, year: route.params.year, month: route.params.mo
     viewMode.value = 'planner'
   } else if (name === 'savings') {
     viewMode.value = 'savings'
+  } else if (name === 'insights') {
+    // Same reasoning as onMounted above.
+    viewMode.value = 'insights'
   } else {
     viewMode.value = 'monthly'
   }

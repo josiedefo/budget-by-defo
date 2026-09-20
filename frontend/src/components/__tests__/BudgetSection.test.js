@@ -11,8 +11,10 @@ vi.mock('@/services/api', () => ({
   }
 }))
 
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: vi.fn() })
+  useRouter: () => ({ push: pushMock })
 }))
 
 const vuetify = createVuetify({ components, directives })
@@ -113,5 +115,24 @@ describe('BudgetSection planned-amount editing', () => {
     expect(updates).toHaveLength(2)
     expect(updates.some(([p]) => p.data.isKeyItem === true)).toBe(true)
     expect(updates.some(([p]) => p.data.plannedAmount === 100)).toBe(true)
+  })
+})
+
+describe('BudgetSection navigation', () => {
+  beforeEach(() => {
+    pushMock.mockClear()
+  })
+
+  it('clicking an item name navigates to its spending insights', async () => {
+    const wrapper = mountSection()
+    const itemLink = wrapper.findAll('.item-link')[0]
+
+    await itemLink.trigger('click')
+
+    expect(pushMock).toHaveBeenCalledWith({
+      name: 'insights',
+      params: { year: 2026 },
+      query: { section: 'Food', item: 'Groceries' }
+    })
   })
 })

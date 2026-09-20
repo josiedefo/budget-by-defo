@@ -4,6 +4,7 @@ import YearlyBudgetView from '@/views/YearlyBudgetView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import PlannerView from '@/views/PlannerView.vue'
 import SavingsView from '@/views/SavingsView.vue'
+import SpendingInsightsView from '@/views/SpendingInsightsView.vue'
 
 const routes = [
   {
@@ -44,6 +45,14 @@ const routes = [
     path: '/savings',
     name: 'savings',
     component: SavingsView
+  },
+  {
+    path: '/insights/:year',
+    name: 'insights',
+    component: SpendingInsightsView,
+    props: route => ({
+      year: parseInt(route.params.year)
+    })
   }
 ]
 

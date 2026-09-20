@@ -2,6 +2,7 @@ package com.budget.controller;
 
 import com.budget.dto.BudgetDTO;
 import com.budget.dto.CopyBudgetRequest;
+import com.budget.dto.ItemInsightDTO;
 import com.budget.dto.YearlySummaryDTO;
 import com.budget.service.BudgetService;
 import jakarta.validation.Valid;
@@ -39,6 +40,15 @@ public class BudgetController {
     public ResponseEntity<YearlySummaryDTO> getYearlySummary(@PathVariable Integer year) {
         YearlySummaryDTO summary = budgetService.getYearlySummary(year);
         return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/{year}/item-insight")
+    public ResponseEntity<ItemInsightDTO> getItemInsight(
+            @PathVariable Integer year,
+            @RequestParam String section,
+            @RequestParam String item) {
+        ItemInsightDTO insight = budgetService.getItemInsight(year, section, item);
+        return ResponseEntity.ok(insight);
     }
 
     @PostMapping
