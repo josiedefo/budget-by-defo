@@ -54,6 +54,7 @@
           <SavingsFundCard
             :fund="fund"
             @delete="$emit('delete-fund', fund.id)"
+            @history="$emit('open-history', fund)"
           />
         </v-col>
       </v-row>
@@ -75,7 +76,7 @@ import SavingsFundCard from './SavingsFundCard.vue'
 const savingsStore = useSavingsStore()
 const { unassignedFund, userFunds } = storeToRefs(savingsStore)
 
-defineEmits(['open-withdraw', 'open-reallocate', 'open-edit', 'delete-fund', 'open-payout', 'close-fund'])
+defineEmits(['open-withdraw', 'open-reallocate', 'open-edit', 'delete-fund', 'open-payout', 'close-fund', 'open-history'])
 
 const STORAGE_KEY = 'savings-fund-order'
 const orderedFunds = ref([])

@@ -2,6 +2,7 @@ package com.budget.service;
 
 import com.budget.dto.SavingsFundDTO;
 import com.budget.model.FundGoalType;
+import com.budget.model.FundStatus;
 import com.budget.model.SavingsEvent;
 import com.budget.model.SavingsEventType;
 import com.budget.model.SavingsFund;
@@ -18,11 +19,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,6 +53,52 @@ class SavingsFundServiceTest {
         fund.setIsSystemFund(false);
         fund.setIsActive(true);
         when(savingsFundRepository.findById(1L)).thenReturn(Optional.of(fund));
+        lenient().when(savingsEventRepository.sumAmountForFundByTypes(eq(1L), anyList()))
+                .thenReturn(BigDecimal.ZERO);
+    }
+
+    @Test
+    void closedTargetFund_keepsProgressFromLifetimeSavings_notBalance() {
+        fund.setName("Kids School Fund");
+        fund.setGoalType(FundGoalType.TARGET_WITH_DEADLINE);
+        fund.setTargetAmount(new BigDecimal("19880.00"));
+        fund.setDeadline(LocalDate.of(2026, 8, 1));
+        fund.setBalance(new BigDecimal("19880.00"));
+        when(savingsEventRepository.sumAmountForFundByTypes(1L,
+                List.of(SavingsEventType.DEPOSIT_ALLOCATED, SavingsEventType.REALLOCATION_IN)))
+                .thenReturn(new BigDecimal("19880.00"));
+        when(savingsEventRepository.sumAmountForFundByTypes(1L,
+                List.of(SavingsEventType.WITHDRAWAL, SavingsEventType.PAYOUT)))
+                .thenReturn(new BigDecimal("16805.00"));
+        when(savingsEventRepository.sumAmountForFundByTypes(1L, List.of(SavingsEventType.CLOSE_RELEASE)))
+                .thenReturn(new BigDecimal("3075.00"));
+        fund.setClosedDate(LocalDate.of(2026, 8, 5));
+        fund.setBalance(BigDecimal.ZERO);
+
+        SavingsFundDTO dto = service.getFund(1L);
+
+        assertThat(dto.getProgressPercent()).isEqualTo(100);
+        assertThat(dto.getStatus()).isEqualTo(FundStatus.COMPLETE);
+        assertThat(dto.getRemaining()).isEqualByComparingTo("0");
+        assertThat(dto.getTotalSaved()).isEqualByComparingTo("19880.00");
+        assertThat(dto.getTotalUsed()).isEqualByComparingTo("16805.00");
+        assertThat(dto.getReleasedAmount()).isEqualByComparingTo("3075.00");
+    }
+
+    @Test
+    void closedTargetFund_savedLessThanTarget_isClosedNotComplete() {
+        fund.setGoalType(FundGoalType.TARGET);
+        fund.setTargetAmount(new BigDecimal("1000.00"));
+        fund.setClosedDate(LocalDate.of(2026, 8, 5));
+        when(savingsEventRepository.sumAmountForFundByTypes(1L,
+                List.of(SavingsEventType.DEPOSIT_ALLOCATED, SavingsEventType.REALLOCATION_IN)))
+                .thenReturn(new BigDecimal("400.00"));
+
+        SavingsFundDTO dto = service.getFund(1L);
+
+        assertThat(dto.getStatus()).isEqualTo(FundStatus.CLOSED);
+        assertThat(dto.getProgressPercent()).isEqualTo(40);
+        assertThat(dto.getRemaining()).isEqualByComparingTo("600.00");
     }
 
     @Test

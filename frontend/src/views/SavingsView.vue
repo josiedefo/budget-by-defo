@@ -48,6 +48,7 @@
           @delete-fund="confirmDelete"
           @open-payout="confirmPayout"
           @close-fund="openClose"
+          @open-history="openFundHistory"
         />
       </v-tabs-window-item>
 
@@ -225,6 +226,12 @@ function openEdit(fund) {
 function confirmDelete(fundId) {
   selectedFundForAction.value = savingsStore.funds.find(f => f.id === fundId)
   showDeleteConfirm.value = true
+}
+
+function openFundHistory(fund) {
+  historyFundId.value = fund.id
+  historyFundEventId.value = null
+  activeTab.value = 'history'
 }
 
 function openClose(fund) {

@@ -33,13 +33,26 @@ public class SavingsFundDTO {
     private BigDecimal ytdSpent;
     private LocalDate closedDate;
     private Boolean isClosed;
+    // Lifetime figures, populated for closed funds so progress survives the money being spent
+    private BigDecimal totalSaved;
+    private BigDecimal totalUsed;
+    private BigDecimal releasedAmount;
 
     public static SavingsFundDTO fromEntity(SavingsFund fund) {
         return fromEntityWithYtd(fund, null);
     }
 
     public static SavingsFundDTO fromEntityWithYtd(SavingsFund fund, BigDecimal ytdSpent) {
+        return fromEntityWithStats(fund, ytdSpent, null, null, null);
+    }
+
+    public static SavingsFundDTO fromEntityWithStats(SavingsFund fund, BigDecimal ytdSpent,
+                                                     BigDecimal totalSaved, BigDecimal totalUsed,
+                                                     BigDecimal releasedAmount) {
         SavingsFundDTO dto = new SavingsFundDTO();
+        dto.setTotalSaved(totalSaved);
+        dto.setTotalUsed(totalUsed);
+        dto.setReleasedAmount(releasedAmount);
         dto.setId(fund.getId());
         dto.setName(fund.getName());
         dto.setGoalType(fund.getGoalType());
@@ -60,6 +73,18 @@ public class SavingsFundDTO {
     }
 
     private void computeDerivedFields() {
+        // A closed fund has been saved for and spent; judge it by what was saved over its life,
+        // not by the (now zero) balance.
+        if (Boolean.TRUE.equals(isClosed) && totalSaved != null
+                && (goalType == FundGoalType.TARGET || goalType == FundGoalType.TARGET_WITH_DEADLINE
+                    || goalType == FundGoalType.SPEND_DOWN)
+                && targetAmount != null && targetAmount.compareTo(BigDecimal.ZERO) > 0) {
+            remaining = targetAmount.subtract(totalSaved).max(BigDecimal.ZERO);
+            progressPercent = Math.min(100, totalSaved.multiply(BigDecimal.valueOf(100))
+                    .divide(targetAmount, 0, RoundingMode.FLOOR).intValue());
+            status = totalSaved.compareTo(targetAmount) >= 0 ? FundStatus.COMPLETE : FundStatus.CLOSED;
+            return;
+        }
         switch (goalType) {
             case TARGET:
             case TARGET_WITH_DEADLINE:

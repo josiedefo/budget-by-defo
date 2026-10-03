@@ -30,27 +30,36 @@ public class SavingsFundService {
     private final SavingsEventRepository savingsEventRepository;
 
     public List<SavingsFundDTO> getAllFunds() {
-        int currentYear = LocalDate.now().getYear();
         return savingsFundRepository.findAllByIsActiveTrueOrderByNameAsc()
                 .stream()
-                .map(fund -> {
-                    BigDecimal ytdSpent = null;
-                    if (fund.getGoalType() == FundGoalType.SPEND_AS_YOU_GO) {
-                        ytdSpent = savingsEventRepository.sumWithdrawalsForFundInYear(fund.getId(), currentYear);
-                    }
-                    return SavingsFundDTO.fromEntityWithYtd(fund, ytdSpent);
-                })
+                .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     public SavingsFundDTO getFund(Long id) {
         SavingsFund fund = savingsFundRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Savings fund not found: " + id));
+        return toDto(fund);
+    }
+
+    private SavingsFundDTO toDto(SavingsFund fund) {
         BigDecimal ytdSpent = null;
         if (fund.getGoalType() == FundGoalType.SPEND_AS_YOU_GO) {
             ytdSpent = savingsEventRepository.sumWithdrawalsForFundInYear(fund.getId(), LocalDate.now().getYear());
         }
-        return SavingsFundDTO.fromEntityWithYtd(fund, ytdSpent);
+        if (!fund.isClosed()) {
+            return SavingsFundDTO.fromEntityWithYtd(fund, ytdSpent);
+        }
+        Long id = fund.getId();
+        BigDecimal saved = savingsEventRepository.sumAmountForFundByTypes(id,
+                        List.of(SavingsEventType.DEPOSIT_ALLOCATED, SavingsEventType.REALLOCATION_IN))
+                .subtract(savingsEventRepository.sumAmountForFundByTypes(id,
+                        List.of(SavingsEventType.REALLOCATION_OUT)));
+        BigDecimal used = savingsEventRepository.sumAmountForFundByTypes(id,
+                List.of(SavingsEventType.WITHDRAWAL, SavingsEventType.PAYOUT));
+        BigDecimal released = savingsEventRepository.sumAmountForFundByTypes(id,
+                List.of(SavingsEventType.CLOSE_RELEASE));
+        return SavingsFundDTO.fromEntityWithStats(fund, ytdSpent, saved, used, released);
     }
 
     @Transactional

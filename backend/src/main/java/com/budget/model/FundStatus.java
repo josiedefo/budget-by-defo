@@ -4,5 +4,6 @@ public enum FundStatus {
     IN_PROGRESS,
     COMPLETE,
     OK,
-    AT_LIMIT
+    AT_LIMIT,
+    CLOSED
 }

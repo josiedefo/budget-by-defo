@@ -79,6 +79,47 @@ class SavingsLinkIntegrationTest {
     }
 
     @Test
+    void closedTargetFund_reportsLifetimeProgress_andBlocksLaterTransactions() throws Exception {
+        createAccount("Close Account", "30000.00");
+        String fundBody = mockMvc.perform(post("/api/savings/funds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"School\",\"goalType\":\"TARGET_WITH_DEADLINE\"," +
+                                 "\"targetAmount\":1000,\"deadline\":\"2026-08-01\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        long fundId = objectMapper.readTree(fundBody).get("id").asLong();
+
+        mockMvc.perform(post("/api/savings/events/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"targetFundId\":" + fundId + ",\"amount\":1000,\"eventDate\":\"2026-07-01\"}"))
+                .andExpect(status().isOk());
+        long usedTx = createTransaction("2026-08-04", "Tuition", "800.00");
+        mockMvc.perform(post("/api/savings/events/link-transaction")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionId\":" + usedTx + ",\"fundId\":" + fundId +
+                                 ",\"eventType\":\"WITHDRAWAL\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/savings/funds/" + fundId + "/close")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"closedDate\":\"2026-08-05\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isClosed").value(true))
+                .andExpect(jsonPath("$.balance").value(0))
+                .andExpect(jsonPath("$.progressPercent").value(100))
+                .andExpect(jsonPath("$.status").value("COMPLETE"))
+                .andExpect(jsonPath("$.totalSaved").value(1000))
+                .andExpect(jsonPath("$.totalUsed").value(800))
+                .andExpect(jsonPath("$.releasedAmount").value(200));
+
+        long lateTx = createTransaction("2026-08-06", "Late", "10.00");
+        mockMvc.perform(post("/api/savings/events/link-transaction")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionId\":" + lateTx + ",\"fundId\":" + fundId +
+                                 ",\"eventType\":\"WITHDRAWAL\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void linkedTransaction_updateAndDelete_keepAccountInSync() throws Exception {
         long accountId = createAccount("Sync Account", "1000.00");
         long txId = createTransaction("2033-01-10", "Vanguard", "100.00");

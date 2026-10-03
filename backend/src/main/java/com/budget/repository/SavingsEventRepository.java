@@ -20,6 +20,11 @@ public interface SavingsEventRepository extends JpaRepository<SavingsEvent, Long
            "AND YEAR(e.eventDate) = :year")
     BigDecimal sumWithdrawalsForFundInYear(@Param("fundId") Long fundId, @Param("year") int year);
 
+    @Query("SELECT COALESCE(SUM(e.amount), 0) FROM SavingsEvent e " +
+           "WHERE e.fund.id = :fundId AND e.eventType IN :types")
+    BigDecimal sumAmountForFundByTypes(@Param("fundId") Long fundId,
+                                       @Param("types") List<SavingsEventType> types);
+
     @Query("SELECT e FROM SavingsEvent e JOIN FETCH e.fund WHERE e.transactionRef = :transactionRef")
     Optional<SavingsEvent> findByTransactionRef(@Param("transactionRef") Long transactionRef);
 

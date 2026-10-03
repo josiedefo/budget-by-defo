@@ -126,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useSavingsStore } from '@/stores/savings'
@@ -149,6 +149,13 @@ function setRowRef(el, eventId) {
   if (el) rowRefs[eventId] = el
   else delete rowRefs[eventId]
 }
+
+watch(() => props.initialFundId, async (id) => {
+  if (id) {
+    selectedId.value = id
+    await savingsStore.fetchEventsForFund(id)
+  }
+})
 
 onMounted(async () => {
   if (props.initialFundId) {

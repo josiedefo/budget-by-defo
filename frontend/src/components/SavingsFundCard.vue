@@ -23,6 +23,15 @@
         Closed {{ formatDate(fund.closedDate) }}
       </div>
 
+      <!-- Closed fund lifetime summary -->
+      <div v-if="fund.isClosed && fund.totalSaved != null" class="text-body-small mb-2">
+        <div class="d-flex justify-space-between"><span>Saved</span><span>${{ formatAmount(fund.totalSaved) }}</span></div>
+        <div class="d-flex justify-space-between"><span>Used</span><span>${{ formatAmount(fund.totalUsed) }}</span></div>
+        <div v-if="parseFloat(fund.releasedAmount || 0) > 0" class="d-flex justify-space-between">
+          <span>Released to pool</span><span>${{ formatAmount(fund.releasedAmount) }}</span>
+        </div>
+      </div>
+
       <!-- TARGET / TARGET_WITH_DEADLINE / SPEND_DOWN progress -->
       <template v-if="fund.goalType === 'TARGET' || fund.goalType === 'TARGET_WITH_DEADLINE' || fund.goalType === 'SPEND_DOWN'">
         <v-progress-linear
@@ -43,7 +52,11 @@
           Payout: {{ formatDate(fund.payoutDate) }}
           <span v-if="fund.payoutAmount"> (${{ formatAmount(fund.payoutAmount) }})</span>
         </div>
-        <v-chip size="x-small" class="mt-2" :color="fund.status === 'COMPLETE' ? 'success' : 'warning'" variant="tonal">
+        <v-chip v-if="fund.isClosed" size="x-small" class="mt-2"
+          :color="fund.status === 'COMPLETE' ? 'success' : 'grey'" variant="tonal">
+          {{ fund.status === 'COMPLETE' ? 'Goal reached' : 'Closed short of goal' }}
+        </v-chip>
+        <v-chip v-else size="x-small" class="mt-2" :color="fund.status === 'COMPLETE' ? 'success' : 'warning'" variant="tonal">
           {{ fund.status === 'COMPLETE' ? 'Complete' : 'In Progress' }}
         </v-chip>
       </template>
@@ -63,7 +76,13 @@
       </template>
     </v-card-text>
 
-    <v-card-actions v-if="!fund.isClosed" class="pt-0">
+    <v-card-actions v-if="fund.isClosed" class="pt-0">
+      <v-btn size="small" variant="text" color="primary" @click="$emit('history')">
+        <v-icon start size="small">mdi-history</v-icon>
+        History
+      </v-btn>
+    </v-card-actions>
+    <v-card-actions v-else class="pt-0">
       <v-btn size="small" variant="text" color="primary" @click="$emit('withdraw')">
         <v-icon start size="small">mdi-minus-circle</v-icon>
         Withdraw
@@ -91,7 +110,7 @@ const props = defineProps({
   fund: { type: Object, required: true }
 })
 
-defineEmits(['withdraw', 'reallocate', 'edit', 'delete', 'payout', 'close'])
+defineEmits(['withdraw', 'reallocate', 'edit', 'delete', 'payout', 'close', 'history'])
 
 const goalTypeLabels = {
   TARGET: 'Target',
@@ -135,7 +154,7 @@ function formatDate(dateStr) {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
 }
 .fund-closed {
-  opacity: 0.65;
+  opacity: 0.8;
 }
 .cursor-pointer {
   cursor: pointer;
