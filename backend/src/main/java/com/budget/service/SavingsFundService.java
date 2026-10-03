@@ -106,7 +106,7 @@ public class SavingsFundService {
         fund.setPayoutAmount(request.getPayoutAmount());
 
         fund = savingsFundRepository.save(fund);
-        return SavingsFundDTO.fromEntity(fund);
+        return getFund(fund.getId());
     }
 
     @Transactional
