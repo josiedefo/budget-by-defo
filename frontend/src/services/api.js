@@ -189,6 +189,7 @@ export const savingsApi = {
   getFund(id) { return api.get(`/savings/funds/${id}`) },
   createFund(data) { return api.post('/savings/funds', data) },
   updateFund(id, data) { return api.put(`/savings/funds/${id}`, data) },
+  closeFund(id, data) { return api.post(`/savings/funds/${id}/close`, data) },
   deleteFund(id) { return api.delete(`/savings/funds/${id}`) },
   getSummary() { return api.get('/savings/funds/summary') },
 

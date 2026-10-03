@@ -105,8 +105,8 @@
           <template v-else>
             <v-select
               v-model="selectedFundId"
-              :items="savingsStore.userFunds"
-              item-title="name"
+              :items="savingsStore.linkableFunds"
+              item-title="label"
               item-value="id"
               label="Savings Fund"
               variant="outlined"

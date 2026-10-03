@@ -31,6 +31,8 @@ public class SavingsFundDTO {
     private Integer progressPercent;
     private FundStatus status;
     private BigDecimal ytdSpent;
+    private LocalDate closedDate;
+    private Boolean isClosed;
 
     public static SavingsFundDTO fromEntity(SavingsFund fund) {
         return fromEntityWithYtd(fund, null);
@@ -51,6 +53,8 @@ public class SavingsFundDTO {
         dto.setIsActive(fund.getIsActive());
         dto.setCreatedAt(fund.getCreatedAt());
         dto.setYtdSpent(ytdSpent);
+        dto.setClosedDate(fund.getClosedDate());
+        dto.setIsClosed(fund.isClosed());
         dto.computeDerivedFields();
         return dto;
     }

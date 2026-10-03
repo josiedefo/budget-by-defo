@@ -1,5 +1,5 @@
 <template>
-  <v-card class="fund-card h-100" variant="outlined">
+  <v-card class="fund-card h-100" :class="{ 'fund-closed': fund.isClosed }" variant="outlined">
     <v-card-title class="d-flex align-center justify-space-between pb-1">
       <div class="d-flex align-center ga-1 min-width-0">
         <v-icon class="drag-handle text-medium-emphasis" size="small">mdi-drag</v-icon>
@@ -9,7 +9,8 @@
         <v-chip size="x-small" :color="goalTypeColor" variant="tonal">
           {{ goalTypeLabel }}
         </v-chip>
-        <v-icon size="small" class="cursor-pointer" @click="$emit('edit')">mdi-pencil</v-icon>
+        <v-chip v-if="fund.isClosed" size="x-small" color="grey" variant="flat">Closed</v-chip>
+        <v-icon v-if="!fund.isClosed" size="small" class="cursor-pointer" @click="$emit('edit')">mdi-pencil</v-icon>
         <v-icon v-if="!fund.isSystemFund" size="small" class="cursor-pointer text-error"
           @click="$emit('delete')">mdi-delete</v-icon>
       </div>
@@ -17,6 +18,10 @@
 
     <v-card-text class="pt-0">
       <div class="text-headline-small font-weight-bold mb-2">${{ formatAmount(fund.balance) }}</div>
+      <div v-if="fund.isClosed" class="text-body-small text-medium-emphasis mb-2">
+        <v-icon size="x-small">mdi-lock-outline</v-icon>
+        Closed {{ formatDate(fund.closedDate) }}
+      </div>
 
       <!-- TARGET / TARGET_WITH_DEADLINE / SPEND_DOWN progress -->
       <template v-if="fund.goalType === 'TARGET' || fund.goalType === 'TARGET_WITH_DEADLINE' || fund.goalType === 'SPEND_DOWN'">
@@ -58,7 +63,7 @@
       </template>
     </v-card-text>
 
-    <v-card-actions class="pt-0">
+    <v-card-actions v-if="!fund.isClosed" class="pt-0">
       <v-btn size="small" variant="text" color="primary" @click="$emit('withdraw')">
         <v-icon start size="small">mdi-minus-circle</v-icon>
         Withdraw
@@ -71,6 +76,10 @@
         <v-icon start size="small">mdi-calendar-export</v-icon>
         Payout
       </v-btn>
+      <v-btn v-if="!fund.isSystemFund" size="small" variant="text" @click="$emit('close')">
+        <v-icon start size="small">mdi-lock-outline</v-icon>
+        Close
+      </v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -82,7 +91,7 @@ const props = defineProps({
   fund: { type: Object, required: true }
 })
 
-defineEmits(['withdraw', 'reallocate', 'edit', 'delete', 'payout'])
+defineEmits(['withdraw', 'reallocate', 'edit', 'delete', 'payout', 'close'])
 
 const goalTypeLabels = {
   TARGET: 'Target',
@@ -124,6 +133,9 @@ function formatDate(dateStr) {
 }
 .fund-card:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+.fund-closed {
+  opacity: 0.65;
 }
 .cursor-pointer {
   cursor: pointer;

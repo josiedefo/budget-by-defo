@@ -56,6 +56,7 @@ public class SavingsEventService {
             if (!targetFund.getIsActive()) {
                 throw new IllegalStateException("Cannot deposit into an inactive fund");
             }
+            requireNotClosed(targetFund);
         } else {
             targetFund = savingsFundService.getOrCreateUnassignedFund();
         }
@@ -83,6 +84,7 @@ public class SavingsEventService {
     public SavingsEventDTO logWithdrawal(LogWithdrawalRequest request) {
         SavingsFund fund = savingsFundRepository.findById(request.getFundId())
                 .orElseThrow(() -> new EntityNotFoundException("Fund not found: " + request.getFundId()));
+        requireNotClosed(fund);
 
         if (fund.getBalance().compareTo(request.getAmount()) < 0) {
             throw new IllegalStateException(
@@ -109,6 +111,9 @@ public class SavingsEventService {
                 .orElseThrow(() -> new EntityNotFoundException("Source fund not found: " + request.getSourceFundId()));
         SavingsFund destination = savingsFundRepository.findById(request.getDestinationFundId())
                 .orElseThrow(() -> new EntityNotFoundException("Destination fund not found: " + request.getDestinationFundId()));
+
+        requireNotClosed(source);
+        requireNotClosed(destination);
 
         if (source.getBalance().compareTo(request.getAmount()) < 0) {
             throw new IllegalStateException(
@@ -144,6 +149,7 @@ public class SavingsEventService {
         SavingsFund fund = savingsFundRepository.findById(fundId)
                 .orElseThrow(() -> new EntityNotFoundException("Fund not found: " + fundId));
 
+        requireNotClosed(fund);
         if (fund.getGoalType() != FundGoalType.SPEND_DOWN) {
             throw new IllegalStateException("Payout can only be processed for SPEND_DOWN funds");
         }
@@ -349,6 +355,7 @@ public class SavingsEventService {
 
         SavingsFund fund = savingsFundRepository.findById(request.getFundId())
                 .orElseThrow(() -> new EntityNotFoundException("Fund not found: " + request.getFundId()));
+        requireLinkableOn(fund, transaction);
 
         BigDecimal amount = transaction.getAmount();
         SavingsEventType eventType = request.getEventType();
@@ -431,6 +438,7 @@ public class SavingsEventService {
         if (transactions.isEmpty()) {
             return new BulkLinkResult(0, 0, 0, BigDecimal.ZERO);
         }
+        transactions.forEach(tx -> requireLinkableOn(fund, tx));
 
         List<Long> txIds = transactions.stream().map(Transaction::getId).collect(Collectors.toList());
         Set<Long> alreadyLinked = savingsEventRepository.findByTransactionRefIn(txIds)
@@ -487,6 +495,22 @@ public class SavingsEventService {
         savingsFundRepository.save(fund);
 
         return new BulkLinkResult(toLink.size(), skipped, transactions.size(), totalAmount);
+    }
+
+    private void requireNotClosed(SavingsFund fund) {
+        if (fund.isClosed()) {
+            throw new IllegalStateException(String.format(
+                    "Fund \"%s\" was closed on %s", fund.getName(), fund.getClosedDate()));
+        }
+    }
+
+    /** A closed fund still accepts transactions dated on or before its closing date, nothing later. */
+    private void requireLinkableOn(SavingsFund fund, Transaction tx) {
+        if (fund.isClosed() && tx.getTransactionDate().isAfter(fund.getClosedDate())) {
+            throw new IllegalStateException(String.format(
+                    "Fund \"%s\" was closed on %s; it cannot be linked to a transaction dated %s",
+                    fund.getName(), fund.getClosedDate(), tx.getTransactionDate()));
+        }
     }
 
     private SavingsEvent buildEvent(SavingsFund fund, SavingsEventType type,

@@ -59,7 +59,7 @@ const form = ref({ fundId: null, amount: '', eventDate: today, note: '' })
 
 watch(() => props.fundId, (id) => { if (id) form.value.fundId = id }, { immediate: true })
 
-const fundOptions = computed(() => funds.value.filter(f => f.isActive))
+const fundOptions = computed(() => funds.value.filter(f => f.isActive && !f.isClosed))
 const selectedFund = computed(() => funds.value.find(f => f.id === form.value.fundId))
 const insufficientBalance = computed(() => {
   if (!selectedFund.value || !form.value.amount) return false

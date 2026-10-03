@@ -47,6 +47,7 @@
           @open-edit="openEdit"
           @delete-fund="confirmDelete"
           @open-payout="confirmPayout"
+          @close-fund="openClose"
         />
       </v-tabs-window-item>
 
@@ -77,6 +78,29 @@
           <v-spacer />
           <v-btn @click="showDeleteConfirm = false">Cancel</v-btn>
           <v-btn color="error" variant="elevated" :loading="loading" @click="doDelete">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Close fund -->
+    <v-dialog v-model="showCloseConfirm" max-width="440">
+      <v-card>
+        <v-card-title>Close Fund</v-card-title>
+        <v-card-text>
+          <p class="mb-3">
+            Close "{{ selectedFundForAction?.name }}"?
+            <span v-if="parseFloat(selectedFundForAction?.balance || 0) > 0">
+              The remaining ${{ formatAmount(selectedFundForAction?.balance) }} will be released back to the pool as untracked (not moved to the Unassigned fund).
+            </span>
+            Transactions dated after the closing date can no longer be linked to this fund.
+          </p>
+          <v-text-field v-model="closeDate" label="Closing date" type="date" :max="today" />
+          <v-alert v-if="closeError" type="error" variant="tonal" density="compact">{{ closeError }}</v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="showCloseConfirm = false">Cancel</v-btn>
+          <v-btn color="primary" variant="elevated" :loading="loading" :disabled="!closeDate" @click="doClose">Close Fund</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -140,6 +164,15 @@ const showCreateFund = ref(false)
 const showEdit = ref(false)
 const showDeleteConfirm = ref(false)
 const showPayoutConfirm = ref(false)
+const showCloseConfirm = ref(false)
+const closeDate = ref('')
+const closeError = ref('')
+
+function localToday() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+const today = localToday()
 
 onMounted(async () => {
   await Promise.all([
@@ -192,6 +225,22 @@ function openEdit(fund) {
 function confirmDelete(fundId) {
   selectedFundForAction.value = savingsStore.funds.find(f => f.id === fundId)
   showDeleteConfirm.value = true
+}
+
+function openClose(fund) {
+  selectedFundForAction.value = fund
+  closeDate.value = localToday()
+  closeError.value = ''
+  showCloseConfirm.value = true
+}
+
+async function doClose() {
+  try {
+    await savingsStore.closeFund(selectedFundForAction.value.id, closeDate.value)
+    showCloseConfirm.value = false
+  } catch (e) {
+    closeError.value = e.response?.data?.message || e.response?.data?.error || 'Failed to close fund'
+  }
 }
 
 function confirmPayout(fund) {

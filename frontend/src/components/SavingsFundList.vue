@@ -39,20 +39,34 @@
               @edit="$emit('open-edit', fund)"
               @delete="$emit('delete-fund', fund.id)"
               @payout="$emit('open-payout', fund)"
+              @close="$emit('close-fund', fund)"
             />
           </v-col>
         </template>
       </draggable>
     </div>
 
-    <v-alert v-if="!unassignedFund && orderedFunds.length === 0" type="info" variant="tonal">
+    <!-- Closed funds -->
+    <div v-if="closedFunds.length > 0" class="mt-4">
+      <div class="text-title-small text-medium-emphasis mb-2">Closed</div>
+      <v-row>
+        <v-col v-for="fund in closedFunds" :key="fund.id" cols="12" sm="6" md="4" lg="3">
+          <SavingsFundCard
+            :fund="fund"
+            @delete="$emit('delete-fund', fund.id)"
+          />
+        </v-col>
+      </v-row>
+    </div>
+
+    <v-alert v-if="!unassignedFund && orderedFunds.length === 0 && closedFunds.length === 0" type="info" variant="tonal">
       No funds yet. Create your first savings fund to get started.
     </v-alert>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import draggable from 'vuedraggable'
 import { useSavingsStore } from '@/stores/savings'
@@ -61,7 +75,7 @@ import SavingsFundCard from './SavingsFundCard.vue'
 const savingsStore = useSavingsStore()
 const { unassignedFund, userFunds } = storeToRefs(savingsStore)
 
-defineEmits(['open-withdraw', 'open-reallocate', 'open-edit', 'delete-fund', 'open-payout'])
+defineEmits(['open-withdraw', 'open-reallocate', 'open-edit', 'delete-fund', 'open-payout', 'close-fund'])
 
 const STORAGE_KEY = 'savings-fund-order'
 const orderedFunds = ref([])
@@ -81,8 +95,10 @@ function saveOrder() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orderedFunds.value.map(f => f.id)))
 }
 
+const closedFunds = computed(() => userFunds.value.filter(f => f.isClosed))
+
 watch(userFunds, (funds) => {
-  orderedFunds.value = applyStoredOrder(funds)
+  orderedFunds.value = applyStoredOrder(funds.filter(f => !f.isClosed))
 }, { immediate: true })
 </script>
 

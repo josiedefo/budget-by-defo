@@ -359,6 +359,59 @@ class SavingsEventServiceTest {
         verify(savingsEventRepository).delete(event);
     }
 
+    // ── Closed funds ──
+
+    @Test
+    void linkTransactionToFund_dateAfterClosedDate_throws() {
+        fund.setClosedDate(LocalDate.of(2026, 7, 1));
+        Transaction tx = transaction(new BigDecimal("20.00")); // dated 2026-07-10
+        when(transactionRepository.findById(5L)).thenReturn(Optional.of(tx));
+        when(savingsEventRepository.findByTransactionRef(5L)).thenReturn(Optional.empty());
+        when(savingsFundRepository.findById(1L)).thenReturn(Optional.of(fund));
+
+        LinkTransactionToFundRequest request = new LinkTransactionToFundRequest();
+        request.setTransactionId(5L);
+        request.setFundId(1L);
+        request.setEventType(SavingsEventType.WITHDRAWAL);
+
+        assertThatThrownBy(() -> service.linkTransactionToFund(request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("was closed on 2026-07-01");
+        verify(savingsEventRepository, never()).save(any());
+    }
+
+    @Test
+    void linkTransactionToFund_dateOnClosedDate_isAllowed() {
+        fund.setClosedDate(LocalDate.of(2026, 7, 10));
+        Transaction tx = transaction(new BigDecimal("20.00")); // dated 2026-07-10
+        when(transactionRepository.findById(5L)).thenReturn(Optional.of(tx));
+        when(savingsEventRepository.findByTransactionRef(5L)).thenReturn(Optional.empty());
+        when(savingsFundRepository.findById(1L)).thenReturn(Optional.of(fund));
+
+        LinkTransactionToFundRequest request = new LinkTransactionToFundRequest();
+        request.setTransactionId(5L);
+        request.setFundId(1L);
+        request.setEventType(SavingsEventType.WITHDRAWAL);
+
+        service.linkTransactionToFund(request);
+        assertThat(fund.getBalance()).isEqualByComparingTo("80.00");
+    }
+
+    @Test
+    void logDeposit_toClosedFund_throws() {
+        fund.setClosedDate(LocalDate.of(2026, 7, 1));
+        when(savingsFundRepository.findById(1L)).thenReturn(Optional.of(fund));
+
+        LogDepositRequest request = new LogDepositRequest();
+        request.setTargetFundId(1L);
+        request.setAmount(new BigDecimal("10.00"));
+        request.setEventDate(LocalDate.of(2026, 7, 2));
+
+        assertThatThrownBy(() -> service.logDeposit(request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("was closed");
+    }
+
     private Transaction transaction(BigDecimal amount) {
         Transaction tx = new Transaction();
         tx.setId(5L);

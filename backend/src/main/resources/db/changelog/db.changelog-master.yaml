@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/019-add-source-fk-to-plan-item.yaml
   - include:
       file: db/changelog/020-add-unique-savings-link-constraints.yaml
+  - include:
+      file: db/changelog/021-add-closed-date-to-savings-fund.yaml

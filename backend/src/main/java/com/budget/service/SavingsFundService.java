@@ -7,6 +7,8 @@ import com.budget.dto.UpdateSavingsFundRequest;
 import com.budget.model.FundGoalType;
 import com.budget.model.SavingsFund;
 import com.budget.repository.SavingsAccountRepository;
+import com.budget.model.SavingsEvent;
+import com.budget.model.SavingsEventType;
 import com.budget.repository.SavingsEventRepository;
 import com.budget.repository.SavingsFundRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -109,6 +111,44 @@ public class SavingsFundService {
         return getFund(fund.getId());
     }
 
+    /**
+     * Closes a fund: any remaining balance is released back to the pool (it simply stops being
+     * allocated, so it shows up as unallocated pool money) and the fund stops accepting
+     * transactions dated after {@code closedDate}.
+     */
+    @Transactional
+    public SavingsFundDTO closeFund(Long id, LocalDate closedDate) {
+        SavingsFund fund = savingsFundRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Savings fund not found: " + id));
+
+        if (fund.getIsSystemFund()) {
+            throw new IllegalStateException("Cannot close the Unassigned system fund");
+        }
+        if (fund.isClosed()) {
+            throw new IllegalStateException("Fund is already closed");
+        }
+        LocalDate effectiveDate = closedDate != null ? closedDate : LocalDate.now();
+        if (effectiveDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Closing date cannot be in the future");
+        }
+
+        BigDecimal released = fund.getBalance();
+        if (released.compareTo(BigDecimal.ZERO) > 0) {
+            SavingsEvent event = new SavingsEvent();
+            event.setFund(fund);
+            event.setEventType(SavingsEventType.CLOSE_RELEASE);
+            event.setAmount(released);
+            event.setEventDate(effectiveDate);
+            event.setNote("Fund closed - balance released to pool (untracked)");
+            savingsEventRepository.save(event);
+            fund.setBalance(BigDecimal.ZERO);
+        }
+        fund.setClosedDate(effectiveDate);
+        savingsFundRepository.save(fund);
+
+        return getFund(id);
+    }
+
     @Transactional
     public void deleteFund(Long id) {
         SavingsFund fund = savingsFundRepository.findById(id)
@@ -138,7 +178,7 @@ public class SavingsFundService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalRemainingToSave = allActive.stream()
-                .filter(f -> !f.getIsSystemFund()
+                .filter(f -> !f.getIsSystemFund() && !f.isClosed()
                         && (f.getGoalType() == FundGoalType.TARGET
                             || f.getGoalType() == FundGoalType.TARGET_WITH_DEADLINE
                             || f.getGoalType() == FundGoalType.SPEND_DOWN)

@@ -228,7 +228,8 @@ const EVENT_TYPE_LABELS = {
   WITHDRAWAL: 'Withdrawal',
   REALLOCATION_IN: 'Reallocation In',
   REALLOCATION_OUT: 'Reallocation Out',
-  PAYOUT: 'Payout'
+  PAYOUT: 'Payout',
+  CLOSE_RELEASE: 'Released (closed)'
 }
 
 const EVENT_TYPE_COLORS = {
@@ -236,7 +237,8 @@ const EVENT_TYPE_COLORS = {
   WITHDRAWAL: 'error',
   REALLOCATION_IN: 'blue',
   REALLOCATION_OUT: 'orange',
-  PAYOUT: 'purple'
+  PAYOUT: 'purple',
+  CLOSE_RELEASE: 'grey'
 }
 
 function eventTypeLabel(type) { return EVENT_TYPE_LABELS[type] || type }

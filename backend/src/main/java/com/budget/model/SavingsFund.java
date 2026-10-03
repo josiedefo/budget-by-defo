@@ -47,6 +47,9 @@ public class SavingsFund {
     @Column(name = "payout_amount", precision = 12, scale = 2)
     private BigDecimal payoutAmount;
 
+    @Column(name = "closed_date")
+    private LocalDate closedDate;
+
     @Column(name = "is_system_fund", nullable = false)
     private Boolean isSystemFund = false;
 
@@ -58,6 +61,10 @@ public class SavingsFund {
 
     @OneToMany(mappedBy = "fund", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SavingsEvent> events = new ArrayList<>();
+
+    public boolean isClosed() {
+        return closedDate != null;
+    }
 
     @PrePersist
     protected void onCreate() {

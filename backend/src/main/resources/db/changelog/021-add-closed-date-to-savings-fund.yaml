@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 21
+      author: budget-app
+      comment: >-
+        A fund can be closed on a date: its remaining balance is released back to the pool and
+        no transaction dated after closed_date may be linked to it.
+      changes:
+        - addColumn:
+            tableName: savings_fund
+            columns:
+              - column:
+                  name: closed_date
+                  type: DATE

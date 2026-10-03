@@ -1,5 +1,6 @@
 package com.budget.controller;
 
+import com.budget.dto.CloseFundRequest;
 import com.budget.dto.CreateSavingsFundRequest;
 import com.budget.dto.SavingsFundDTO;
 import com.budget.dto.SavingsSummaryDTO;
@@ -39,6 +40,13 @@ public class SavingsFundController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateSavingsFundRequest request) {
         return savingsFundService.updateFund(id, request);
+    }
+
+    @PostMapping("/{id}/close")
+    public SavingsFundDTO closeFund(
+            @PathVariable Long id,
+            @RequestBody(required = false) CloseFundRequest request) {
+        return savingsFundService.closeFund(id, request != null ? request.getClosedDate() : null);
     }
 
     @DeleteMapping("/{id}")

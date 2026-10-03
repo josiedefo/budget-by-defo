@@ -49,7 +49,7 @@ const { funds, loading, error } = storeToRefs(savingsStore)
 const today = new Date().toISOString().split('T')[0]
 const form = ref({ amount: '', eventDate: today, targetFundId: null, note: '' })
 
-const fundOptions = computed(() => funds.value.filter(f => f.isActive))
+const fundOptions = computed(() => funds.value.filter(f => f.isActive && !f.isClosed))
 
 function close() {
   emit('update:modelValue', false)

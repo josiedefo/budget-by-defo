@@ -126,7 +126,7 @@ register one. Run the backend, then `npm run preview` (port 4173, proxies `/api`
 
 Changelogs live in `backend/src/main/resources/db/changelog/`. Always add new YAML files and include them in `db.changelog-master.yaml`. Never reuse a changeSet `id`.
 
-Current migrations: 001–020 (tables through unique savings link constraints).
+Current migrations: 001–021 (tables through `closed_date` on savings_fund).
 
 ---
 
@@ -155,6 +155,7 @@ Current migrations: 001–020 (tables through unique savings link constraints).
 - `SavingsEvent` tracks DEPOSIT_ALLOCATED, WITHDRAWAL, REALLOCATION_IN, REALLOCATION_OUT, PAYOUT
 - `SavingsEvent.transactionRef` is a plain `Long` (not a FK) linking back to a Transaction
 - Pool enforcement: sum of all active fund balances ≤ sum of all active account balances
+- **Closing** (`POST /api/savings/funds/{id}/close`, optional `closedDate`, default today, not future): sets `closedDate`, zeroes the balance and logs a `CLOSE_RELEASE` event for the released amount — the money simply becomes "Untracked" pool money (pool − allocated − Unassigned); it is NOT moved into the Unassigned fund. `isActive` stays true so closed funds still display (in a "Closed" section). A closed fund rejects deposits, withdrawals, reallocation and payout; transactions dated *after* `closedDate` can't be linked (single and bulk), earlier-dated ones still can. Closed funds are excluded from upcoming-deadline and remaining-to-save summaries. The Unassigned system fund can't be closed
 
 ---
 

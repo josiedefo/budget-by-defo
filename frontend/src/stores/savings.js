@@ -25,6 +25,15 @@ export const useSavingsStore = defineStore('savings', () => {
     funds.value.filter(f => !f.isSystemFund)
   )
 
+  // Funds a transaction can be linked to. Closed funds stay selectable (earlier-dated
+  // transactions may still belong to them) but are labelled; the backend enforces the date cutoff.
+  const linkableFunds = computed(() =>
+    userFunds.value.map(f => ({
+      ...f,
+      label: f.isClosed ? `${f.name} (closed ${f.closedDate})` : f.name
+    }))
+  )
+
   async function fetchAccounts() {
     loading.value = true
     error.value = null
@@ -182,6 +191,23 @@ export const useSavingsStore = defineStore('savings', () => {
       return response.data
     } catch (e) {
       error.value = 'Failed to update fund'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function closeFund(id, closedDate) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await savingsApi.closeFund(id, { closedDate })
+      const index = funds.value.findIndex(f => f.id === id)
+      if (index !== -1) funds.value[index] = response.data
+      if (selectedFundId.value === id) await fetchEventsForFund(id)
+      return response.data
+    } catch (e) {
+      error.value = e.response?.data?.message || e.response?.data?.error || 'Failed to close fund'
       throw e
     } finally {
       loading.value = false
@@ -533,6 +559,7 @@ export const useSavingsStore = defineStore('savings', () => {
     totalPoolBalance,
     unassignedFund,
     userFunds,
+    linkableFunds,
     fetchAccounts,
     fetchFunds,
     fetchEventsForFund,
@@ -547,6 +574,7 @@ export const useSavingsStore = defineStore('savings', () => {
     deleteAccount,
     createFund,
     updateFund,
+    closeFund,
     deleteFund,
     logDeposit,
     logWithdrawal,

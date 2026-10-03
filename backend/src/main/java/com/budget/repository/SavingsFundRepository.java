@@ -18,7 +18,7 @@ public interface SavingsFundRepository extends JpaRepository<SavingsFund, Long> 
     BigDecimal sumAllActiveFundBalances();
 
     @Query("SELECT f FROM SavingsFund f WHERE f.isActive = true " +
-           "AND f.goalType IN ('TARGET_WITH_DEADLINE', 'SPEND_DOWN') " +
+           "AND f.closedDate IS NULL AND f.goalType IN ('TARGET_WITH_DEADLINE', 'SPEND_DOWN') " +
            "AND (f.deadline IS NOT NULL OR f.payoutDate IS NOT NULL) " +
            "ORDER BY CASE WHEN f.deadline IS NOT NULL THEN f.deadline ELSE f.payoutDate END ASC")
     List<SavingsFund> findUpcomingDeadlineFunds();

@@ -5,5 +5,6 @@ public enum SavingsEventType {
     WITHDRAWAL,
     REALLOCATION_IN,
     REALLOCATION_OUT,
-    PAYOUT
+    PAYOUT,
+    CLOSE_RELEASE
 }
